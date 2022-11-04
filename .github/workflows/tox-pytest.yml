@@ -1,0 +1,55 @@
+name: tox-pytest
+
+on: [push, pull_request]
+
+jobs:
+  ci-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10"]
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+
+      - name: Set up conda environment for testing
+        uses: conda-incubator/setup-miniconda@v2.1.1
+        with:
+          miniforge-variant: Mambaforge
+          miniforge-version: latest
+          use-mamba: true
+          mamba-version: "*"
+          channels: conda-forge,defaults
+          channel-priority: true
+          python-version: ${{ matrix.python-version }}
+          activate-environment: cheshire
+          environment-file: environment.yml
+      - shell: bash -l {0}
+        run: |
+          conda info
+          conda list
+          conda config --show-sources
+          conda config --show
+          printenv | sort
+
+      - name: Run PyTest with Tox
+        run: |
+          conda run -n cheshire tox
+
+      - name: Coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: ./coverage.info
+
+  finish:
+    needs: ci-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Coveralls Finished
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.github_token }}
+          parallel-finished: true
