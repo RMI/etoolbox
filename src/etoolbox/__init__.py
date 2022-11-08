@@ -7,8 +7,6 @@ from importlib.metadata import PackageNotFoundError, version
 
 # In order for the package modules to be available when you import the package,
 # they need to be imported here somehow. Not sure if this is best practice though.
-import cheshire.cli
-import cheshire.dummy  # noqa: F401
 
 # Create a root logger for use anywhere within the package.
 logger = logging.getLogger(__name__)
@@ -25,11 +23,12 @@ __long_description__ = """
 This should be a paragraph long description of what the package does.
 """
 
+
 try:
-    __version__ = version("rmi.cheshire")
+    __version__ = version("rmi.etoolbox")
 except PackageNotFoundError:
     logger.warning("Version unknown because package is not installed.")
     __version__ = "unknown"
 
-__projecturl__ = "https://github.com/rmi-electricity/cheshire"
-__downloadurl__ = "https://github.com/rmi-electricity/cheshire"
+__projecturl__ = "https://github.com/rmi-electricity/etoolbox"
+__downloadurl__ = "https://github.com/rmi-electricity/etoolbox"

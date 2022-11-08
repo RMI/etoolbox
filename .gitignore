@@ -55,6 +55,7 @@ coverage.info
 *.py,cover
 .hypothesis/
 .pytest_cache/
+tests/*.zip
 
 # Translations
 *.mo

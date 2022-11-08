@@ -2,9 +2,44 @@
 import logging
 from pathlib import Path
 
+import pandas as pd
 import pytest
 
+from etoolbox.datazip.test_classes import KlassSlots, KlassWOSlots
+
 logger = logging.getLogger(__name__)
+
+
+@pytest.fixture
+def df_dict() -> dict:
+    """Dictionary of dfs."""
+    return {
+        "a": pd.DataFrame(
+            [[0, 1], [2, 3]],
+            columns=pd.MultiIndex.from_tuples([(0, "a"), (1, "b")]),
+        ),
+        "b": pd.Series([1, 2, 3, 4]),
+    }
+
+
+@pytest.fixture
+def klass_w_slot(df_dict):
+    """Generic class that uses slots."""
+    obj = KlassSlots()
+    obj.foo = df_dict["a"]
+    obj.tup = (1, 2)
+    obj.lis = (3, 4)
+    obj._dfs = df_dict
+    return obj
+
+
+@pytest.fixture
+def klass_wo_slot(df_dict):
+    """Generic class that does not use slots."""
+    obj = KlassWOSlots()
+    obj.foo = df_dict["a"]
+    obj._dfs = df_dict
+    return obj
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:

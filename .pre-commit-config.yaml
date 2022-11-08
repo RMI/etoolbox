@@ -107,15 +107,15 @@ repos:
         args: ["-c", "pyproject.toml"]
         additional_dependencies: ["bandit[toml]"]
 
-  # Use type annotations to check types
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.971
-    hooks:
-      - id: mypy
-        additional_dependencies:
-          - pytest
-          - types-jinja2
-          - types-setuptools
+  #  # Use type annotations to check types
+  #  - repo: https://github.com/pre-commit/mirrors-mypy
+  #    rev: v0.971
+  #    hooks:
+  #      - id: mypy
+  #        additional_dependencies:
+  #          - pytest
+  #          - types-jinja2
+  #          - types-setuptools
 
   # Check for errors in restructuredtext (.rst) files under the doc hierarchy
   - repo: https://github.com/PyCQA/doc8
@@ -154,7 +154,7 @@ repos:
         verbose: false
         pass_filenames: false
         always_run: true
-        entry: pytest --doctest-modules src/cheshire tests/unit
+        entry: pytest --doctest-modules src/etoolbox tests/unit
 
 # Configuration for pre-commit.ci
 ci:

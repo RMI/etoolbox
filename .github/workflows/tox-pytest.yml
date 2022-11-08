@@ -24,7 +24,7 @@ jobs:
           channels: conda-forge,defaults
           channel-priority: true
           python-version: ${{ matrix.python-version }}
-          activate-environment: cheshire
+          activate-environment: etoolbox
           environment-file: environment.yml
       - shell: bash -l {0}
         run: |
@@ -36,7 +36,7 @@ jobs:
 
       - name: Run PyTest with Tox
         run: |
-          conda run -n cheshire tox
+          conda run -n etoolbox tox
 
       - name: Coveralls
         uses: coverallsapp/github-action@master
