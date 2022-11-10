@@ -17,7 +17,9 @@ What's New?
 *  Created :class:`.IOMixin` and :class:`IOWrapper` to make it easier to add
    :class:`.DataZip` to other classes.
 *  Migrating :func:`.compare_dfs` from the Hub.
-
+*  Updates to :class:`.DataZip`, :class:`.IOMixin`, and :class:`IOWrapper` to better
+   better manage attributes missing from original object or file representation of
+   object.
 
 Known Issues
 ^^^^^^^^^^^^

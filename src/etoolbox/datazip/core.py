@@ -15,7 +15,7 @@ import pandas as pd
 
 LOGGER = logging.getLogger(__name__)
 
-RECIPES = {
+RECIPES: dict[tuple, dict] = {
     ("datetime", "datetime", None): {
         "method": "as_str",
         "attributes": None,
@@ -137,32 +137,28 @@ class DataZip(ZipFile):
 
         super().__init__(file, mode, *args, **kwargs)
         self.bad_cols, self.obj_meta = {}, {}
-        self.other_attrs, self.contents = {}, defaultdict(list)
+        self.attributes, self.contents = {}, defaultdict(list)
         self._recipes = {} if recipes is None else recipes
         if mode == "r":
+            self.attributes = json.loads(super().read("attributes.json"))
+            metadata = json.loads(super().read("metadata.json"))
             for attr in (
                 "bad_cols",
                 "obj_meta",
-                "other_attrs",
                 "contents",
             ):
-                try:
-                    setattr(self, attr, json.loads(super().read(attr + ".json")))
-                except Exception as exc:
-                    LOGGER.warning("%s missing from %s, %r", attr, file, exc)
+                setattr(self, attr, metadata.get(attr, {}))
             try:
-                self._recipes = {
-                    tuple(k): v for k, v in json.loads(super().read("_recipes.json"))
-                }
+                self._recipes = {tuple(k): v for k, v in metadata["_recipes"]}
             except Exception as exc:
                 LOGGER.warning("unable to load recipes for %s, %r", file, exc)
 
     @property
-    def recipes(self):
+    def recipes(self) -> dict[tuple, dict]:
         """Combination of internal and constant recipes."""
         return RECIPES | self._recipes
 
-    def _stemlist(self):
+    def _stemlist(self) -> list[str]:
         return list(map(lambda x: x.partition(".")[0], self.namelist()))
 
     def read(
@@ -171,26 +167,39 @@ class DataZip(ZipFile):
         """Return obj or bytes for name."""
         stem, _, suffix = name.partition(".")
         if self.contents.get(stem, False):
-            if "dict" in self.obj_meta[stem][1]:
-                out_dict = {
-                    k.rpartition("<||>")[2]: self.read(k) for k in self.contents[stem]
-                }
-                if self.obj_meta[stem][1] == "defaultdict":
-                    return defaultdict(lambda: None, out_dict)
-                return out_dict
-            else:
-                return [self.read(k) for k in self.contents[stem]]
+            return self._recursive_read(stem)
         if suffix == "parquet" or f"{stem}.parquet" in self.namelist():
             return self._read_df(stem)
         if suffix == "json" or f"{stem}.json" in self.namelist():
             return self._read_jsonable(stem)
         if (suffix == "zip" or f"{stem}.zip" in self.namelist()) and not super_:
             return self._read_obj(stem)
-        if stem in self.other_attrs:
+        if stem in self.attributes:
             return obj_from_recipe(
-                self.other_attrs[stem], *self.obj_meta.get(stem, (None, None, None))
+                self.attributes[stem], *self.obj_meta.get(stem, (None, None, None))
             )
         return super().read(name)
+
+    def _recursive_read(self, stem: str) -> list | dict:
+        if "dict" in self.obj_meta[stem][1]:
+            out_dict = {}
+            for k in self.contents[stem]:
+                key = k.rpartition("<||>")[2]
+                try:
+                    out_dict[key] = self.read(k)
+                except KeyError as exc:
+                    LOGGER.error("Error loading %s in %s (%s). %r", key, stem, k, exc)
+            if self.obj_meta[stem][1] == "defaultdict":
+                return defaultdict(lambda: None, out_dict)
+            return out_dict
+        else:
+            out_list = []
+            for k in self.contents[stem]:
+                try:
+                    out_list.append(self.read(k))
+                except KeyError as exc:
+                    LOGGER.error("Error loading %s in %s. %r", k, stem, exc)
+            return out_list
 
     def read_dfs(self) -> Generator[tuple[str, pd.DataFrame | pd.Series]]:
         """Read all dfs lazily."""
@@ -198,15 +207,15 @@ class DataZip(ZipFile):
             if "parquet" in suffix:
                 yield name, self.read(name)
 
-    def _read_obj(self, name) -> pd.DataFrame | pd.Series:
+    def _read_obj(self, name: str) -> Any:
         temp = BytesIO(super().read(name + ".zip"))
         return obj_from_recipe(temp, *self.obj_meta[name])
 
-    def _read_jsonable(self, name) -> pd.DataFrame | pd.Series:
+    def _read_jsonable(self, name: str) -> Any:
         thing = json.loads(super().read(name + ".json"))
         return obj_from_recipe(thing, *self.obj_meta.get(name, (None, None, None)))
 
-    def _read_df(self, name) -> pd.DataFrame | pd.Series:
+    def _read_df(self, name: str) -> pd.DataFrame | pd.Series:
         out = pd.read_parquet(BytesIO(super().read(name + ".parquet")))
 
         if name in self.bad_cols:
@@ -221,34 +230,32 @@ class DataZip(ZipFile):
     def writed(
         self,
         name: str,
-        data: str | dict | pd.DataFrame | pd.Series | NamedTuple | Any,
-        parent_name: str | None = None,
+        data: str | dict | list | tuple | pd.DataFrame | pd.Series | NamedTuple | Any,
         **kwargs,
-    ) -> None:
-        """Write dict, df, str, to name."""
+    ) -> bool:
+        """Write dict, df, str, or some other objects to name."""
         if data is None:
             LOGGER.info("Unable to write data %s because it is None.", name)
-            return None
+            return False
         name = name.removesuffix(".json").removesuffix(".parquet").removesuffix(".zip")
         if name not in self.contents:
             if isinstance(data, (pd.DataFrame, pd.Series)):
-                self._write_df(name, data, **kwargs)
-            elif isinstance(data, (dict, list, tuple)):
+                return self._write_df(name, data, **kwargs)
+            if isinstance(data, (dict, list, tuple)):
                 try:
-                    self._write_jsonable(name, data)
+                    return self._write_jsonable(name, data)
                 except TypeError:
-                    self._recursive_write(name, data)
-            elif hasattr(data, "to_file") and hasattr(data, "from_file"):
-                self._write_obj(name, data, **kwargs)
-            elif (obj_info := self._objinfo(data)) in self.recipes:
-                self._write_using_recipe(name, data, obj_info)
-            else:
-                self._write_as_str(name, data, **kwargs)
+                    return self._recursive_write(name, data)
+            if hasattr(data, "to_file") and hasattr(data, "from_file"):
+                return self._write_obj(name, data, **kwargs)
+            if (obj_info := self._objinfo(data)) in self.recipes:
+                return self._write_using_recipe(name, data, obj_info)
+            return self._write_as_str(name, data, **kwargs)
 
         else:
             raise FileExistsError(f"{name} already in {self.filename}")
 
-    def _recursive_write(self, name, data):
+    def _recursive_write(self, name: str, data: dict | list | tuple) -> bool:
         if isinstance(data, dict):
             item_iter = data.items()
         elif isinstance(data, (tuple, list)):
@@ -256,29 +263,34 @@ class DataZip(ZipFile):
         else:
             raise TypeError(f"{name} is a {data.__class__} which is not supported")
         self.obj_meta.update({name: self._objinfo(data)})
+        all_good = []
         for k, v in item_iter:
-            self.writed(f"{name}<||>{k}", v, parent_name=name)
-            self.contents[name].append(f"{name}<||>{k}")
+            good = self.writed(f"{name}<||>{k}", v)
+            all_good.append(good)
+            if good:
+                self.contents[name].append(f"{name}<||>{k}")
+        return any(all_good)
 
     def _write_jsonable(
         self,
-        name,
+        name: str,
         obj: dict[int | str, list | tuple | dict | str | float | int] | list,
         **kwargs,
-    ) -> None:
+    ) -> bool:
         """Write a dict in the ZIP as json."""
         to_write = obj
         if hasattr(obj, "_asdict"):
             to_write = obj._asdict()
         _ = json.dumps(to_write, ensure_ascii=False, indent=4)
-        self.other_attrs.update({name: to_write})
+        self.attributes.update({name: to_write})
         self.obj_meta.update({name: self._objinfo(obj)})
         _ = self.contents[name]
+        return True
 
-    def _write_using_recipe(self, name, data, obj_info):
+    def _write_using_recipe(self, name: str, data: Any, obj_info) -> bool:
         recipe = self.recipes[obj_info]
         if not recipe["keep"]:
-            return None
+            return False
         if recipe["method"] == "by_attribute":
             to_write = {
                 attr: (func(getattr(data, attr)) if func else getattr(data, attr))
@@ -287,30 +299,33 @@ class DataZip(ZipFile):
         elif recipe["method"] == "as_str":
             to_write = str(data)
         _ = json.dumps(to_write, ensure_ascii=False, indent=4)
-        self.other_attrs.update({name: to_write})
+        self.attributes.update({name: to_write})
         self.obj_meta.update({name: recipe["constructor"]})
         _ = self.contents[name]
+        return True
 
-    def _write_as_str(self, name, obj, **kwargs):
+    def _write_as_str(self, name: str, obj: Any, **kwargs) -> bool:
         """Write an object as whatever str is in the parentheses of its repr."""
         obj_info = self._objinfo(obj)
-        self.other_attrs.update(
+        self.attributes.update(
             {name: repr(obj).removeprefix(obj_info[1] + "(").removesuffix(")")}
         )
         self.obj_meta.update({name: obj_info})
         _ = self.contents[name]
+        return True
 
-    def _write_obj(self, name, obj, **kwargs):
+    def _write_obj(self, name: str, obj: Any, **kwargs) -> bool:
         obj.to_file(temp := BytesIO(), **kwargs)
         self.writestr(f"{name}.zip", temp.getvalue())
         self.obj_meta.update({name: self._objinfo(obj, "from_file")})
         _ = self.contents[name]
+        return True
 
-    def _write_df(self, name: str, df: pd.DataFrame | pd.Series, **kwargs) -> None:
+    def _write_df(self, name: str, df: pd.DataFrame | pd.Series, **kwargs) -> bool:
         """Write a df in the ZIP as parquet."""
         if df.empty:
             LOGGER.info("Unable to write df %s because it is empty.", name)
-            return None
+            return False
         if isinstance(df, pd.Series):
             df = df.to_frame(name=name)
         try:
@@ -320,33 +335,34 @@ class DataZip(ZipFile):
             self.writestr(f"{name}.parquet", self._str_cols(df).to_parquet())
         self.obj_meta.update({name: self._objinfo(df)})
         _ = self.contents[name]
+        return True
 
     @staticmethod
-    def _str_cols(df, *args):
+    def _str_cols(df: pd.DataFrame, *args) -> pd.DataFrame:
         return df.set_axis(list(map(str, range(df.shape[1]))), axis="columns")
 
     @staticmethod
-    def _objinfo(obj, constructor=None):
+    def _objinfo(obj: Any, constructor=None) -> tuple[str, ...]:
         return obj.__class__.__module__, obj.__class__.__qualname__, constructor
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         if self.mode == "w":
             self.writestr(
-                "other_attrs.json",
-                json.dumps(self.other_attrs, ensure_ascii=False, indent=4),
+                "attributes.json",
+                json.dumps(self.attributes, ensure_ascii=False, indent=4),
             )
             self.writestr(
-                "contents.json", json.dumps(self.contents, ensure_ascii=False, indent=4)
-            )
-            self.writestr(
-                "bad_cols.json", json.dumps(self.bad_cols, ensure_ascii=False, indent=4)
-            )
-            self.writestr(
-                "obj_meta.json", json.dumps(self.obj_meta, ensure_ascii=False, indent=4)
-            )
-            self.writestr(
-                "_recipes.json",
-                json.dumps(list(self._recipes.items()), ensure_ascii=False, indent=4),
+                "metadata.json",
+                json.dumps(
+                    {
+                        "contents": self.contents,
+                        "bad_cols": self.bad_cols,
+                        "obj_meta": self.obj_meta,
+                        "_recipes": list(self._recipes.items()),
+                    },
+                    ensure_ascii=False,
+                    indent=4,
+                ),
             )
         super().__exit__(exc_type, exc_val, exc_tb)
 

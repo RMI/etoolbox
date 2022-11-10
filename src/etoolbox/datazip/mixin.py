@@ -1,86 +1,87 @@
 """A mixin for adding :class:`.DataZip` functionality to another class."""
 from __future__ import annotations
 
+import getpass
 import inspect
-
-# import pickle
+import logging
+from contextlib import suppress
+from datetime import datetime
 from importlib import import_module
 from io import BytesIO
 from pathlib import Path
+from typing import Any
 from zipfile import ZIP_STORED
+from zoneinfo import ZoneInfo
 
 from etoolbox import __version__
 from etoolbox.datazip.core import DataZip
+
+LOGGER = logging.getLogger(__name__)
+
+
+def _get_version(obj: Any) -> str:
+    mod = import_module(obj.__class__.__module__.partition(".")[0])
+    for v_attr in ("__version__", "version", "release"):
+        if hasattr(mod, v_attr):
+            return getattr(mod, v_attr)
+    return "unknown"
+
+
+def _type_check(cls: any, meta: dict, path: Path) -> None:
+    if meta["__qualname__"] != cls.__qualname__:
+        raise TypeError(
+            f"{path.name} represents a `{meta['__qualname__']}` which "
+            f"is not compatible with `{cls.__qualname__}.from_file()`"
+        )
 
 
 class IOMixin:
     """Mixin for adding :class:`.DataZip` IO."""
 
+    # in case child uses __slots__
     __slots__ = ()
+    recipes = {}
 
     @classmethod
-    def from_dz(cls, *args, **kwargs):
+    def from_dz(cls, *args, **kwargs) -> Any:
         """Alias for :meth:`.IOMixin.from_file`."""
         return cls.from_file(*args, **kwargs)
 
-    # Disabling pickle IO because bandit doesn't like it and implementation is
-    # comparatively trivial
-    # @classmethod
-    # def from_pickle(cls, path: Path | str, **kwargs):
-    #     with open(path.with_suffix(".pkl"), "rb") as f:
-    #         temp = pickle.load(f)
-    #     return temp
-    #
-    # def to_pickle(self, path: Path | str, **kwargs):
-    #     self._to_pickle(self, path, **kwargs)
-    #
-    # @staticmethod
-    # def _to_pickle(self, path: Path | str, **kwargs):
-    #     with open(path.with_suffix(".pkl"), "wb") as f:
-    #         pickle.dump(self, f, pickle.HIGHEST_PROTOCOL)
-
     @classmethod
-    def from_file(cls, path: Path | str | BytesIO, **kwargs):
-        """Recreate object fom file."""
-        out, _ = cls._from_file(cls, path, cls_from_meta=False, **kwargs)
+    def from_file(cls, path: Path | str | BytesIO, **kwargs) -> Any:
+        """Recreate object fom file or buffer."""
+        out, metadata = cls._from_file(cls, path, **kwargs)
+        with suppress(Exception):
+            setattr(out, "_metadata", metadata)
         return out
 
     @staticmethod
-    def _from_file(cls, path: Path | str | BytesIO, cls_from_meta, **kwargs):
-
-        data_dict = {}
-        _dfs = {}
+    def _from_file(cls, path: Path | str | BytesIO, **kwargs) -> tuple[Any, dict]:
         with DataZip(path, "r") as z:
-            metadata = z.read("metadata")
+            metadata = z.read("<||>metadata<||>")
 
-            if cls_from_meta:
+            if cls is None:
                 cls = getattr(
                     import_module(metadata["__module__"]), metadata["__qualname__"]
                 )
             else:
-                IOMixin._type_check(cls, metadata, path)
+                _type_check(cls, metadata, path)
 
-            for name in z.contents:
-                # if name.startswith("_dfs_"):
-                #     _dfs.update({name.removeprefix("_dfs_"): z.read(name)})
-                if "<||>" not in name:
-                    data_dict.update({name: z.read(name)})
+            data_dict = {name: z.read(name) for name in metadata["attr_list"]}
 
         sig = inspect.signature(cls).parameters
         self = cls(
             **{k: v for k, v in data_dict.items() if k in sig},
         )
-        if _dfs:
-            self._dfs.update(_dfs)
         for k, v in data_dict.items():
             if k not in sig:
                 setattr(self, k, v)
 
         return self, metadata
 
-    def to_dz(self, *args, **kwargs):
+    def to_dz(self, *args, **kwargs) -> None:
         """Alias for :meth:`.IOMixin.to_file`."""
-        return self.to_file(*args, **kwargs)
+        self.to_file(*args, **kwargs)
 
     def to_file(
         self,
@@ -88,9 +89,16 @@ class IOMixin:
         compression=ZIP_STORED,
         clobber=False,
         **kwargs,
-    ):
-        """Write object to file."""
-        self._to_file(self, path, compression, clobber, **kwargs)
+    ) -> None:
+        """Write object to file or buffer."""
+        self._to_file(
+            self,
+            path,
+            compression,
+            clobber,
+            recipes=self.recipes | kwargs.get("recipes", {}),
+            **kwargs,
+        )
 
     @staticmethod
     def _to_file(
@@ -98,43 +106,40 @@ class IOMixin:
         path: Path | str | BytesIO,
         compression,
         clobber,
-        recipes=None,
         **kwargs,
-    ):
+    ) -> None:
         if isinstance(path, (str, Path)):
             if Path(path).with_suffix(".zip").exists() and not clobber:
                 raise FileExistsError(f"{path} exists, to overwrite set `clobber=True`")
             if clobber:
                 Path(path).with_suffix(".zip").unlink(missing_ok=True)
-
-        recipes = recipes if recipes is not None else {}
-
-        with DataZip(path, "w", compression=compression, recipes=recipes) as z:
-            metadata = {
-                "__qualname__": self.__class__.__qualname__,
-                "__module__": self.__class__.__module__,
-                "__version__": __version__,
-            }
-            if hasattr(self, "_metadata"):
-                metadata = metadata | self._metadata | kwargs.get("metadata", {})
-
+        metadata = {
+            "__module__": self.__class__.__module__,
+            "__qualname__": self.__class__.__qualname__,
+            "__obj_version": _get_version(self),
+            "__io_version__": __version__,
+            "__created_by__": getpass.getuser(),
+            "__file_created__": str(datetime.now(tz=ZoneInfo("UTC"))),
+            **kwargs.get("metadata", {}),
+        }
+        with DataZip(
+            path, "w", compression=compression, recipes=kwargs.get("recipes", {})
+        ) as z:
+            attr_list = []
             if hasattr(self, "__slots__"):
-                __dict__ = (
-                    (attr_name, getattr(self, attr_name))
-                    for attr_name in self.__slots__
-                )
-            else:
-                __dict__ = self.__dict__.items()
-            for attr_name, attr_value in __dict__:
-                if "__" not in attr_name:
-                    z.writed(attr_name, attr_value)
-            z.writed("metadata", metadata)
+                for attr_name in self.__slots__:
+                    try:
+                        written = z.writed(attr_name, getattr(self, attr_name))
+                    except AttributeError:
+                        pass
+                    else:
+                        if written:
+                            attr_list.append(attr_name)
+            if hasattr(self, "__dict__"):
+                for attr_name, attr_value in self.__dict__.items():
+                    if attr_name not in attr_list:
+                        written = z.writed(attr_name, attr_value)
+                        if written:
+                            attr_list.append(attr_name)
 
-    @staticmethod
-    def _type_check(cls, meta, path):
-        if meta["__qualname__"] != cls.__qualname__:
-            raise TypeError(
-                f"{path.name} represents a `{meta['__qualname__']}` which "
-                f"is not compatible with `{cls.__qualname__}.from_file()`"
-            )
-        del meta["__qualname__"]
+            z.writed("<||>metadata<||>", metadata | {"attr_list": attr_list})
