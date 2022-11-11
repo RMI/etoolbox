@@ -19,7 +19,8 @@ What's New?
 *  Migrating :func:`.compare_dfs` from the Hub.
 *  Updates to :class:`.DataZip`, :class:`.IOMixin`, and :class:`IOWrapper` to better
    better manage attributes missing from original object or file representation of
-   object.
+   object. Including ability to use differently organized versions of
+   :class:`.DataZip`.
 
 Known Issues
 ^^^^^^^^^^^^

@@ -140,18 +140,26 @@ class DataZip(ZipFile):
         self.attributes, self.contents = {}, defaultdict(list)
         self._recipes = {} if recipes is None else recipes
         if mode == "r":
-            self.attributes = json.loads(super().read("attributes.json"))
-            metadata = json.loads(super().read("metadata.json"))
+            self.attributes = self._json_get(
+                "attributes", self._json_get("other_attrs", {})
+            )
+            metadata = self._json_get("metadata", {})
             for attr in (
                 "bad_cols",
                 "obj_meta",
                 "contents",
             ):
-                setattr(self, attr, metadata.get(attr, {}))
+                setattr(self, attr, metadata.get(attr, self._json_get(attr, {})))
             try:
                 self._recipes = {tuple(k): v for k, v in metadata["_recipes"]}
             except Exception as exc:
                 LOGGER.warning("unable to load recipes for %s, %r", file, exc)
+
+    def _json_get(self, j_attr, default=None):
+        try:
+            return json.loads(super().read(f"{j_attr}.json"))
+        except KeyError:
+            return default
 
     @property
     def recipes(self) -> dict[tuple, dict]:
