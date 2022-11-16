@@ -64,6 +64,18 @@ def test_datazip(test_dir):
         (test_dir / "obj.zip").unlink(missing_ok=True)
 
 
+def test_datazip_meta_safety(test_dir):
+    """Test :class:`.DataZip`."""
+    try:
+        with DataZip(test_dir / "obj.zip", "w") as z:
+            with pytest.raises(ValueError):
+                z.writed("metadata", {1: 3, "3": "fifteen", 5: (0, 1)})
+    except Exception as exc:
+        raise AssertionError("Something broke") from exc
+    finally:
+        (test_dir / "obj.zip").unlink(missing_ok=True)
+
+
 def test_datazip_w(test_dir):
     """Test writing to existing :class:`.DataZip`."""
     df_dict = {

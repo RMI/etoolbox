@@ -242,6 +242,8 @@ class DataZip(ZipFile):
         **kwargs,
     ) -> bool:
         """Write dict, df, str, or some other objects to name."""
+        if name == "metadata":
+            raise ValueError("`metadata` name is reserved, please use a different name")
         if data is None:
             LOGGER.info("Unable to write data %s because it is None.", name)
             return False
