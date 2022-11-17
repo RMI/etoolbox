@@ -21,6 +21,12 @@ What's New?
    better manage attributes missing from original object or file representation of
    object. Including ability to use differently organized versions of
    :class:`.DataZip`.
+*  Clean up of :class:`.DataZip` internals, both within the object and in laying out
+   files. Particularly of how metadata and attributes are stored. Added
+   :meth:`.DataZip.readm` and :meth:`.DataZip.writem` to read and write additional
+   metadata not core to :class:`.DataZip`.
+*  Added support for storing :class:`numpy.array` objects in :class:`.DataZip` using
+   :func:`numpy.load` and :func:`numpy.save`.
 
 Known Issues
 ^^^^^^^^^^^^

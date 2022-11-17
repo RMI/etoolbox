@@ -58,7 +58,7 @@ class IOMixin:
     @staticmethod
     def _from_file(cls, path: Path | str | BytesIO, **kwargs) -> tuple[Any, dict]:
         with DataZip(path, "r") as z:
-            metadata = z.read("<||>metadata<||>")
+            metadata = z.readm()
 
             if cls is None:
                 cls = getattr(
@@ -141,5 +141,4 @@ class IOMixin:
                         written = z.writed(attr_name, attr_value)
                         if written:
                             attr_list.append(attr_name)
-
-            z.writed("<||>metadata<||>", metadata | {"attr_list": attr_list})
+            z.writem(None, metadata | {"attr_list": attr_list})

@@ -1,4 +1,5 @@
 """Core :class:`.DataZip` tests."""
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -53,8 +54,8 @@ def test_datazip(test_dir):
     else:
         with DataZip(test_dir / "obj.zip", "r") as z1:
             for n in ("a", "b", "c", "d"):
-                assert n in z1.contents
-            assert "a" in z1.bad_cols
+                assert n in z1._contents
+            assert "a" in z1._bad_cols
             assert isinstance(z1.read("a"), pd.DataFrame)
             assert isinstance(z1.read("b"), pd.Series)
             assert isinstance(z1.read("c"), dict)
@@ -69,9 +70,28 @@ def test_datazip_meta_safety(test_dir):
     try:
         with DataZip(test_dir / "obj.zip", "w") as z:
             with pytest.raises(ValueError):
-                z.writed("metadata", {1: 3, "3": "fifteen", 5: (0, 1)})
+                z.writed("__metadata__", {1: 3, "3": "fifteen", 5: (0, 1)})
+            with pytest.raises(ValueError):
+                z.writed("__attributes__", {1: 3, "3": "fifteen", 5: (0, 1)})
     except Exception as exc:
         raise AssertionError("Something broke") from exc
+    finally:
+        (test_dir / "obj.zip").unlink(missing_ok=True)
+
+
+def test_datazip_numpy(test_dir):
+    """Test :class:`.DataZip`."""
+    array = np.array([[0.0, 4.1], [3.2, 2.1]])
+    try:
+        with DataZip(test_dir / "obj.zip", "w") as z:
+            z.writed("np", array)
+    except Exception as exc:
+        raise AssertionError("Something broke") from exc
+    else:
+        with DataZip(test_dir / "obj.zip", "r") as z1:
+            ar = z1.read("np")
+            assert isinstance(ar, np.ndarray)
+            assert np.all(ar == array)
     finally:
         (test_dir / "obj.zip").unlink(missing_ok=True)
 
@@ -91,7 +111,7 @@ def test_datazip_w(test_dir):
         raise AssertionError("Something broke") from exc
     else:
         with DataZip(test_dir / "obj.zip", "r") as z1:
-            assert "a" in z1.bad_cols
+            assert "a" in z1._bad_cols
         with pytest.raises(ValueError):
             with DataZip(test_dir / "obj.zip", "a") as z2a:
                 z2a.namelist()
