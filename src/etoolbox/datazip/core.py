@@ -268,10 +268,13 @@ class DataZip(ZipFile):
 
     def writem(self, key, data):
         """Write metadata."""
+        if key is None and not isinstance(data, dict):
+            raise TypeError("if key is None, data must be a dict")
         _ = json.dumps(data, ensure_ascii=False, indent=4)
-        if key is None and isinstance(data, dict):
+        if key is None:
             self._other_meta = self._other_meta | data
-        self._other_meta.update({key: data})
+        else:
+            self._other_meta.update({key: data})
 
     def _write_numpy(self, name: str, data: np.ndarray, **kwargs) -> bool:
         np.save(temp := BytesIO(), data, allow_pickle=False)

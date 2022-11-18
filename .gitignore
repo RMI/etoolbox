@@ -56,6 +56,10 @@ coverage.info
 .hypothesis/
 .pytest_cache/
 tests/*.zip
+tests/*
+!tests/unit/*
+!tests/integration/*
+!tests/data/*
 
 # Translations
 *.mo

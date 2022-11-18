@@ -79,6 +79,36 @@ def test_datazip_meta_safety(test_dir):
         (test_dir / "obj.zip").unlink(missing_ok=True)
 
 
+def test_datazip_meta_readwrite(test_dir):
+    """Test read/write metadata without key."""
+    try:
+        with DataZip(test_dir / "obj.zip", "w") as z:
+            with pytest.raises(TypeError):
+                z.writem(None, 3)
+            z.writem(None, {"foo": "bar"})
+    except Exception as exc:
+        raise AssertionError("Something broke") from exc
+    else:
+        with DataZip(test_dir / "obj.zip", "r") as z1:
+            assert z1.readm() == {"foo": "bar"}
+    finally:
+        (test_dir / "obj.zip").unlink(missing_ok=True)
+
+
+def test_datazip_meta_readwrite_key(test_dir):
+    """Test write metadata by key and read by key."""
+    try:
+        with DataZip(test_dir / "obj.zip", "w") as z:
+            z.writem("foo", "bar")
+    except Exception as exc:
+        raise AssertionError("Something broke") from exc
+    else:
+        with DataZip(test_dir / "obj.zip", "r") as z1:
+            assert z1.readm("foo") == "bar"
+    finally:
+        (test_dir / "obj.zip").unlink(missing_ok=True)
+
+
 def test_datazip_numpy(test_dir):
     """Test :class:`.DataZip`."""
     array = np.array([[0.0, 4.1], [3.2, 2.1]])
