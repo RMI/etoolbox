@@ -9,7 +9,7 @@ dependencies:
 
   # Packages specified in setup.cfg that need or benefit from binary conda packages
   - pandas >= 1.4,<1.6
-  - pyarrow>=10, <11
+  - pyarrow>=9, <11
 
   # Use pip to install the package defined by this repo for development:
   - pip:
