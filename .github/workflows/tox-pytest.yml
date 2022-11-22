@@ -21,7 +21,7 @@ jobs:
           miniforge-version: latest
           use-mamba: true
           mamba-version: "*"
-          channels: conda-forge,defaults
+          channels: conda-forge
           channel-priority: true
           python-version: ${{ matrix.python-version }}
           activate-environment: etoolbox
