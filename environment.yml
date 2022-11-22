@@ -8,12 +8,9 @@ dependencies:
   - setuptools<66
 
   # Packages specified in setup.cfg that need or benefit from binary conda packages
-  - bottleneck ~= 1.3
-  - numexpr ~= 2.8
-  - numpy >= 1.18.5,<2
   - pandas >= 1.4,<1.6
   - pyarrow>=7, <11
 
   # Use pip to install the package defined by this repo for development:
   - pip:
-      - --editable ./[dev,doc,tests,types]
+      - --editable ./[dev,doc,tests]
