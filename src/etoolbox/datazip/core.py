@@ -138,23 +138,27 @@ class DataZip(ZipFile):
                 )
 
         super().__init__(file, mode, *args, **kwargs)
-        self._bad_cols, self._obj_meta, self._other_meta = {}, {}, {}
+        self._no_pqt_cols, self._obj_meta, self._other_meta = {}, {}, {}
         self._attributes, self._contents = {}, defaultdict(list)
         self._recipes = {} if recipes is None else recipes
         if mode == "r":
             self._attributes = self._json_get(
                 "__attributes__", "attributes", "other_attrs"
             )
-            metadata = self._json_get("__metadata__", "metadata")
+            md = self._json_get("__metadata__", "metadata")
             for attr in (
-                "bad_cols",
                 "obj_meta",
                 "contents",
                 "other_meta",
             ):
-                setattr(self, "_" + attr, metadata.get(attr, self._json_get(attr)))
+                setattr(self, f"_{attr}", md.get(attr, self._json_get(attr)))
+            setattr(
+                self,
+                "_no_pqt_cols",
+                md.get("no_pqt_cols", md.get("bad_cols", self._json_get("bad_cols"))),
+            )
             with suppress(KeyError):
-                self._recipes = {tuple(k): v for k, v in metadata["recipes"]}
+                self._recipes = {tuple(k): v for k, v in md["recipes"]}
 
     def _json_get(self, *args):
         for arg in args:
@@ -229,9 +233,9 @@ class DataZip(ZipFile):
 
     def _read_df(self, name: str) -> pd.DataFrame | pd.Series:
         out = pd.read_parquet(BytesIO(super().read(name + ".parquet"))).squeeze()
-        if name not in self._bad_cols:
+        if name not in self._no_pqt_cols:
             return out
-        cols, names = self._bad_cols[name]
+        cols, names = self._no_pqt_cols[name]
         if isinstance(names, (tuple, list)) and len(names) > 1:
             return out.set_axis(pd.MultiIndex.from_tuples(cols, names=names), axis=1)
         return out.set_axis(pd.Index(cols, name=names[0]), axis=1)
@@ -359,7 +363,7 @@ class DataZip(ZipFile):
         try:
             self.writestr(f"{name}.parquet", df.to_parquet())
         except ValueError:
-            self._bad_cols.update({name: (list(df.columns), list(df.columns.names))})
+            self._no_pqt_cols.update({name: (list(df.columns), list(df.columns.names))})
             self.writestr(f"{name}.parquet", self._str_cols(df).to_parquet())
         self._obj_meta.update({name: self._objinfo(df)})
         _ = self._contents[name]
@@ -384,7 +388,7 @@ class DataZip(ZipFile):
                 json.dumps(
                     {
                         "contents": self._contents,
-                        "bad_cols": self._bad_cols,
+                        "no_pqt_cols": self._no_pqt_cols,
                         "obj_meta": self._obj_meta,
                         "recipes": list(self._recipes.items()),
                         "other_meta": self._other_meta,

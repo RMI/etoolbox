@@ -55,7 +55,7 @@ def test_datazip(test_dir):
         with DataZip(test_dir / "obj.zip", "r") as z1:
             for n in ("a", "b", "c", "d"):
                 assert n in z1._contents
-            assert "a" in z1._bad_cols
+            assert "a" in z1._no_pqt_cols
             assert isinstance(z1.read("a"), pd.DataFrame)
             assert isinstance(z1.read("b"), pd.Series)
             assert isinstance(z1.read("c"), dict)
@@ -141,7 +141,7 @@ def test_datazip_w(test_dir):
         raise AssertionError("Something broke") from exc
     else:
         with DataZip(test_dir / "obj.zip", "r") as z1:
-            assert "a" in z1._bad_cols
+            assert "a" in z1._no_pqt_cols
         with pytest.raises(ValueError):
             with DataZip(test_dir / "obj.zip", "a") as z2a:
                 z2a.namelist()
