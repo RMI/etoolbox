@@ -2,23 +2,138 @@
 requires = ["setuptools<66", "setuptools_scm[toml]<8"]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "rmi.etoolbox"
+description = "A set of tools and functions we use across projects."
+license = {file = "LICENSE.txt"}
+readme = "README.rst"
+dynamic = ["version"]
+classifiers = [
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+]
+requires-python = ">=3.10,<3.11"
+dependencies = [
+    "pandas >= 1.4,< 1.6",
+    "pyarrow>=9, <11",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black[jupyter] >= 22,<23",
+    "isort>=5.0,<5.11",
+    "tox>=3.20,<3.28",
+]
+doc = [
+    "doc8>=0.9,<1.1",  # Ensures clean documentation formatting
+    "furo>=2022.4.7",  # A clean customisable Sphinx documentation theme.
+    "rstcheck[sphinx,toml]>=5.0,<6.2",  # ReStructuredText linter
+    "sphinx>=4,!=5.1.0,<5.3.1",
+    "sphinx-autoapi>=1.8,<2.1",
+    "sphinx-issues>=1.2,<3.1",
+    "sphinx-autodoc-typehints>1.19,<=1.19.5",
+    "sphinxcontrib-mermaid>0.7,<=0.7.1",
+]
+tests = [
+    "bandit>=1.6,<1.8",  # Checks code for security issues
+    "coverage>=5.3,<6.6",  # Lets us track what code is being tested
+    "flake8>=4.0,<5.1",  # A framework for linting & static analysis
+    "flake8-builtins>=1.5,<2.1",  # Avoid shadowing Python built-in names
+    "flake8-docstrings>=1.5,<1.7",  # Ensure docstrings are formatted well
+    "flake8-pyproject>1.0,<=1.2",  # flake8 config in pyproject.toml
+    "flake8-rst-docstrings>=0.2,<0.3",  # Allow use of ReST in docstrings
+    "flake8-use-fstring>=1.0,<1.5",  # Highlight use of old-style string formatting
+    "mccabe>=0.6,<0.8",  # Checks that code isn't overly complicated
+    "mypy>=0.942,<0.992",  # Static type checking
+    "pep8-naming>=0.12,<0.14",  # Require PEP8 compliant variable names
+    "pre-commit>=2.9,<2.21",  # Allow us to run pre-commit hooks in testing
+    "pydocstyle>=5.1,<6.2",  # Style guidelines for Python documentation
+    "pytest>=6.2,<7.3",  # test framework
+    "pytest-console-scripts>=1.1,<1.4",  # Allow automatic testing of scripts
+    "pytest-cov>=2.10,<4.1",  # Pytest plugin for working with coverage
+    "sqlalchemy>1.4,<1.5",  # required for testing ability to zip objects with engines
+    "tox>=3.20,<3.28",  # Python test environment manager
+]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.dynamic]
+version = {attr = "etoolbox._version.__version__"}
+
 [tool.setuptools_scm]
+write_to = "src/etoolbox/_version.py"
+
+#######################################################################################
+# Configurations for linters and other tools
+#######################################################################################
+[tool.bandit]
+exclude_dirs = ["tests"]
+skips = ["B101"]
 
 [tool.black]
 line-length = 88
 target-version = ["py39", "py310", "py311"]
 include = "\\.pyi?$"
 
+[tool.doc8]
+max-line-length = 88
+ignore-path = "docs/_build"
+
+[tool.flake8]
+extend-ignore = [
+    # * W503, W504: Line break before / after binary operator.
+    "W503", "W504",
+    "D401", # * D401: Imperative mood.
+    "E501", # * E501: Overlong line
+    "E203", # * E203: Space before ':' (black recommends to ignore)
+    # * RST201,RST203,RST301: Google docstrings aren't RST until after being processed by
+    #   Napoleon. See https://github.com/peterjc/flake8-rst-docstrings/issues/17
+    "RST201",  "RST203",  "RST301",
+    "D105",
+]
+max-complexity = 15
+inline-quotes = "double"
+max-line-length = 88
+docstring-convention = "google"
+# Files and directories that should not be subject to linting
+extend-exclude = [
+    ".env_tox",
+    ".eggs",
+    "build",
+]
+rst-roles =[
+    "attr",
+    "class",
+    "doc",
+    "func",
+    "meth",
+    "mod",
+    "obj",
+    "py:const",
+    "ref",
+    "user",
+]
+rst-directives =[
+    "envvar",
+    "exception",
+]
+percent-greedy = 2
+format-greedy = 2
+per-file-ignores = [
+    "__init__.py:F401"
+]
+
 [tool.isort]
 profile = "black"
 known_first_party = ["etoolbox"]
 
-[tool.bandit]
-exclude_dirs = ["tests"]
-skips = ["B101"]
-
 [tool.mypy]
-python_version = "3.10"
+#python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
 #plugins = "numpy.typing.mypy_plugin"
@@ -59,10 +174,6 @@ filterwarnings = [
     "ignore:distutils Version classes are deprecated:DeprecationWarning",
     "ignore:Creating a LegacyVersion:DeprecationWarning:pkg_resources[.*]",
 ]
-
-[tool.doc8]
-max-line-length = 88
-ignore-path = "docs/_build"
 
 [tool.rstcheck]
 report_level = "WARNING"

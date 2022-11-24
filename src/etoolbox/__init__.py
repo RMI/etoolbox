@@ -23,10 +23,9 @@ __long_description__ = """
 This should be a paragraph long description of what the package does.
 """
 
-
 try:
-    __version__ = version("rmi.etoolbox")
-except PackageNotFoundError:
+    from etoolbox._version import version as __version__
+except ImportError:
     logger.warning("Version unknown because package is not installed.")
     __version__ = "unknown"
 
