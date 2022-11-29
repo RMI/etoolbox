@@ -3,16 +3,16 @@ eToolBox: A set of tools and functions we use across projects
 
 .. readme-intro
 
-.. image:: https://github.com/rmi-electricity/etoolbox/workflows/tox-pytest/badge.svg
-   :target: https://github.com/rmi-electricity/etoolbox/actions?query=workflow%3Atox-pytest
+.. image:: https://github.com/rmi/etoolbox/workflows/tox-pytest/badge.svg
+   :target: https://github.com/rmi/etoolbox/actions?query=workflow%3Atox-pytest
    :alt: Tox-PyTest Status
 
-.. image:: https://github.com/rmi-electricity/etoolbox/workflows/docs/badge.svg
-   :target: https://rmi-electricity.github.io/etoolbox/
+.. image:: https://github.com/rmi/etoolbox/workflows/docs/badge.svg
+   :target: https://rmi.github.io/etoolbox/
    :alt: GitHub Pages Status
 
-.. image:: https://coveralls.io/repos/github/rmi-electricity/etoolbox/badge.svg
-   :target: https://coveralls.io/github/rmi-electricity/etoolbox
+.. image:: https://coveralls.io/repos/github/rmi/etoolbox/badge.svg
+   :target: https://coveralls.io/github/rmi/etoolbox
 
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
    :target: https://github.com/psf/black>
@@ -43,13 +43,13 @@ environment using pip. To install it using pip:
 
 .. code-block:: bash
 
-   pip install git+https://github.com/rmi-electricity/etoolbox.git
+   pip install git+https://github.com/rmi/etoolbox.git
 
 Or from the dev branch:
 
 .. code-block:: bash
 
-   pip install git+https://github.com/rmi-electricity/etoolbox.git@dev
+   pip install git+https://github.com/rmi/etoolbox.git@dev
 
 
 To create an environment for eToolbox, navigate to the repo folder in terminal and run:
