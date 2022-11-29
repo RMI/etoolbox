@@ -11,8 +11,8 @@ eToolBox: A set of tools and functions we use across projects
    :target: https://rmi.github.io/etoolbox/
    :alt: GitHub Pages Status
 
-.. image:: https://coveralls.io/repos/github/rmi/etoolbox/badge.svg
-   :target: https://coveralls.io/github/rmi/etoolbox
+.. image:: https://coveralls.io/repos/github/RMI/etoolbox/badge.svg?branch=main
+   :target: https://coveralls.io/github/RMI/etoolbox?branch=main
 
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
    :target: https://github.com/psf/black>
