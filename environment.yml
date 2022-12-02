@@ -8,7 +8,7 @@ dependencies:
   - setuptools<66
 
   # Packages specified in setup.cfg that need or benefit from binary conda packages
-  - utils >= 1.4,<1.6
+  - pandas >= 1.4,<1.6
   - pyarrow>=9, <11
 
   # Use pip to install the package defined by this repo for development:
