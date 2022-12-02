@@ -31,6 +31,19 @@ def _get_version(obj: Any) -> str:
     return "unknown"
 
 
+def _get_username():
+    try:
+        return getpass.getuser()
+    except ModuleNotFoundError as exc0:
+        import os
+
+        try:
+            return os.getlogin()
+        except Exception as exc1:
+            LOGGER.error("No username %r from %r", exc1, exc0)
+            return "unknown"
+
+
 def _type_check(cls: any, meta: dict, path: Path) -> None:
     if meta["__qualname__"] != cls.__qualname__:
         raise TypeError(
@@ -122,7 +135,7 @@ class IOMixin:
             "__qualname__": self.__class__.__qualname__,
             "__obj_version": _get_version(self),
             "__io_version__": __version__,
-            "__created_by__": getpass.getuser(),
+            "__created_by__": _get_username(),
             "__file_created__": str(datetime.now(tz=ZoneInfo("UTC"))),
             **kwargs.get("metadata", {}),
         }

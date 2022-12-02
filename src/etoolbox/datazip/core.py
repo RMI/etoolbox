@@ -160,20 +160,6 @@ class DataZip(ZipFile):
             with suppress(KeyError):
                 self._recipes = {tuple(k): v for k, v in md["recipes"]}
 
-    def _json_get(self, *args):
-        for arg in args:
-            with suppress(Exception):
-                return json.loads(super().read(f"{arg}.json"))
-        return {}
-
-    @property
-    def recipes(self) -> dict[tuple, dict]:
-        """Combination of internal and constant recipes."""
-        return RECIPES | self._recipes
-
-    def _stemlist(self) -> list[str]:
-        return list(map(lambda x: x.partition(".")[0], self.namelist()))
-
     def read(self, name: str | ZipInfo, pwd: bytes | None = ..., super_=False) -> Any:
         """Return obj or bytes for name."""
         stem, _, suffix = name.partition(".")
@@ -182,41 +168,16 @@ class DataZip(ZipFile):
         if suffix == "parquet" or f"{stem}.parquet" in self.namelist():
             return self._read_df(stem)
         if (suffix == "zip" or f"{stem}.zip" in self.namelist()) and not super_:
-            return self._read_obj(stem)
+            return obj_from_recipe(
+                BytesIO(super().read(stem + ".zip")), *self._obj_meta[stem]
+            )
         if suffix == "npy" or f"{stem}.npy" in self.namelist():
-            return self._read_numpy(stem)
+            return np.load(BytesIO(super().read(stem + ".npy")))
         if stem in self._attributes:
             return obj_from_recipe(
                 self._attributes[stem], *self._obj_meta.get(stem, (None, None, None))
             )
         return super().read(name)
-
-    def readm(self, key=None):
-        """Read metadata."""
-        if key is None:
-            return self._other_meta
-        return self._other_meta[key]
-
-    def _recursive_read(self, stem: str) -> list | dict:
-        if "dict" in self._obj_meta[stem][1]:
-            out_dict = {}
-            for k in self._contents[stem]:
-                key = k.rpartition("<||>")[2]
-                try:
-                    out_dict[key] = self.read(k)
-                except KeyError as exc:
-                    LOGGER.error("Error loading %s in %s (%s). %r", key, stem, k, exc)
-            if self._obj_meta[stem][1] == "defaultdict":
-                return defaultdict(lambda: None, out_dict)
-            return out_dict
-        else:
-            out_list = []
-            for k in self._contents[stem]:
-                try:
-                    out_list.append(self.read(k))
-                except KeyError as exc:
-                    LOGGER.error("Error loading %s in %s. %r", k, stem, exc)
-            return out_list
 
     def read_dfs(self) -> Generator[tuple[str, pd.DataFrame | pd.Series]]:
         """Read all dfs lazily."""
@@ -224,21 +185,11 @@ class DataZip(ZipFile):
             if "parquet" in suffix:
                 yield name, self.read(name)
 
-    def _read_numpy(self, name: str) -> Any:
-        return np.load(BytesIO(super().read(name + ".npy")))
-
-    def _read_obj(self, name: str) -> Any:
-        temp = BytesIO(super().read(name + ".zip"))
-        return obj_from_recipe(temp, *self._obj_meta[name])
-
-    def _read_df(self, name: str) -> pd.DataFrame | pd.Series:
-        out = pd.read_parquet(BytesIO(super().read(name + ".parquet"))).squeeze()
-        if name not in self._no_pqt_cols:
-            return out
-        cols, names = self._no_pqt_cols[name]
-        if isinstance(names, (tuple, list)) and len(names) > 1:
-            return out.set_axis(pd.MultiIndex.from_tuples(cols, names=names), axis=1)
-        return out.set_axis(pd.Index(cols, name=names[0]), axis=1)
+    def readm(self, key=None):
+        """Read metadata."""
+        if key is None:
+            return self._other_meta
+        return self._other_meta[key]
 
     def writed(
         self,
@@ -280,12 +231,121 @@ class DataZip(ZipFile):
         else:
             self._other_meta.update({key: data})
 
-    def _write_numpy(self, name: str, data: np.ndarray, **kwargs) -> bool:
-        np.save(temp := BytesIO(), data, allow_pickle=False)
-        self.writestr(f"{name}.npy", temp.getvalue())
-        self._obj_meta.update({name: self._objinfo(data)})
-        _ = self._contents[name]
-        return True
+    def close(self) -> None:
+        """Close the file, and for mode 'w' write attributes and metadata."""
+        if self.fp is None:
+            return
+
+        if self.mode == "w":
+            self.writestr(
+                "__attributes__.json",
+                json.dumps(self._attributes, ensure_ascii=False, indent=4),
+            )
+            self.writestr(
+                "__metadata__.json",
+                json.dumps(
+                    {
+                        "contents": self._contents,
+                        "no_pqt_cols": self._no_pqt_cols,
+                        "obj_meta": self._obj_meta,
+                        "recipes": list(self._recipes.items()),
+                        "other_meta": self._other_meta,
+                    },
+                    ensure_ascii=False,
+                    indent=4,
+                ),
+            )
+        super().close()
+
+    @classmethod
+    def dfs_to_zip(cls, path: Path, df_dict: dict[str, pd.DataFrame], clobber=False):
+        """Create a zip of parquets.
+
+        Args:
+            df_dict: dict of dfs to put into a zip
+            path: path for the zip
+            clobber: if True, overwrite exiting file with same path
+
+        Returns: None
+
+        """
+        path = path.with_suffix(".zip")
+        if path.exists():
+            if not clobber:
+                raise FileExistsError(f"{path} exists, to overwrite set `clobber=True`")
+            path.unlink()
+        with cls(path, "w") as z:
+            other_stuff = {}
+            for key, val in df_dict.items():
+                if isinstance(val, (pd.Series, pd.DataFrame, dict)):
+                    z.writed(key, val)
+                elif isinstance(val, (float, int, str, tuple, dict, list)):
+                    other_stuff.update({key: val})
+            z.writed("other_stuff", other_stuff)
+
+    @classmethod
+    def dfs_from_zip(cls, path: Path) -> dict:
+        """Dict of dfs from a zip of parquets.
+
+        Args:
+            path: path of the zip to load
+
+        Returns: dict of dfs
+
+        """
+        with cls(path, "r") as z:
+            out_dict = dict(z.read_dfs())
+            try:
+                other = z.read("other_stuff")
+            except KeyError:
+                other = {}
+            out_dict = out_dict | other
+
+        return out_dict
+
+    def _json_get(self, *args):
+        for arg in args:
+            with suppress(Exception):
+                return json.loads(super().read(f"{arg}.json"))
+        return {}
+
+    @property
+    def recipes(self) -> dict[tuple, dict]:
+        """Combination of internal and constant recipes."""
+        return RECIPES | self._recipes
+
+    def _stemlist(self) -> list[str]:
+        return list(map(lambda x: x.partition(".")[0], self.namelist()))
+
+    def _recursive_read(self, stem: str) -> list | dict:
+        if "dict" in self._obj_meta[stem][1]:
+            out_dict = {}
+            for k in self._contents[stem]:
+                key = k.rpartition("<||>")[2]
+                try:
+                    out_dict[key] = self.read(k)
+                except KeyError as exc:
+                    LOGGER.error("Error loading %s in %s (%s). %r", key, stem, k, exc)
+            if self._obj_meta[stem][1] == "defaultdict":
+                return defaultdict(lambda: None, out_dict)
+            return out_dict
+        else:
+            out_list = []
+            for k in self._contents[stem]:
+                try:
+                    out_list.append(self.read(k))
+                except KeyError as exc:
+                    LOGGER.error("Error loading %s in %s. %r", k, stem, exc)
+            return out_list
+
+    def _read_df(self, name: str) -> pd.DataFrame | pd.Series:
+        out = pd.read_parquet(BytesIO(super().read(name + ".parquet"))).squeeze()
+        if name not in self._no_pqt_cols:
+            return out
+        cols, names = self._no_pqt_cols[name]
+        if isinstance(names, (tuple, list)) and len(names) > 1:
+            return out.set_axis(pd.MultiIndex.from_tuples(cols, names=names), axis=1)
+        return out.set_axis(pd.Index(cols, name=names[0]), axis=1)
 
     def _recursive_write(self, name: str, data: dict | list | tuple) -> bool:
         if isinstance(data, dict):
@@ -302,6 +362,13 @@ class DataZip(ZipFile):
             if good:
                 self._contents[name].append(f"{name}<||>{k}")
         return any(all_good)
+
+    def _write_numpy(self, name: str, data: np.ndarray, **kwargs) -> bool:
+        np.save(temp := BytesIO(), data, allow_pickle=False)
+        self.writestr(f"{name}.npy", temp.getvalue())
+        self._obj_meta.update({name: self._objinfo(data)})
+        _ = self._contents[name]
+        return True
 
     def _write_jsonable(
         self,
@@ -376,75 +443,3 @@ class DataZip(ZipFile):
     @staticmethod
     def _objinfo(obj: Any, constructor=None) -> tuple[str, ...]:
         return obj.__class__.__module__, obj.__class__.__qualname__, constructor
-
-    def close(self) -> None:
-        """Close the file, and for mode 'w' write attributes and metadata."""
-        if self.fp is None:
-            return
-
-        if self.mode == "w":
-            self.writestr(
-                "__attributes__.json",
-                json.dumps(self._attributes, ensure_ascii=False, indent=4),
-            )
-            self.writestr(
-                "__metadata__.json",
-                json.dumps(
-                    {
-                        "contents": self._contents,
-                        "no_pqt_cols": self._no_pqt_cols,
-                        "obj_meta": self._obj_meta,
-                        "recipes": list(self._recipes.items()),
-                        "other_meta": self._other_meta,
-                    },
-                    ensure_ascii=False,
-                    indent=4,
-                ),
-            )
-        super().close()
-
-    @classmethod
-    def dfs_to_zip(cls, path: Path, df_dict: dict[str, pd.DataFrame], clobber=False):
-        """Create a zip of parquets.
-
-        Args:
-            df_dict: dict of dfs to put into a zip
-            path: path for the zip
-            clobber: if True, overwrite exiting file with same path
-
-        Returns: None
-
-        """
-        path = path.with_suffix(".zip")
-        if path.exists():
-            if not clobber:
-                raise FileExistsError(f"{path} exists, to overwrite set `clobber=True`")
-            path.unlink()
-        with cls(path, "w") as z:
-            other_stuff = {}
-            for key, val in df_dict.items():
-                if isinstance(val, (pd.Series, pd.DataFrame, dict)):
-                    z.writed(key, val)
-                elif isinstance(val, (float, int, str, tuple, dict, list)):
-                    other_stuff.update({key: val})
-            z.writed("other_stuff", other_stuff)
-
-    @classmethod
-    def dfs_from_zip(cls, path: Path) -> dict:
-        """Dict of dfs from a zip of parquets.
-
-        Args:
-            path: path of the zip to load
-
-        Returns: dict of dfs
-
-        """
-        with cls(path, "r") as z:
-            out_dict = dict(z.read_dfs())
-            try:
-                other = z.read("other_stuff")
-            except KeyError:
-                other = {}
-            out_dict = out_dict | other
-
-        return out_dict
