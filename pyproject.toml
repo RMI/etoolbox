@@ -22,6 +22,7 @@ requires-python = ">=3.10,<3.12"
 dependencies = [
     "pandas >= 1.4,< 1.6",
     "pyarrow>=9, <11",
+    "tzdata>=2022.7; platform_system=='Windows'"
 ]
 
 [project.optional-dependencies]
@@ -142,25 +143,10 @@ warn_unused_configs = true
 
 [[tool.mypy.overrides]]
 module = [
-    "addfips.*",
-    "coloredlogs.*",
-    "dask.*",
-    "datapackage.*",
-    "dbfread.*",
-    "geopandas.*",
-    "matplotlib.*",
-    "networkx.*",
-    "numba.*",
     "numpy.*",
     "pandas.*",
     "pyarrow.*",
-    "seaborn.*",
-    "scipy.*",
-    "sklearn.*",
-    "sphinx.*",
     "sqlalchemy.*",
-    "tableschema.*",
-    "timezonefinder.*",
 ]
 ignore_missing_imports = true
 
