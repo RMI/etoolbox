@@ -108,3 +108,16 @@ def compare_dfs(
     out.index.names = ["merge"] + align_col.split("+")
     logger.warning("category counts: %s", Counter(out.index.get_level_values(0)))
     return out.iloc[:, 1:]
+
+
+def as_ufunc(func):
+    """Turn ``np.frompyfunc`` into decorator."""
+    return np.frompyfunc(func, 2, 1)
+
+
+@as_ufunc
+def isclose(i, j):
+    """~Equivalent of ``np.isclose`` for arrays with strs."""
+    if isinstance(i, str):
+        return i == j
+    return 1e-4 > np.abs(i - j)

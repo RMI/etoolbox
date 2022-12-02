@@ -5,7 +5,7 @@ from etoolbox.datazip import IOWrapper
 from etoolbox.datazip.test_classes import MockPudlTabl
 
 
-def test_wrapper(test_dir):
+def test_wrapper(temp_dir):
     """Test wrapping a mocked PudlTabl."""
     r = {
         ("etoolbox.datazip.test_classes", "KlassWOSlots", None): {
@@ -19,21 +19,18 @@ def test_wrapper(test_dir):
     }
     a = IOWrapper(MockPudlTabl(), recipes=r)
     df = a.utils_eia860()
-    try:
-        a.to_file(test_dir / "wrapped")
-        b = IOWrapper.from_file(test_dir / "wrapped")
-        assert df.compare(b.utils_eia860()).empty
-        assert not b.bga_eia860().empty
-    finally:
-        (test_dir / "wrapped.zip").unlink(missing_ok=True)
+    a.to_file(temp_dir / "test_wrapper")
+    b = IOWrapper.from_file(temp_dir / "test_wrapper")
+    assert df.compare(b.utils_eia860()).empty
+    assert not b.bga_eia860().empty
 
 
-def test_wrapper_on_pudl(test_dir):
+def test_wrapper_on_pudl(temp_dir):
     """Test :class:`.IOWrapper` on :class:`pudl.PudlTabl`."""
     pudl = pytest.importorskip("pudl")
     sqlalchemy = pytest.importorskip("sqlalchemy")
 
-    file = test_dir / "pudltabl"
+    file = temp_dir / "test_wrapper_on_pudl"
     file.with_suffix(".zip").unlink(missing_ok=True)
 
     pt = IOWrapper(
@@ -49,12 +46,9 @@ def test_wrapper_on_pudl(test_dir):
     )
     pt.plants_eia860()
     pt.gens_eia860()
-    try:
-        pt.to_file(test_dir / "pudltabl")
+    pt.to_file(temp_dir / "test_wrapper_on_pudl")
 
-        new = IOWrapper.from_file(file)
-        assert new._dfs.keys() == pt._dfs.keys()
-        for df_name, df in new._dfs.items():
-            assert df.shape == pt._dfs[df_name].shape
-    finally:
-        file.with_suffix(".zip").unlink(missing_ok=True)
+    new = IOWrapper.from_file(file)
+    assert new._dfs.keys() == pt._dfs.keys()
+    for df_name, df in new._dfs.items():
+        assert df.shape == pt._dfs[df_name].shape

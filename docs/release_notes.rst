@@ -22,11 +22,20 @@ What's New?
    object. Including ability to use differently organized versions of
    :class:`.DataZip`.
 *  Clean up of :class:`.DataZip` internals, both within the object and in laying out
-   files. Particularly of how metadata and attributes are stored. Added
+   files. Particularly how metadata and attributes are stored. Added
    :meth:`.DataZip.readm` and :meth:`.DataZip.writem` to read and write additional
    metadata not core to :class:`.DataZip`.
 *  Added support for storing :class:`numpy.array` objects in :class:`.DataZip` using
    :func:`numpy.load` and :func:`numpy.save`.
+*  :class:`.DataZip` now handles writing attributes and metadata using
+   :meth:`.DataZip.close` so :class:`.DataZip` can now be used with or without a
+   context manager.
+*  Added :func:`.isclose`, similar to :func:`numpy.isclose` but allowing comparison
+   of arrays containing strings, especially useful with :class:`pandas.Series`.
+*  Added a module :mod:`etoolbox.utils.match` containing the helpers Raymond Hettinger
+   demonstrated in his `talk <https://www.youtube.com/watch?v=ZTvwxXL37XI>`_ at PyCon
+   Italia for using Python's ``case``/``match`` syntax.
+*  Added support for Python 3.11.
 
 Known Issues
 ^^^^^^^^^^^^

@@ -68,7 +68,7 @@ issues_github_path = "rmi/etoolbox"
 # we need to define these package to URL mappings:
 intersphinx_mapping = {
     "numpy": ("https://numpy.org/doc/stable/", None),
-    "pandas": ("https://pandas.pydata.org/pandas-docs/stable", None),
+    "utils": ("https://pandas.pydata.org/pandas-docs/stable", None),
     "pytest": ("https://docs.pytest.org/en/latest/", None),
     "python": ("https://docs.python.org/3", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/", None),

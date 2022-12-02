@@ -24,11 +24,11 @@ RECIPES: dict[tuple, dict] = {
         "keep": True,
         "constructor": ("datetime", "datetime", None),
     },
-    ("pandas._libs.tslibs.timestamps", "Timestamp", None): {
+    ("utils._libs.tslibs.timestamps", "Timestamp", None): {
         "method": "as_str",
         "attributes": None,
         "keep": True,
-        "constructor": ("pandas._libs.tslibs.timestamps", "Timestamp", None),
+        "constructor": ("utils._libs.tslibs.timestamps", "Timestamp", None),
     },
     ("pudl.workspace.datastore", "Datastore", None): {
         "method": None,
@@ -94,7 +94,7 @@ def obj_from_recipe(
 
 
 class DataZip(ZipFile):
-    """SubClass of :class:`ZipFile` with methods for easier use with :mod:`pandas`.
+    """SubClass of :class:`ZipFile` with methods for easier use with :mod:`utils`.
 
     z = DataZip(file, mode="r", compression=ZIP_STORED, allowZip64=True,
                 compresslevel=None)
@@ -377,7 +377,11 @@ class DataZip(ZipFile):
     def _objinfo(obj: Any, constructor=None) -> tuple[str, ...]:
         return obj.__class__.__module__, obj.__class__.__qualname__, constructor
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def close(self) -> None:
+        """Close the file, and for mode 'w' write attributes and metadata."""
+        if self.fp is None:
+            return
+
         if self.mode == "w":
             self.writestr(
                 "__attributes__.json",
@@ -397,7 +401,7 @@ class DataZip(ZipFile):
                     indent=4,
                 ),
             )
-        super().__exit__(exc_type, exc_val, exc_tb)
+        super().close()
 
     @classmethod
     def dfs_to_zip(cls, path: Path, df_dict: dict[str, pd.DataFrame], clobber=False):

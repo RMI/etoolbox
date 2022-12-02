@@ -15,8 +15,10 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+
 ]
-requires-python = ">=3.10,<3.11"
+requires-python = ">=3.10,<3.12"
 dependencies = [
     "pandas >= 1.4,< 1.6",
     "pyarrow>=9, <11",
@@ -164,7 +166,7 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["."]
-addopts = ["--verbose"]
+addopts = ["--verbose", "--doctest-modules"]
 log_format = "%(asctime)s [%(levelname)8s] %(name)s:%(lineno)s %(message)s"
 log_date_format=" %Y-%m-%d %H:%M:%S"
 log_cli = true

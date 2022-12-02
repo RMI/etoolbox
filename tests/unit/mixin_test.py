@@ -4,12 +4,12 @@ import pytest
 from etoolbox.datazip import IOMixin
 
 
-def test_mixin_on_pudl(test_dir):
+def test_mixin_on_pudl(temp_dir):
     """Test :class:`.IOMixin` on :class:`pudl.PudlTabl`."""
     pudl = pytest.importorskip("pudl")
     sqlalchemy = pytest.importorskip("sqlalchemy")
 
-    file = test_dir / "pudltabl"
+    file = temp_dir / "test_mixin_on_pudl"
     file.with_suffix(".zip").unlink(missing_ok=True)
 
     class PTM(pudl.output.pudltabl.PudlTabl, IOMixin):
@@ -38,12 +38,9 @@ def test_mixin_on_pudl(test_dir):
     pt.plants_eia860()
     pt.gens_eia860()
 
-    try:
-        pt.to_file(test_dir / "pudltabl")
+    pt.to_file(temp_dir / "test_mixin_on_pudl")
 
-        new = PTM.from_file(file)
-        assert new._dfs.keys() == pt._dfs.keys()
-        for df_name, df in new._dfs.items():
-            assert df.shape == pt._dfs[df_name].shape
-    finally:
-        file.with_suffix(".zip").unlink(missing_ok=True)
+    new = PTM.from_file(file)
+    assert new._dfs.keys() == pt._dfs.keys()
+    for df_name, df in new._dfs.items():
+        assert df.shape == pt._dfs[df_name].shape

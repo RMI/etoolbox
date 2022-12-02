@@ -1,5 +1,6 @@
 """PyTest configuration module. Defines useful fixtures, command line args."""
 import logging
+import shutil
 from pathlib import Path
 
 import pandas as pd
@@ -67,3 +68,12 @@ def test_dir() -> Path:
     Mostly this is meant as an example of a fixture.
     """
     return Path(__file__).parent
+
+
+@pytest.fixture(scope="session")
+def temp_dir(test_dir) -> Path:
+    """Return the path to a temp directory that gets deleted on teardown."""
+    out = test_dir / "temp"
+    out.mkdir(exist_ok=True)
+    yield out
+    shutil.rmtree(out)
