@@ -213,6 +213,8 @@ class DataZip(ZipFile):
                 return self._write_jsonable(name, data)
             except TypeError:
                 return self._recursive_write(name, data)
+        if hasattr(data, "write_image"):
+            return self._write_image(name, data)
         if hasattr(data, "to_file") and hasattr(data, "from_file"):
             return self._write_obj(name, data, **kwargs)
         if isinstance(data, np.ndarray):
@@ -433,6 +435,13 @@ class DataZip(ZipFile):
             self._no_pqt_cols.update({name: (list(df.columns), list(df.columns.names))})
             self.writestr(f"{name}.parquet", self._str_cols(df).to_parquet())
         self._obj_meta.update({name: self._objinfo(df)})
+        _ = self._contents[name]
+        return True
+
+    def _write_image(self, name: str, data: Any, **kwargs) -> bool:
+        data.write_image(temp := BytesIO(), format="pdf")
+        self.writestr(f"{name}.pdf", temp.getvalue())
+        self._obj_meta.update({name: self._objinfo(data)})
         _ = self._contents[name]
         return True
 

@@ -36,6 +36,9 @@ What's New?
    demonstrated in his `talk <https://www.youtube.com/watch?v=ZTvwxXL37XI>`_ at PyCon
    Italia for using Python's ``case``/``match`` syntax.
 *  Added support for Python 3.11.
+*  Added support for storing :mod:`plotly` figures as ``pdf`` in :class:`.DataZip`.
+   :meth:`.DataZip.close` so :class:`.DataZip` can now be used with or without a
+   context manager.
 
 Known Issues
 ^^^^^^^^^^^^
