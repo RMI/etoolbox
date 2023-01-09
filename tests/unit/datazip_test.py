@@ -42,6 +42,7 @@ def test_datazip(temp_dir):
             z.writed("a", df_dict["a"])
             z.writed("b", df_dict["b"])
             z.writed("c", {1: 3, "3": "fifteen", 5: (0, 1)})
+            z.writed("aa", df_dict["a"].loc[:, (0, "a")])
             z.writed("d", "hello world")
             with pytest.raises(FileExistsError):
                 z.writed("c", {1: 3, "3": "fifteen", 5: (0, 1)})
@@ -56,6 +57,7 @@ def test_datazip(temp_dir):
             assert "a" in z1._no_pqt_cols
             assert isinstance(z1.read("a"), pd.DataFrame)
             assert isinstance(z1.read("b"), pd.Series)
+            assert isinstance(z1.read("aa"), pd.Series)
             assert isinstance(z1.read("c"), dict)
             assert isinstance(z1.read("d"), str)
             assert z1.read("d") == "hello world"

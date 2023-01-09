@@ -40,6 +40,12 @@ What's New?
    :meth:`.DataZip.close` so :class:`.DataZip` can now be used with or without a
    context manager.
 
+Bug Fixes
+^^^^^^^^^
+*  Fixed an issue where a recreating a :class:`pandas.Series` failed when its name
+   came from a :class:`pandas.MultiIndex`.
+
+
 Known Issues
 ^^^^^^^^^^^^
 *  Recipe system is fragile and bespoke, there really should be a better way...
