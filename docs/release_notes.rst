@@ -43,7 +43,8 @@ What's New?
 Bug Fixes
 ^^^^^^^^^
 *  Fixed an issue where a single column :class:`pandas.DataFrame` was recreated
-   as a :class:`pandas.Series`.
+   as a :class:`pandas.Series`. Now this should be backwards compatible by applying
+   :class:`pandas.DataFrame.squeeze` if object metadata is not available.
 
 
 Known Issues

@@ -342,7 +342,7 @@ class DataZip(ZipFile):
 
     def _read_df(self, name: str) -> pd.DataFrame | pd.Series:
         out = pd.read_parquet(BytesIO(super().read(name + ".parquet")))
-        is_series = self._obj_meta[name][1] == "Series"
+        is_series = "Series" == self._obj_meta.get(name, ("", "Series", ""))[1]
         if name not in self._no_pqt_cols:
             if is_series:
                 return out.squeeze()
