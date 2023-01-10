@@ -42,8 +42,8 @@ What's New?
 
 Bug Fixes
 ^^^^^^^^^
-*  Fixed an issue where a recreating a :class:`pandas.Series` failed when its name
-   came from a :class:`pandas.MultiIndex`.
+*  Fixed an issue where a single column :class:`pandas.DataFrame` was recreated
+   as a :class:`pandas.Series`.
 
 
 Known Issues

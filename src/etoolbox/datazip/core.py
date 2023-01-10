@@ -342,14 +342,19 @@ class DataZip(ZipFile):
 
     def _read_df(self, name: str) -> pd.DataFrame | pd.Series:
         out = pd.read_parquet(BytesIO(super().read(name + ".parquet")))
+        is_series = self._obj_meta[name][1] == "Series"
         if name not in self._no_pqt_cols:
-            return out.squeeze()
+            if is_series:
+                return out.squeeze()
+            return out
         cols, names = self._no_pqt_cols[name]
         if isinstance(names, (tuple, list)) and len(names) > 1:
-            return out.set_axis(
-                pd.MultiIndex.from_tuples(cols, names=names), axis=1
-            ).squeeze()
-        return out.set_axis(pd.Index(cols, name=names[0]), axis=1).squeeze()
+            idx = pd.MultiIndex.from_tuples(cols, names=names)
+        else:
+            idx = pd.Index(cols, name=names[0])
+        if is_series:
+            return out.set_axis(idx, axis=1).squeeze()
+        return out.set_axis(idx, axis=1)
 
     def _recursive_write(self, name: str, data: dict | list | tuple) -> bool:
         if isinstance(data, dict):
@@ -429,6 +434,7 @@ class DataZip(ZipFile):
         if df.empty:
             LOGGER.info("Unable to write df %s because it is empty.", name)
             return False
+        self._obj_meta.update({name: self._objinfo(df)})
         if isinstance(df, pd.Series):
             df = df.to_frame(name=name)
         try:
@@ -436,7 +442,7 @@ class DataZip(ZipFile):
         except ValueError:
             self._no_pqt_cols.update({name: (list(df.columns), list(df.columns.names))})
             self.writestr(f"{name}.parquet", self._str_cols(df).to_parquet())
-        self._obj_meta.update({name: self._objinfo(df)})
+        # self._obj_meta.update({name: self._objinfo(df)})
         _ = self._contents[name]
         return True
 
