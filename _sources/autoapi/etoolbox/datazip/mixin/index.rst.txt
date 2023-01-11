@@ -1,0 +1,104 @@
+:py:mod:`etoolbox.datazip.mixin`
+================================
+
+.. py:module:: etoolbox.datazip.mixin
+
+.. autoapi-nested-parse::
+
+   A mixin for adding :class:`.DataZip` functionality to another class.
+
+   The goal is to build this out so that most custom classes can be stored
+   and recovered by inheriting this mixin.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   etoolbox.datazip.mixin.IOMixin
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   etoolbox.datazip.mixin._get_version
+   etoolbox.datazip.mixin._get_username
+   etoolbox.datazip.mixin._type_check
+
+
+
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   etoolbox.datazip.mixin.LOGGER
+
+
+.. py:data:: LOGGER
+   
+
+   
+
+.. py:function:: _get_version(obj)
+
+
+.. py:function:: _get_username()
+
+
+.. py:function:: _type_check(cls, meta, path)
+
+
+.. py:class:: IOMixin
+
+   Mixin for adding :class:`.DataZip` IO.
+
+   .. py:attribute:: __slots__
+      :annotation: = []
+
+      
+
+   .. py:attribute:: recipes
+      
+
+      
+
+   .. py:method:: from_dz(*args, **kwargs)
+      :classmethod:
+
+      Alias for :meth:`.IOMixin.from_file`.
+
+
+   .. py:method:: from_file(path, **kwargs)
+      :classmethod:
+
+      Recreate object fom file or buffer.
+
+
+   .. py:method:: _from_file(cls, path, **kwargs)
+      :staticmethod:
+
+
+   .. py:method:: to_dz(*args, **kwargs)
+
+      Alias for :meth:`.IOMixin.to_file`.
+
+
+   .. py:method:: to_file(path, compression=ZIP_STORED, clobber=False, **kwargs)
+
+      Write object to file or buffer.
+
+
+   .. py:method:: _to_file(self, path, compression, clobber, **kwargs)
+      :staticmethod:
+
+
+

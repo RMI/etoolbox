@@ -1,0 +1,885 @@
+<!doctype html>
+<html class="no-js" lang="en">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="#" /><link rel="search" title="Search" href="search.html" />
+
+    <!-- Generated with Sphinx 6.1.3 and Furo 2022.12.07 --><title>Index - eToolBox 0.0 documentation</title>
+<link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?digest=91d0f0d1c444bdcb17a68e833c7a53903343c195" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-half" viewBox="0 0 24 24">
+    <title>Auto light/dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-shadow">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M13 12h5" />
+      <path d="M13 15h4" />
+      <path d="M13 18h1" />
+      <path d="M13 9h4" />
+      <path d="M13 6h1" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation">
+  <div class="visually-hidden">Hide navigation sidebar</div>
+</label>
+<label class="overlay toc-overlay" for="__toc">
+  <div class="visually-hidden">Hide table of contents sidebar</div>
+</label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <div class="visually-hidden">Toggle site navigation sidebar</div>
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">eToolBox 0.0 documentation</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle">
+          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+          <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <div class="visually-hidden">Toggle table of contents sidebar</div>
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  <div class="sidebar-logo-container">
+    <img class="sidebar-logo only-light" src="_static/Small_PNG-RMI_logo_PrimaryUse.PNG" alt="Light Logo"/>
+    <img class="sidebar-logo only-dark" src="_static/Small_PNG-RMI_logo_PrimaryUse_White_Horizontal.PNG" alt="Dark Logo"/>
+  </div>
+  
+  <span class="sidebar-brand-text">eToolBox 0.0 documentation</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <ul>
+<li class="toctree-l1"><a class="reference internal" href="LICENSE.html">Licensing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_of_conduct.html">Code of Conduct</a></li>
+<li class="toctree-l1"><a class="reference internal" href="release_notes.html">Release Notes</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="autoapi/index.html">API Reference</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="autoapi/etoolbox/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">etoolbox</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l3 has-children"><a class="reference internal" href="autoapi/etoolbox/datazip/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">etoolbox.datazip</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" role="switch" type="checkbox"/><label for="toctree-checkbox-3"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/etoolbox/datazip/core/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">etoolbox.datazip.core</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/etoolbox/datazip/mixin/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">etoolbox.datazip.mixin</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/etoolbox/datazip/test_classes/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">etoolbox.datazip.test_classes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/etoolbox/datazip/wrapper/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">etoolbox.datazip.wrapper</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="autoapi/etoolbox/utils/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">etoolbox.utils</span></code></a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" role="switch" type="checkbox"/><label for="toctree-checkbox-4"><div class="visually-hidden">Toggle child pages in navigation</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/etoolbox/utils/arrays/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">etoolbox.utils.arrays</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="autoapi/etoolbox/utils/match/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">etoolbox.utils.match</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="autoapi/etoolbox/_version/index.html"><code class="xref py py-mod docutils literal notranslate"><span class="pre">etoolbox._version</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle">
+              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+              <svg class="theme-icon-when-auto"><use href="#svg-sun-half"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+            <div class="visually-hidden">Toggle table of contents sidebar</div>
+            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+          </label>
+        </div>
+        <article role="main">
+          
+<section class="genindex-section">
+  <h1 id="index">Index</h1>
+  <div class="genindex-jumpbox"><a href="#_"><strong>_</strong></a> | <a href="#A"><strong>A</strong></a> | <a href="#B"><strong>B</strong></a> | <a href="#C"><strong>C</strong></a> | <a href="#D"><strong>D</strong></a> | <a href="#E"><strong>E</strong></a> | <a href="#F"><strong>F</strong></a> | <a href="#I"><strong>I</strong></a> | <a href="#K"><strong>K</strong></a> | <a href="#L"><strong>L</strong></a> | <a href="#M"><strong>M</strong></a> | <a href="#O"><strong>O</strong></a> | <a href="#Q"><strong>Q</strong></a> | <a href="#R"><strong>R</strong></a> | <a href="#T"><strong>T</strong></a> | <a href="#U"><strong>U</strong></a> | <a href="#V"><strong>V</strong></a> | <a href="#W"><strong>W</strong></a></div>
+</section>
+<section id="_" class="genindex-section">
+  <h2>_</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/etoolbox/index.html#etoolbox.__author__">__author__ (in module etoolbox)</a>
+</li>
+        <li><a href="autoapi/etoolbox/index.html#etoolbox.__contact__">__contact__ (in module etoolbox)</a>
+</li>
+        <li><a href="autoapi/etoolbox/index.html#etoolbox.__description__">__description__ (in module etoolbox)</a>
+</li>
+        <li><a href="autoapi/etoolbox/index.html#etoolbox.__docformat__">__docformat__ (in module etoolbox)</a>
+</li>
+        <li><a href="autoapi/etoolbox/index.html#etoolbox.__downloadurl__">__downloadurl__ (in module etoolbox)</a>
+</li>
+        <li><a href="autoapi/etoolbox/utils/index.html#etoolbox.utils.InSet.__eq__">__eq__() (etoolbox.utils.InSet method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/utils/match/index.html#etoolbox.utils.match.InSet.__eq__">(etoolbox.utils.match.InSet method)</a>
+</li>
+          <li><a href="autoapi/etoolbox/utils/match/index.html#etoolbox.utils.match.RegexEqual.__eq__">(etoolbox.utils.match.RegexEqual method)</a>
+</li>
+          <li><a href="autoapi/etoolbox/utils/index.html#etoolbox.utils.RegexEqual.__eq__">(etoolbox.utils.RegexEqual method)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/utils/index.html#etoolbox.utils.FuncCall.__get__">__get__() (etoolbox.utils.FuncCall method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/utils/match/index.html#etoolbox.utils.match.FuncCall.__get__">(etoolbox.utils.match.FuncCall method)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.IOWrapper.__getattr__">__getattr__() (etoolbox.datazip.IOWrapper method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/wrapper/index.html#etoolbox.datazip.wrapper.IOWrapper.__getattr__">(etoolbox.datazip.wrapper.IOWrapper method)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/index.html#etoolbox.__license__">__license__ (in module etoolbox)</a>
+</li>
+        <li><a href="autoapi/etoolbox/index.html#etoolbox.__long_description__">__long_description__ (in module etoolbox)</a>
+</li>
+        <li><a href="autoapi/etoolbox/index.html#etoolbox.__maintainer__">__maintainer__ (in module etoolbox)</a>
+</li>
+        <li><a href="autoapi/etoolbox/index.html#etoolbox.__maintainer_email__">__maintainer_email__ (in module etoolbox)</a>
+</li>
+        <li><a href="autoapi/etoolbox/index.html#etoolbox.__projecturl__">__projecturl__ (in module etoolbox)</a>
+</li>
+        <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.IOWrapper.__repr__">__repr__() (etoolbox.datazip.IOWrapper method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/wrapper/index.html#etoolbox.datazip.wrapper.IOWrapper.__repr__">(etoolbox.datazip.wrapper.IOWrapper method)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/utils/index.html#etoolbox.utils.FuncCall.__set_name__">__set_name__() (etoolbox.utils.FuncCall method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/utils/match/index.html#etoolbox.utils.match.FuncCall.__set_name__">(etoolbox.utils.match.FuncCall method)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.IOMixin.__slots__">__slots__ (etoolbox.datazip.IOMixin attribute)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.IOWrapper.__slots__">(etoolbox.datazip.IOWrapper attribute)</a>
+</li>
+          <li><a href="autoapi/etoolbox/datazip/mixin/index.html#etoolbox.datazip.mixin.IOMixin.__slots__">(etoolbox.datazip.mixin.IOMixin attribute)</a>
+</li>
+          <li><a href="autoapi/etoolbox/datazip/test_classes/index.html#etoolbox.datazip.test_classes.KlassSlots.__slots__">(etoolbox.datazip.test_classes.KlassSlots attribute)</a>
+</li>
+          <li><a href="autoapi/etoolbox/datazip/wrapper/index.html#etoolbox.datazip.wrapper.IOWrapper.__slots__">(etoolbox.datazip.wrapper.IOWrapper attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/index.html#etoolbox.__version__">__version__ (in module etoolbox)</a>
+</li>
+        <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.IOMixin._from_file">_from_file() (etoolbox.datazip.IOMixin static method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/mixin/index.html#etoolbox.datazip.mixin.IOMixin._from_file">(etoolbox.datazip.mixin.IOMixin static method)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/datazip/mixin/index.html#etoolbox.datazip.mixin._get_username">_get_username() (in module etoolbox.datazip.mixin)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/etoolbox/datazip/mixin/index.html#etoolbox.datazip.mixin._get_version">_get_version() (in module etoolbox.datazip.mixin)</a>
+</li>
+        <li><a href="autoapi/etoolbox/datazip/core/index.html#etoolbox.datazip.core.DataZip._json_get">_json_get() (etoolbox.datazip.core.DataZip method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.DataZip._json_get">(etoolbox.datazip.DataZip method)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/datazip/core/index.html#etoolbox.datazip.core.DataZip._objinfo">_objinfo() (etoolbox.datazip.core.DataZip static method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.DataZip._objinfo">(etoolbox.datazip.DataZip static method)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/datazip/core/index.html#etoolbox.datazip.core.DataZip._read_df">_read_df() (etoolbox.datazip.core.DataZip method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.DataZip._read_df">(etoolbox.datazip.DataZip method)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/datazip/core/index.html#etoolbox.datazip.core.DataZip._recursive_read">_recursive_read() (etoolbox.datazip.core.DataZip method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.DataZip._recursive_read">(etoolbox.datazip.DataZip method)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/datazip/core/index.html#etoolbox.datazip.core.DataZip._recursive_write">_recursive_write() (etoolbox.datazip.core.DataZip method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.DataZip._recursive_write">(etoolbox.datazip.DataZip method)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/datazip/core/index.html#etoolbox.datazip.core.DataZip._stemlist">_stemlist() (etoolbox.datazip.core.DataZip method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.DataZip._stemlist">(etoolbox.datazip.DataZip method)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/datazip/core/index.html#etoolbox.datazip.core.DataZip._str_cols">_str_cols() (etoolbox.datazip.core.DataZip static method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.DataZip._str_cols">(etoolbox.datazip.DataZip static method)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.IOMixin._to_file">_to_file() (etoolbox.datazip.IOMixin static method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/mixin/index.html#etoolbox.datazip.mixin.IOMixin._to_file">(etoolbox.datazip.mixin.IOMixin static method)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/datazip/mixin/index.html#etoolbox.datazip.mixin._type_check">_type_check() (in module etoolbox.datazip.mixin)</a>
+</li>
+        <li><a href="autoapi/etoolbox/datazip/core/index.html#etoolbox.datazip.core.DataZip._write_as_str">_write_as_str() (etoolbox.datazip.core.DataZip method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.DataZip._write_as_str">(etoolbox.datazip.DataZip method)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/datazip/core/index.html#etoolbox.datazip.core.DataZip._write_df">_write_df() (etoolbox.datazip.core.DataZip method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.DataZip._write_df">(etoolbox.datazip.DataZip method)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/datazip/core/index.html#etoolbox.datazip.core.DataZip._write_image">_write_image() (etoolbox.datazip.core.DataZip method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.DataZip._write_image">(etoolbox.datazip.DataZip method)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/datazip/core/index.html#etoolbox.datazip.core.DataZip._write_jsonable">_write_jsonable() (etoolbox.datazip.core.DataZip method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.DataZip._write_jsonable">(etoolbox.datazip.DataZip method)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/datazip/core/index.html#etoolbox.datazip.core.DataZip._write_numpy">_write_numpy() (etoolbox.datazip.core.DataZip method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.DataZip._write_numpy">(etoolbox.datazip.DataZip method)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/datazip/core/index.html#etoolbox.datazip.core.DataZip._write_obj">_write_obj() (etoolbox.datazip.core.DataZip method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.DataZip._write_obj">(etoolbox.datazip.DataZip method)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/datazip/core/index.html#etoolbox.datazip.core.DataZip._write_using_recipe">_write_using_recipe() (etoolbox.datazip.core.DataZip method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.DataZip._write_using_recipe">(etoolbox.datazip.DataZip method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="A" class="genindex-section">
+  <h2>A</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/etoolbox/utils/arrays/index.html#etoolbox.utils.arrays.as_ufunc">as_ufunc() (in module etoolbox.utils.arrays)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="B" class="genindex-section">
+  <h2>B</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/etoolbox/datazip/test_classes/index.html#etoolbox.datazip.test_classes.MockPudlTabl.bga_eia860">bga_eia860() (etoolbox.datazip.test_classes.MockPudlTabl method)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="C" class="genindex-section">
+  <h2>C</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/etoolbox/datazip/core/index.html#etoolbox.datazip.core.DataZip.close">close() (etoolbox.datazip.core.DataZip method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.DataZip.close">(etoolbox.datazip.DataZip method)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/utils/index.html#etoolbox.utils.compare_dfs">compare_dfs() (in module etoolbox.utils)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/utils/arrays/index.html#etoolbox.utils.arrays.compare_dfs">(in module etoolbox.utils.arrays)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/etoolbox/utils/index.html#etoolbox.utils.Const">Const (class in etoolbox.utils)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/utils/match/index.html#etoolbox.utils.match.Const">(class in etoolbox.utils.match)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/datazip/test_classes/index.html#etoolbox.datazip.test_classes.ObjMeta.constructor">constructor (etoolbox.datazip.test_classes.ObjMeta attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="D" class="genindex-section">
+  <h2>D</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.DataZip">DataZip (class in etoolbox.datazip)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/core/index.html#etoolbox.datazip.core.DataZip">(class in etoolbox.datazip.core)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/datazip/core/index.html#etoolbox.datazip.core.DataZip.dfs_from_zip">dfs_from_zip() (etoolbox.datazip.core.DataZip class method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.DataZip.dfs_from_zip">(etoolbox.datazip.DataZip class method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/etoolbox/datazip/core/index.html#etoolbox.datazip.core.DataZip.dfs_to_zip">dfs_to_zip() (etoolbox.datazip.core.DataZip class method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.DataZip.dfs_to_zip">(etoolbox.datazip.DataZip class method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="E" class="genindex-section">
+  <h2>E</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li>
+    etoolbox
+
+        <ul>
+          <li><a href="autoapi/etoolbox/index.html#module-etoolbox">module</a>
+</li>
+        </ul></li>
+        <li>
+    etoolbox._version
+
+        <ul>
+          <li><a href="autoapi/etoolbox/_version/index.html#module-etoolbox._version">module</a>
+</li>
+        </ul></li>
+        <li>
+    etoolbox.datazip
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/index.html#module-etoolbox.datazip">module</a>
+</li>
+        </ul></li>
+        <li>
+    etoolbox.datazip.core
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/core/index.html#module-etoolbox.datazip.core">module</a>
+</li>
+        </ul></li>
+        <li>
+    etoolbox.datazip.mixin
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/mixin/index.html#module-etoolbox.datazip.mixin">module</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li>
+    etoolbox.datazip.test_classes
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/test_classes/index.html#module-etoolbox.datazip.test_classes">module</a>
+</li>
+        </ul></li>
+        <li>
+    etoolbox.datazip.wrapper
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/wrapper/index.html#module-etoolbox.datazip.wrapper">module</a>
+</li>
+        </ul></li>
+        <li>
+    etoolbox.utils
+
+        <ul>
+          <li><a href="autoapi/etoolbox/utils/index.html#module-etoolbox.utils">module</a>
+</li>
+        </ul></li>
+        <li>
+    etoolbox.utils.arrays
+
+        <ul>
+          <li><a href="autoapi/etoolbox/utils/arrays/index.html#module-etoolbox.utils.arrays">module</a>
+</li>
+        </ul></li>
+        <li>
+    etoolbox.utils.match
+
+        <ul>
+          <li><a href="autoapi/etoolbox/utils/match/index.html#module-etoolbox.utils.match">module</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="F" class="genindex-section">
+  <h2>F</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.IOMixin.from_dz">from_dz() (etoolbox.datazip.IOMixin class method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/mixin/index.html#etoolbox.datazip.mixin.IOMixin.from_dz">(etoolbox.datazip.mixin.IOMixin class method)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.IOMixin.from_file">from_file() (etoolbox.datazip.IOMixin class method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.IOWrapper.from_file">(etoolbox.datazip.IOWrapper class method)</a>
+</li>
+          <li><a href="autoapi/etoolbox/datazip/mixin/index.html#etoolbox.datazip.mixin.IOMixin.from_file">(etoolbox.datazip.mixin.IOMixin class method)</a>
+</li>
+          <li><a href="autoapi/etoolbox/datazip/wrapper/index.html#etoolbox.datazip.wrapper.IOWrapper.from_file">(etoolbox.datazip.wrapper.IOWrapper class method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/etoolbox/utils/index.html#etoolbox.utils.FuncCall">FuncCall (class in etoolbox.utils)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/utils/match/index.html#etoolbox.utils.match.FuncCall">(class in etoolbox.utils.match)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="I" class="genindex-section">
+  <h2>I</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/etoolbox/utils/index.html#etoolbox.utils.InSet">InSet (class in etoolbox.utils)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/utils/match/index.html#etoolbox.utils.match.InSet">(class in etoolbox.utils.match)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.IOMixin">IOMixin (class in etoolbox.datazip)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/mixin/index.html#etoolbox.datazip.mixin.IOMixin">(class in etoolbox.datazip.mixin)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.IOWrapper">IOWrapper (class in etoolbox.datazip)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/wrapper/index.html#etoolbox.datazip.wrapper.IOWrapper">(class in etoolbox.datazip.wrapper)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/utils/index.html#etoolbox.utils.isclose">isclose() (in module etoolbox.utils)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/utils/arrays/index.html#etoolbox.utils.arrays.isclose">(in module etoolbox.utils.arrays)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="K" class="genindex-section">
+  <h2>K</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/etoolbox/datazip/test_classes/index.html#etoolbox.datazip.test_classes.KlassSlots">KlassSlots (class in etoolbox.datazip.test_classes)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/etoolbox/datazip/test_classes/index.html#etoolbox.datazip.test_classes.KlassWOSlots">KlassWOSlots (class in etoolbox.datazip.test_classes)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="L" class="genindex-section">
+  <h2>L</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/etoolbox/index.html#etoolbox.logger">logger (in module etoolbox)</a>
+</li>
+        <li><a href="autoapi/etoolbox/datazip/core/index.html#etoolbox.datazip.core.LOGGER">LOGGER (in module etoolbox.datazip.core)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/mixin/index.html#etoolbox.datazip.mixin.LOGGER">(in module etoolbox.datazip.mixin)</a>
+</li>
+          <li><a href="autoapi/etoolbox/datazip/wrapper/index.html#etoolbox.datazip.wrapper.LOGGER">(in module etoolbox.datazip.wrapper)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/etoolbox/utils/arrays/index.html#etoolbox.utils.arrays.logger">logger (in module etoolbox.utils.arrays)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="M" class="genindex-section">
+  <h2>M</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/etoolbox/datazip/test_classes/index.html#etoolbox.datazip.test_classes.MockPudlTabl">MockPudlTabl (class in etoolbox.datazip.test_classes)</a>
+</li>
+        <li>
+    module
+
+        <ul>
+          <li><a href="autoapi/etoolbox/index.html#module-etoolbox">etoolbox</a>
+</li>
+          <li><a href="autoapi/etoolbox/_version/index.html#module-etoolbox._version">etoolbox._version</a>
+</li>
+          <li><a href="autoapi/etoolbox/datazip/index.html#module-etoolbox.datazip">etoolbox.datazip</a>
+</li>
+          <li><a href="autoapi/etoolbox/datazip/core/index.html#module-etoolbox.datazip.core">etoolbox.datazip.core</a>
+</li>
+          <li><a href="autoapi/etoolbox/datazip/mixin/index.html#module-etoolbox.datazip.mixin">etoolbox.datazip.mixin</a>
+</li>
+          <li><a href="autoapi/etoolbox/datazip/test_classes/index.html#module-etoolbox.datazip.test_classes">etoolbox.datazip.test_classes</a>
+</li>
+          <li><a href="autoapi/etoolbox/datazip/wrapper/index.html#module-etoolbox.datazip.wrapper">etoolbox.datazip.wrapper</a>
+</li>
+          <li><a href="autoapi/etoolbox/utils/index.html#module-etoolbox.utils">etoolbox.utils</a>
+</li>
+          <li><a href="autoapi/etoolbox/utils/arrays/index.html#module-etoolbox.utils.arrays">etoolbox.utils.arrays</a>
+</li>
+          <li><a href="autoapi/etoolbox/utils/match/index.html#module-etoolbox.utils.match">etoolbox.utils.match</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/etoolbox/datazip/test_classes/index.html#etoolbox.datazip.test_classes.ObjMeta.module">module (etoolbox.datazip.test_classes.ObjMeta attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="O" class="genindex-section">
+  <h2>O</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/etoolbox/datazip/core/index.html#etoolbox.datazip.core.obj_from_recipe">obj_from_recipe() (in module etoolbox.datazip.core)</a>
+</li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/etoolbox/datazip/test_classes/index.html#etoolbox.datazip.test_classes.ObjMeta">ObjMeta (class in etoolbox.datazip.test_classes)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="Q" class="genindex-section">
+  <h2>Q</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/etoolbox/datazip/test_classes/index.html#etoolbox.datazip.test_classes.ObjMeta.qualname">qualname (etoolbox.datazip.test_classes.ObjMeta attribute)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="R" class="genindex-section">
+  <h2>R</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/etoolbox/datazip/core/index.html#etoolbox.datazip.core.DataZip.read">read() (etoolbox.datazip.core.DataZip method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.DataZip.read">(etoolbox.datazip.DataZip method)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/datazip/core/index.html#etoolbox.datazip.core.DataZip.read_dfs">read_dfs() (etoolbox.datazip.core.DataZip method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.DataZip.read_dfs">(etoolbox.datazip.DataZip method)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/datazip/core/index.html#etoolbox.datazip.core.DataZip.readm">readm() (etoolbox.datazip.core.DataZip method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.DataZip.readm">(etoolbox.datazip.DataZip method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/etoolbox/datazip/core/index.html#etoolbox.datazip.core.DataZip.recipes">recipes (etoolbox.datazip.core.DataZip property)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.DataZip.recipes">(etoolbox.datazip.DataZip property)</a>
+</li>
+          <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.IOMixin.recipes">(etoolbox.datazip.IOMixin attribute)</a>
+</li>
+          <li><a href="autoapi/etoolbox/datazip/mixin/index.html#etoolbox.datazip.mixin.IOMixin.recipes">(etoolbox.datazip.mixin.IOMixin attribute)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/datazip/core/index.html#etoolbox.datazip.core.RECIPES">RECIPES (in module etoolbox.datazip.core)</a>
+</li>
+        <li><a href="autoapi/etoolbox/utils/index.html#etoolbox.utils.RegexEqual">RegexEqual (class in etoolbox.utils)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/utils/match/index.html#etoolbox.utils.match.RegexEqual">(class in etoolbox.utils.match)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="T" class="genindex-section">
+  <h2>T</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.IOMixin.to_dz">to_dz() (etoolbox.datazip.IOMixin method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/mixin/index.html#etoolbox.datazip.mixin.IOMixin.to_dz">(etoolbox.datazip.mixin.IOMixin method)</a>
+</li>
+        </ul></li>
+        <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.IOMixin.to_file">to_file() (etoolbox.datazip.IOMixin method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.IOWrapper.to_file">(etoolbox.datazip.IOWrapper method)</a>
+</li>
+          <li><a href="autoapi/etoolbox/datazip/mixin/index.html#etoolbox.datazip.mixin.IOMixin.to_file">(etoolbox.datazip.mixin.IOMixin method)</a>
+</li>
+          <li><a href="autoapi/etoolbox/datazip/wrapper/index.html#etoolbox.datazip.wrapper.IOWrapper.to_file">(etoolbox.datazip.wrapper.IOWrapper method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="U" class="genindex-section">
+  <h2>U</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/etoolbox/datazip/test_classes/index.html#etoolbox.datazip.test_classes.MockPudlTabl.utils_eia860">utils_eia860() (etoolbox.datazip.test_classes.MockPudlTabl method)</a>
+</li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="V" class="genindex-section">
+  <h2>V</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/etoolbox/utils/index.html#etoolbox.utils.Var">Var (class in etoolbox.utils)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/utils/match/index.html#etoolbox.utils.match.Var">(class in etoolbox.utils.match)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+<section id="W" class="genindex-section">
+  <h2>W</h2>
+  <table style="width: 100%" class="indextable genindextable"><tr>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/etoolbox/datazip/core/index.html#etoolbox.datazip.core.DataZip.writed">writed() (etoolbox.datazip.core.DataZip method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.DataZip.writed">(etoolbox.datazip.DataZip method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+    <td style="width: 33%; vertical-align: top;"><ul>
+        <li><a href="autoapi/etoolbox/datazip/core/index.html#etoolbox.datazip.core.DataZip.writem">writem() (etoolbox.datazip.core.DataZip method)</a>
+
+        <ul>
+          <li><a href="autoapi/etoolbox/datazip/index.html#etoolbox.datazip.DataZip.writem">(etoolbox.datazip.DataZip method)</a>
+</li>
+        </ul></li>
+    </ul></td>
+  </tr></table>
+</section>
+
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2023, RMI, CC-BY-4.0
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            <div class="icons">
+              <a class="muted-link " href="https://github.com/rmi/etoolbox" aria-label="GitHub">
+        <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path>
+        </svg>
+    </a>
+              
+            </div>
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </div>
+</div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/scripts/furo.js"></script>
+    </body>
+</html>

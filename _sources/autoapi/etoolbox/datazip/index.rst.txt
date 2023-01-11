@@ -1,0 +1,261 @@
+:py:mod:`etoolbox.datazip`
+==========================
+
+.. py:module:: etoolbox.datazip
+
+.. autoapi-nested-parse::
+
+   Core :class:`.DataZip` object plus mixins and wrappers.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   core/index.rst
+   mixin/index.rst
+   test_classes/index.rst
+   wrapper/index.rst
+
+
+Package Contents
+----------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   etoolbox.datazip.DataZip
+   etoolbox.datazip.IOMixin
+   etoolbox.datazip.IOWrapper
+
+
+
+
+.. py:class:: DataZip(file, mode='r', recipes=None, *args, **kwargs)
+
+   Bases: :py:obj:`zipfile.ZipFile`
+
+   SubClass of :class:`ZipFile` with methods for easier use with :mod:`utils`.
+
+   z = DataZip(file, mode="r", compression=ZIP_STORED, allowZip64=True,
+               compresslevel=None)
+
+
+   Open the ZIP file.
+
+   :param file: Either the path to the file, or a file-like object.
+                If it is a path, the file will be opened and closed by ZipFile.
+   :param mode: The mode can be either read 'r', write 'w', exclusive create 'x',
+                or append 'a'.
+   :param recipes: add more customization on how attributes will be stored
+                   organized like :py:const:`etoolbox.datazip.core.RECIPES`
+   :param compression: ZIP_STORED (no compression), ZIP_DEFLATED (requires zlib),
+                       ZIP_BZIP2 (requires bz2) or ZIP_LZMA (requires lzma).
+   :param allowZip64: if True ZipFile will create files with ZIP64 extensions when
+                      needed, otherwise it will raise an exception when this would
+                      be necessary.
+   :param compresslevel: None (default for the given compression type) or an integer
+                         specifying the level to pass to the compressor.
+                         When using ZIP_STORED or ZIP_LZMA this keyword has no effect.
+                         When using ZIP_DEFLATED integers 0 through 9 are accepted.
+                         When using ZIP_BZIP2 integers 1 through 9 are accepted.
+
+   .. py:property:: recipes
+      :type: dict[tuple, dict]
+
+      Combination of internal and constant recipes.
+
+   .. py:method:: read(name, pwd = ..., super_=False)
+
+      Return obj or bytes for name.
+
+
+   .. py:method:: read_dfs()
+
+      Read all dfs lazily.
+
+
+   .. py:method:: readm(key=None)
+
+      Read metadata.
+
+
+   .. py:method:: writed(name, data, **kwargs)
+
+      Write dict, df, str, or some other objects to name.
+
+
+   .. py:method:: writem(key, data)
+
+      Write metadata.
+
+
+   .. py:method:: close()
+
+      Close the file, and for mode 'w' write attributes and metadata.
+
+
+   .. py:method:: dfs_to_zip(path, df_dict, clobber=False)
+      :classmethod:
+
+      Create a zip of parquets.
+
+      :param df_dict: dict of dfs to put into a zip
+      :param path: path for the zip
+      :param clobber: if True, overwrite exiting file with same path
+
+      Returns: None
+
+
+
+   .. py:method:: dfs_from_zip(path)
+      :classmethod:
+
+      Dict of dfs from a zip of parquets.
+
+      :param path: path of the zip to load
+
+      Returns: dict of dfs
+
+
+
+   .. py:method:: _json_get(*args)
+
+
+   .. py:method:: _stemlist()
+
+
+   .. py:method:: _recursive_read(stem)
+
+
+   .. py:method:: _read_df(name)
+
+
+   .. py:method:: _recursive_write(name, data)
+
+
+   .. py:method:: _write_numpy(name, data, **kwargs)
+
+
+   .. py:method:: _write_jsonable(name, obj, **kwargs)
+
+      Write a dict in the ZIP as json.
+
+
+   .. py:method:: _write_using_recipe(name, data, obj_info)
+
+
+   .. py:method:: _write_as_str(name, obj, **kwargs)
+
+      Write an object as whatever str is in the parentheses of its repr.
+
+
+   .. py:method:: _write_obj(name, obj, **kwargs)
+
+
+   .. py:method:: _write_df(name, df, **kwargs)
+
+      Write a df in the ZIP as parquet.
+
+
+   .. py:method:: _write_image(name, data, **kwargs)
+
+
+   .. py:method:: _str_cols(df, *args)
+      :staticmethod:
+
+
+   .. py:method:: _objinfo(obj, constructor=None)
+      :staticmethod:
+
+
+
+.. py:class:: IOMixin
+
+   Mixin for adding :class:`.DataZip` IO.
+
+   .. py:attribute:: __slots__
+      :annotation: = []
+
+      
+
+   .. py:attribute:: recipes
+      
+
+      
+
+   .. py:method:: from_dz(*args, **kwargs)
+      :classmethod:
+
+      Alias for :meth:`.IOMixin.from_file`.
+
+
+   .. py:method:: from_file(path, **kwargs)
+      :classmethod:
+
+      Recreate object fom file or buffer.
+
+
+   .. py:method:: _from_file(cls, path, **kwargs)
+      :staticmethod:
+
+
+   .. py:method:: to_dz(*args, **kwargs)
+
+      Alias for :meth:`.IOMixin.to_file`.
+
+
+   .. py:method:: to_file(path, compression=ZIP_STORED, clobber=False, **kwargs)
+
+      Write object to file or buffer.
+
+
+   .. py:method:: _to_file(self, path, compression, clobber, **kwargs)
+      :staticmethod:
+
+
+
+.. py:class:: IOWrapper(obj, recipes = None)
+
+   Bases: :py:obj:`etoolbox.datazip.mixin.IOMixin`
+
+   Wrapper to add :class:`.IOMixin` to an existing object.
+
+   Create an IOWrapper.
+
+   :param obj: the object to wrap
+   :param recipes: add more customization on how attributes will be stored
+                   organized like :py:const:`etoolbox.datazip.core.RECIPES`
+
+   .. py:attribute:: __slots__
+      :annotation: = ['_obj', '_metadata', '_recipes']
+
+      
+
+   .. py:method:: __getattr__(item)
+
+      Pretend to be `self._obj`.
+
+
+   .. py:method:: to_file(path, compression=ZIP_STORED, clobber=False, **kwargs)
+
+      Write out the obj to a file.
+
+
+   .. py:method:: from_file(path, **kwargs)
+      :classmethod:
+
+      Recreate an instance of :class:`.DataZipWrapper` with the wrapped object.
+
+
+   .. py:method:: __repr__()
+
+      Return repr(self).
+
+
+

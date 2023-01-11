@@ -1,0 +1,85 @@
+:py:mod:`etoolbox.datazip.test_classes`
+=======================================
+
+.. py:module:: etoolbox.datazip.test_classes
+
+.. autoapi-nested-parse::
+
+   Mocks and other objects for testing :class:`.IOWrapper`.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   etoolbox.datazip.test_classes.ObjMeta
+   etoolbox.datazip.test_classes.KlassSlots
+   etoolbox.datazip.test_classes.KlassWOSlots
+   etoolbox.datazip.test_classes.MockPudlTabl
+
+
+
+
+.. py:class:: ObjMeta
+
+   Bases: :py:obj:`NamedTuple`
+
+   NamedTuple for testing.
+
+   .. py:attribute:: module
+      :annotation: :str
+
+      
+
+   .. py:attribute:: qualname
+      :annotation: :str
+
+      
+
+   .. py:attribute:: constructor
+      :annotation: :str | None
+
+      
+
+
+.. py:class:: KlassSlots(**kwargs)
+
+   Generic class with slots for testing.
+
+   Init.
+
+   .. py:attribute:: __slots__
+      :annotation: = ['foo', '_dfs', 'tup', 'lis']
+
+      
+
+
+.. py:class:: KlassWOSlots(**kwargs)
+
+   Generic class w/o slots for testing.
+
+   Init.
+
+
+.. py:class:: MockPudlTabl(freq = None, fill_fuel_cost = False, roll_fuel_cost = False, fill_net_gen = False, fill_tech_desc = True, unit_ids = False)
+
+   A fake PudlTabl.
+
+   Initialize the PUDL output object.
+
+   .. py:method:: utils_eia860(update=False)
+
+      Add a df to ``self._dfs``.
+
+
+   .. py:method:: bga_eia860(update=False)
+
+      Add a df to ``self._dfs``.
+
+
+

@@ -1,0 +1,110 @@
+:py:mod:`etoolbox`
+==================
+
+.. py:module:: etoolbox
+
+.. autoapi-nested-parse::
+
+   A template repository for a Python package.
+
+   Created by Catalyst Cooperative, modified by RMI.
+
+
+
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   datazip/index.rst
+   utils/index.rst
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   _version/index.rst
+
+
+Package Contents
+----------------
+
+.. py:data:: logger
+   
+
+   
+
+.. py:data:: __author__
+   :annotation: = RMI
+
+   
+
+.. py:data:: __contact__
+   :annotation: = ...@rmi.org
+
+   
+
+.. py:data:: __maintainer__
+   :annotation: = Cheshire Cat
+
+   
+
+.. py:data:: __license__
+   :annotation: = BSD 3-Clause License
+
+   
+
+.. py:data:: __maintainer_email__
+   :annotation: = ...@rmi.org
+
+   
+
+.. py:data:: __docformat__
+   :annotation: = restructuredtext en
+
+   
+
+.. py:data:: __description__
+   :annotation: = A template for Python package repositories.
+
+   
+
+.. py:data:: __long_description__
+   :annotation: = Multiline-String
+
+    .. raw:: html
+
+        <details><summary>Show Value</summary>
+
+    .. code-block:: text
+        :linenos:
+
+        
+        This should be a paragraph long description of what the package does.
+
+
+    .. raw:: html
+
+        </details>
+
+   
+
+.. py:data:: __version__
+   :annotation: = unknown
+
+   
+
+.. py:data:: __projecturl__
+   :annotation: = https://github.com/rmi-electricity/etoolbox
+
+   
+
+.. py:data:: __downloadurl__
+   :annotation: = https://github.com/rmi-electricity/etoolbox
+
+   
+

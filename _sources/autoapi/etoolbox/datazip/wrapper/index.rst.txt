@@ -1,0 +1,76 @@
+:py:mod:`etoolbox.datazip.wrapper`
+==================================
+
+.. py:module:: etoolbox.datazip.wrapper
+
+.. autoapi-nested-parse::
+
+   Use of :class:`.IOMixin` as basis for a wrapper.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   etoolbox.datazip.wrapper.IOWrapper
+
+
+
+
+Attributes
+~~~~~~~~~~
+
+.. autoapisummary::
+
+   etoolbox.datazip.wrapper.LOGGER
+
+
+.. py:data:: LOGGER
+   
+
+   
+
+.. py:class:: IOWrapper(obj, recipes = None)
+
+   Bases: :py:obj:`etoolbox.datazip.mixin.IOMixin`
+
+   Wrapper to add :class:`.IOMixin` to an existing object.
+
+   Create an IOWrapper.
+
+   :param obj: the object to wrap
+   :param recipes: add more customization on how attributes will be stored
+                   organized like :py:const:`etoolbox.datazip.core.RECIPES`
+
+   .. py:attribute:: __slots__
+      :annotation: = ['_obj', '_metadata', '_recipes']
+
+      
+
+   .. py:method:: __getattr__(item)
+
+      Pretend to be `self._obj`.
+
+
+   .. py:method:: to_file(path, compression=ZIP_STORED, clobber=False, **kwargs)
+
+      Write out the obj to a file.
+
+
+   .. py:method:: from_file(path, **kwargs)
+      :classmethod:
+
+      Recreate an instance of :class:`.DataZipWrapper` with the wrapped object.
+
+
+   .. py:method:: __repr__()
+
+      Return repr(self).
+
+
+
