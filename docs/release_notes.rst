@@ -41,6 +41,7 @@ What's New?
    context manager.
 *  Added support for checking whether a file or attribute is stored in
    :class:`.DataZip` using :meth:`.DataZip.__contains__`, i.e. using Python's ``in``.
+*  Added support for subscript-based, getting and setting data in :class:`.DataZip`.
 
 
 Bug Fixes

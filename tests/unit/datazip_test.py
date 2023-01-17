@@ -67,15 +67,24 @@ def test_datazip(temp_dir):
             assert z1.read("d") == "hello world"
 
 
-def test_datazip_contains(temp_dir):
+def test_datazip_contains_len(temp_dir):
     """Test override of ``in``."""
-    with DataZip(temp_dir / "test_datazip_contains.zip", "w") as z:
+    with DataZip(temp_dir / "test_datazip_contains_len.zip", "w") as z:
         z.writed("a", pd.Series([1, 2, 3, 4]))
-        assert "a" in z
-        assert "a.parquet" in z
-    with DataZip(temp_dir / "test_datazip_contains.zip", "r") as z:
-        assert "a" in z
-        assert "a.parquet" in z
+    with DataZip(temp_dir / "test_datazip_contains_len.zip", "r") as z1:
+        assert "a" in z1
+        assert "a.parquet" in z1
+        assert len(z) == 1
+
+
+def test_datazip_set_get(temp_dir):
+    """Test item access."""
+    series = pd.Series([1, 2, 3, 4])
+    with DataZip(temp_dir / "test_datazip_set_get.zip", "w") as z:
+        z["a"] = series
+    with DataZip(temp_dir / "test_datazip_set_get.zip", "r") as z1:
+        s1 = z1["a"]
+        pd.testing.assert_series_equal(series, s1, check_names=False)
 
 
 def test_datazip_meta_safety(temp_dir):

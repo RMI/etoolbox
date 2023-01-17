@@ -259,10 +259,26 @@ class DataZip(ZipFile):
             )
         super().close()
 
-    def __contains__(self, item):
+    def __contains__(self, item) -> bool:
         """Provide ``in`` check."""
         item, _, _ = item.partition(".")
         return item in self._contents
+
+    def __len__(self) -> int:
+        """Provide for use of ``len`` builtin."""
+        return len(self._contents)
+
+    def __getitem__(self, item: str) -> Any:
+        """Alias for :meth:`.DataZip.read`."""
+        return self.read(item)
+
+    def __setitem__(self, key: str, value: Any) -> None:
+        """Alias for :meth:`.DataZip.writed`."""
+        self.writed(key, value)
+
+    def keys(self):
+        """Set of names in DataZip as if it was a dict."""
+        return self._contents.keys()
 
     @classmethod
     def dfs_to_zip(cls, path: Path, df_dict: dict[str, pd.DataFrame], clobber=False):
