@@ -39,6 +39,9 @@ What's New?
 *  Added support for storing :mod:`plotly` figures as ``pdf`` in :class:`.DataZip`.
    :meth:`.DataZip.close` so :class:`.DataZip` can now be used with or without a
    context manager.
+*  Added support for checking whether a file or attribute is stored in
+   :class:`.DataZip` using :meth:`.DataZip.__contains__`, i.e. using Python's ``in``.
+
 
 Bug Fixes
 ^^^^^^^^^

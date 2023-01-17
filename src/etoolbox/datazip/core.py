@@ -259,6 +259,11 @@ class DataZip(ZipFile):
             )
         super().close()
 
+    def __contains__(self, item):
+        """Provide ``in`` check."""
+        item, _, _ = item.partition(".")
+        return item in self._contents
+
     @classmethod
     def dfs_to_zip(cls, path: Path, df_dict: dict[str, pd.DataFrame], clobber=False):
         """Create a zip of parquets.

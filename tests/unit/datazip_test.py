@@ -67,6 +67,17 @@ def test_datazip(temp_dir):
             assert z1.read("d") == "hello world"
 
 
+def test_datazip_contains(temp_dir):
+    """Test override of ``in``."""
+    with DataZip(temp_dir / "test_datazip_contains.zip", "w") as z:
+        z.writed("a", pd.Series([1, 2, 3, 4]))
+        assert "a" in z
+        assert "a.parquet" in z
+    with DataZip(temp_dir / "test_datazip_contains.zip", "r") as z:
+        assert "a" in z
+        assert "a.parquet" in z
+
+
 def test_datazip_meta_safety(temp_dir):
     """Test :class:`.DataZip`."""
     try:
