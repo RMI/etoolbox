@@ -5,6 +5,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Literal, NamedTuple
 
+import numpy as np
 import pandas as pd
 import sqlalchemy as sa
 
@@ -27,14 +28,68 @@ class KlassSlots:
         for k, v in kwargs.items():
             setattr(self, k, v)
 
+    def __setstate__(self, state):
+        for k, v in state.items():
+            if k in self.__slots__:
+                setattr(self, k, v)
 
-class KlassWOSlots:
+    def __getstate__(self):
+        return {k: getattr(self, k) for k in self.__slots__}
+
+    def __eq__(self, other):
+        return all(
+            (
+                isinstance(other, self.__class__),
+                all(
+                    getattr(self, k) == getattr(other, k) for k in ("foo", "tup", "lis")
+                ),
+                all(
+                    a.compare(b).empty
+                    for a, b in zip(self._dfs.values(), other._dfs.values())
+                ),
+            )
+        )
+
+
+class TestKlass:
     """Generic class w/o slots for testing."""
 
     def __init__(self, **kwargs):
         """Init."""
         for k, v in kwargs.items():
             setattr(self, k, v)
+
+    def __setstate__(self, state):
+        self.__dict__ = state
+
+    def __getstate__(self):
+        return self.__dict__
+
+    def __repr__(self):
+        return (
+            self.__class__.__qualname__
+            + f"({', '.join(f'{k}={v}' for k, v in self.__dict__.items())})"
+        )
+
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+
+        def _comp(v0, v1):
+            try:
+                return bool(v0 == v1)
+            except ValueError:
+                return np.all(np.all(v0 == v1))
+
+        r = []
+        for v0, v1 in zip(self.__dict__.values(), other.__dict__.values()):
+            if isinstance(v0, dict):
+                for v01, v11 in zip(v0.values(), v1.values()):
+                    r.append(_comp(v01, v11))
+            else:
+                r.append(_comp(v0, v1))
+
+        return all(r)
 
 
 class MockPudlTabl:
@@ -52,7 +107,7 @@ class MockPudlTabl:
         """Initialize the PUDL output object."""
         # Validating ds is deferred to the etl_eia861 & etl_ferc714 methods
         # because those are the only places a datastore is required.
-        self.ds = KlassWOSlots(local_cache_path=str(Path.home() / "pudl-work/data"))
+        self.ds = TestKlass(local_cache_path=str(Path.home() / "pudl-work/data"))
 
         self.pudl_engine = sa.create_engine(
             "sqlite:////Users/aengel/pudl-work/sqlite/pudl.sqlite"

@@ -137,6 +137,16 @@ repos:
         always_run: true
         entry: pytest --doctest-modules src/etoolbox tests/unit
 
+      # Run blackdoc
+      - id: blackdoc
+        name: blackdoc
+        stages: [commit]
+        language: system
+        verbose: false
+        pass_filenames: false
+        always_run: true
+        entry: blackdoc src/etoolbox
+
 # Configuration for pre-commit.ci
 ci:
   autofix_commit_msg: |

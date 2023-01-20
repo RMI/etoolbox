@@ -6,7 +6,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from etoolbox.datazip.test_classes import KlassSlots, KlassWOSlots
+from etoolbox.datazip.test_classes import KlassSlots, TestKlass
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ def klass_w_slot(df_dict):
 @pytest.fixture
 def klass_wo_slot(df_dict):
     """Generic class that does not use slots."""
-    obj = KlassWOSlots()
+    obj = TestKlass()
     obj.foo = df_dict["a"]
     obj._dfs = df_dict
     return obj

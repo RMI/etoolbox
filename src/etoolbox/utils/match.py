@@ -42,7 +42,8 @@ class Var:
     ...     case Var.x:
     ...         print('Matches "x"')
     ...     case _:
-    ...         print('No match')
+    ...         print("No match")
+    ...
     Matches "x"
     """
 
@@ -62,6 +63,7 @@ class Const:
     ...         print('Matches "pi"')
     ...     case Var.x:
     ...         print('Matches "x"')
+    ...
     Matches "pi"
     """
 
@@ -77,6 +79,7 @@ class FuncCall:
     >>> class A:
     ...     x = FuncCall(ord)
     ...     y = FuncCall(ord)
+    ...
     >>> A.x
     120
     >>> A.y
@@ -116,19 +119,19 @@ class FuncCall:
                 case Directions.west:
                     return 0, -1
                 case _:
-                    raise ValueError(_('Unknown direction'))
-            print('Adjustment:', adj)
+                    raise ValueError(_("Unknown direction"))
+            print("Adjustment:", adj)
 
     The tool is used like this:
 
     .. code-block:: python
 
-        set_language('es')
-        convert('sur')
+        set_language("es")
+        convert("sur")
         (-1, 0)
 
-        set_language('fr')
-        convert('nord')
+        set_language("fr")
+        convert("nord")
         (1, 0)
 
     The case statements match the current language setting and will change when the
@@ -152,19 +155,20 @@ class RegexEqual(str):
     The :class:`.RegexEqual` class inherits from :class:`str` and overrides the
     :meth:`str.__eq__` method to match a regular expression.
 
-    >>> bool(RegexEqual('hello') == 'h.*o')
+    >>> bool(RegexEqual("hello") == "h.*o")
     True
 
     This is used in the match-clause (not a case clause). It will match cases with a
     regex for a literal pattern:
 
-    >>> match RegexEqual('the tale of two cities'):
-    ...     case 's...y':
-    ...         print('A sad story')
-    ...     case 't..e':
-    ...         print('A mixed tale')
-    ...     case 's..a':
-    ...         print('A long read')
+    >>> match RegexEqual("the tale of two cities"):
+    ...     case "s...y":
+    ...         print("A sad story")
+    ...     case "t..e":
+    ...         print("A mixed tale")
+    ...     case "s..a":
+    ...         print("A long read")
+    ...
     A mixed tale
     """
 
@@ -180,17 +184,18 @@ class InSet(set):
 
     >>> from types import SimpleNamespace
     >>> Colors = SimpleNamespace(
-    ...     warm = InSet({'red', 'orange', 'yellow'}),
-    ...     cool = InSet({'green', 'blue', 'indigo', 'violet'}),
-    ...     mixed = InSet({'purple', 'brown'})
+    ...     warm=InSet({"red", "orange", "yellow"}),
+    ...     cool=InSet({"green", "blue", "indigo", "violet"}),
+    ...     mixed=InSet({"purple", "brown"}),
     ... )
-    >>> match 'blue':
+    >>> match "blue":
     ...     case Colors.warm:
-    ...         print('warm')
+    ...         print("warm")
     ...     case Colors.cool:
-    ...         print('cool')
+    ...         print("cool")
     ...     case Colors.mixed:
-    ...         print('mixed')
+    ...         print("mixed")
+    ...
     cool
 
     """

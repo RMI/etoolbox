@@ -27,13 +27,19 @@ Desciption
 
 *  datazip
 
-   *  DataZip
-   *  IOMixin
-   *  IOWrapper
+   *  DataZip - an extension of
+      `ZipFile <https://docs.python.org/3/library/zipfile.html#zipfile-objects>`_ with
+      a couple useful features:
 
-*  pandas
+      *  Support for easily storing and retrieving a range of Python objects, including
+         builtins, pandas and numpy objects, and certain custom objects.
 
-   * compare_dfs
+   *  IOMixin - a mixin that allows a class to be stored in a DataZip. Usually.
+
+*  utils
+
+   * arrays - pandas and numpy comparison aids.
+   * match - helpers for Python's ``match`` syntax.
 
 Installation
 =======================================================================================

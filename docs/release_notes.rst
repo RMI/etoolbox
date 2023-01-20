@@ -42,6 +42,13 @@ What's New?
 *  Added support for checking whether a file or attribute is stored in
    :class:`.DataZip` using :meth:`.DataZip.__contains__`, i.e. using Python's ``in``.
 *  Added support for subscript-based, getting and setting data in :class:`.DataZip`.
+*  Custom Python objects can be serialized with :class:`.DataZip` if they implement
+   ``__getstate__`` and ``__setstate__``. This replaces the use of ``to_file`` and
+   ``from_file`` by :class:`.DataZip`. :class:`.IOMixin` has been updated accordingly.
+*  Added static methods :meth:`.DataZip.dump` and :meth:`.DataZip.load` for
+   serializing a single Python object, these are designed to be similar to how
+   :func:`pickle.dump` and :func:`pickle.load` work.
+*  Removing :class:`.IOWrapper`.
 
 
 Bug Fixes
@@ -54,3 +61,4 @@ Bug Fixes
 Known Issues
 ^^^^^^^^^^^^
 *  Recipe system is fragile and bespoke, there really should be a better way...
+*  :class:`tuple` nested inside other objects may be returned as :class:`list`.

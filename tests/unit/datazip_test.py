@@ -4,7 +4,14 @@ import pandas as pd
 import pytest
 
 from etoolbox.datazip import DataZip
-from etoolbox.datazip.test_classes import ObjMeta
+from etoolbox.datazip.test_classes import KlassSlots, ObjMeta, TestKlass
+
+
+def idfn(val):
+    """ID function for pytest parameterization."""
+    if isinstance(val, float):
+        return None
+    return str(val)
 
 
 def test_dfs_to_from_zip(temp_dir):
@@ -97,32 +104,6 @@ def test_datazip_meta_safety(temp_dir):
                 z.writed("__attributes__", {1: 3, "3": "fifteen", 5: (0, 1)})
     except Exception as exc:
         raise AssertionError("Something broke") from exc
-
-
-def test_datazip_meta_readwrite(temp_dir):
-    """Test read/write metadata without key."""
-    try:
-        with DataZip(temp_dir / "test_datazip_meta_readwrite.zip", "w") as z:
-            with pytest.raises(TypeError):
-                z.writem(None, 3)
-            z.writem(None, {"foo": "bar"})
-    except Exception as exc:
-        raise AssertionError("Something broke") from exc
-    else:
-        with DataZip(temp_dir / "test_datazip_meta_readwrite.zip", "r") as z1:
-            assert z1.readm() == {"foo": "bar"}
-
-
-def test_datazip_meta_readwrite_key(temp_dir):
-    """Test write metadata by key and read by key."""
-    try:
-        with DataZip(temp_dir / "test_datazip_meta_readwrite_key.zip", "w") as z:
-            z.writem("foo", "bar")
-    except Exception as exc:
-        raise AssertionError("Something broke") from exc
-    else:
-        with DataZip(temp_dir / "test_datazip_meta_readwrite_key.zip", "r") as z1:
-            assert z1.readm("foo") == "bar"
 
 
 def test_datazip_numpy(temp_dir):
@@ -238,3 +219,101 @@ def test_namedtuple_in_datazip(temp_dir):
         om1 = self.read("om")
         self.read("tup")
         assert isinstance(om1, ObjMeta)
+
+
+def test_datazip_dump_load(temp_dir):
+    """Test creating dump/load with slots."""
+    obj = KlassSlots(
+        foo="foo",
+        _dfs={
+            "a": pd.DataFrame(
+                [[0, 1], [2, 3]],
+                columns=pd.MultiIndex.from_tuples([(0, "a"), (1, "b")]),
+            )
+        },
+        tup=(0, 1),
+        lis=["a", 2],
+    )
+    DataZip.dump(obj, temp_dir / "test_datazip_dump.zip")
+    obj1 = DataZip.load(temp_dir / "test_datazip_dump.zip")
+    assert obj == obj1
+
+
+def test_embedded_state_obj(temp_dir):
+    """Test creating a datazip with a :class:`typing.NamedTuple` in it."""
+    obj = KlassSlots(
+        foo="foo",
+        _dfs={
+            "a": pd.DataFrame(
+                [[0, 1], [2, 3]],
+                columns=pd.MultiIndex.from_tuples([(0, "a"), (1, "b")]),
+            )
+        },
+        tup=(0, 1),
+        lis=["a", 2],
+    )
+    with DataZip(temp_dir / "test_embedded_state_obj.zip", "w") as z0:
+        z0["a"] = obj
+    with DataZip(temp_dir / "test_embedded_state_obj.zip", "r") as z1:
+        obj1 = z1["a"]
+    assert obj == obj1
+
+
+def test_datazip_dump_load_wo_slots(temp_dir):
+    """Test creating dump/load without slots."""
+    obj = TestKlass(
+        foo="foo",
+        _dfs={
+            "a": pd.DataFrame(
+                [[0, 1], [2, 3]],
+                columns=pd.MultiIndex.from_tuples([(0, "a"), (1, "b")]),
+            )
+        },
+        tup=(0, 1),
+        lis=["a", 2],
+    )
+    DataZip.dump(obj, temp_dir / "test_datazip_dump_load_wo_slots.zip")
+    obj1 = DataZip.load(temp_dir / "test_datazip_dump_load_wo_slots.zip")
+    assert obj1 == obj
+    assert DataZip.load(temp_dir / "test_datazip_dump_load_wo_slots.zip") == obj
+
+
+def test_none(temp_dir):
+    """Test that ``None`` can be properly stored."""
+    with DataZip(temp_dir / "test_none.zip", "w") as z0:
+        z0["a"] = None
+        z0["b"] = {"foo": None, "bar": 3}
+    with DataZip(temp_dir / "test_none.zip", "r") as z1:
+        assert z1["a"] is None
+        assert z1["b"]["foo"] is None
+
+
+def test_tuple_in_testklass(temp_dir):
+    """Test preservation of tuples in a class."""
+    obj = TestKlass(a=5, b={"c": (2, 3.5)}, c=5.5)
+    DataZip.dump(obj, temp_dir / "test_tuple_in_testklass.zip")
+    obj1 = DataZip.load(temp_dir / "test_tuple_in_testklass.zip")
+    assert obj1.b["c"] == (2, 3.5)
+    assert obj1.a == 5
+
+
+@pytest.mark.parametrize(
+    "key, expected",
+    [
+        ("tuple", (2, (3.5, (1, 3)))),
+        ("tuple_in_dict", {"foo": (5, 4.5), "bar": 3}),
+        ("set", {1, 2, 4}),
+        ("frozenset", frozenset((1, 2, 4))),
+        ("string", "this"),
+        ("int", 3),
+        ("bool", True),
+        ("complex", {"d": 2 + 3j}),
+    ],
+    ids=idfn,
+)
+def test_special_types(temp_dir, key, expected):
+    """Test preservation of tuples."""
+    with DataZip(temp_dir / f"test_special_types_{key}.zip", "w") as z0:
+        z0[key] = expected
+    with DataZip(temp_dir / f"test_special_types_{key}.zip", "r") as z1:
+        assert z1[key] == expected
