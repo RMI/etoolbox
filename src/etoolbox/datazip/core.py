@@ -280,15 +280,18 @@ class DataZip(ZipFile):
         Examples
         --------
         Create a new test file object and put a datazip in it.
+
         >>> file = Path.home() / "test.zip"
         >>> with DataZip(file=file, mode="w") as z0:
         ...     z0["series"] = pd.Series([1, 2, 4], name="series")
         ...
 
         Create a replacement DataZip.
+
         >>> z1 = DataZip.replace(file, save_old=False)
 
         The replacement has the old content.
+
         >>> z1["series"]
         0    1
         1    2
@@ -296,18 +299,22 @@ class DataZip(ZipFile):
         Name: series, dtype: int64
 
         We can also now add to it.
+
         >>> z1["foo"] = "bar"
 
         While the replacement is open, the old verion still exists.
+
         >>> (Path.home() / "test_old.zip").exists()
         True
 
         Now we close the replacement which deletes the old file.
+
         >>> z1.close()
         >>> (Path.home() / "test_old.zip").exists()
         False
 
         Reopening the replacement, we see it contains all the objects.
+
         >>> z2 = DataZip(file, "r")
 
         >>> z2["series"]
@@ -320,6 +327,7 @@ class DataZip(ZipFile):
         'bar'
 
         And now some final test cleanup.
+
         >>> z2.close()
         >>> file.unlink()
 
