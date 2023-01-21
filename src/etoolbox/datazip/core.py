@@ -1,18 +1,15 @@
 """Code for :class:`.DataZip`."""
 from __future__ import annotations
 
-import getpass
-import json
 import logging
 from collections import defaultdict
-from collections.abc import Generator, Mapping, Sequence
+from collections.abc import Generator
 from contextlib import suppress
 from datetime import datetime
-from functools import partial
 from importlib import import_module
 from io import BytesIO
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any
 from zipfile import ZipFile, ZipInfo
 from zoneinfo import ZoneInfo
 
@@ -20,139 +17,16 @@ import numpy as np
 import pandas as pd
 
 from etoolbox import __version__
-
-LOGGER = logging.getLogger(__name__)
-
-RECIPES: dict[tuple, dict] = {
-    ("datetime", "datetime", None): {
-        "method": "as_str",
-        "attributes": None,
-        "keep": True,
-        "constructor": ("datetime", "datetime", None),
-    },
-    ("utils._libs.tslibs.timestamps", "Timestamp", None): {
-        "method": "as_str",
-        "attributes": None,
-        "keep": True,
-        "constructor": ("utils._libs.tslibs.timestamps", "Timestamp", None),
-    },
-    ("pudl.workspace.datastore", "Datastore", None): {
-        "method": None,
-        "attributes": None,
-        "keep": False,
-        "constructor": ("pudl.workspace.datastore", "Datastore", None),
-    },
-    ("sqlalchemy.engine.base", "Engine", None): {
-        "method": "by_attribute",
-        "attributes": (("url", str),),
-        "keep": True,
-        "constructor": ("sqlalchemy.engine.create", None, "create_engine"),
-    },
-}
-
-
-class DZableObj(Protocol):
-    """Protocol for an object that can be serialized with :class:`DataZip`."""
-
-    def __getstate__(self) -> dict:
-        ...
-
-    def __setstate__(self, state: dict) -> None:
-        ...
-
-
-DZable = (
-    float
-    | int
-    | set
-    | frozenset
-    | Mapping
-    | Sequence
-    | DZableObj
-    | np.ndarray
-    | pd.DataFrame
-    | pd.Series
-    | None
+from etoolbox.datazip._json import json_dumps, json_loads
+from etoolbox.datazip._types import RECIPES, STD_TYPES, DZable, DZableObj
+from etoolbox.datazip._utils import (
+    _get_username,
+    _get_version,
+    _objinfo,
+    obj_from_recipe,
 )
 
-
-class _TypeHintingEncoder(json.JSONEncoder):
-    def encode(self, obj):
-        def hint_tuples(item):
-            if isinstance(item, (str, int, float, type(None))):
-                return item
-            if isinstance(item, tuple):
-                return {"__tuple__": True, "items": [hint_tuples(e) for e in item]}
-            if isinstance(item, dict):
-                return {key: hint_tuples(value) for key, value in item.items()}
-            if isinstance(item, list):
-                return [hint_tuples(e) for e in item]
-            if isinstance(item, set):
-                return {"__set__": True, "items": [hint_tuples(e) for e in item]}
-            if isinstance(item, frozenset):
-                return {"__frozenset__": True, "items": [hint_tuples(e) for e in item]}
-            if isinstance(item, complex):
-                return {"__complex__": True, "real": item.real, "imag": item.imag}
-            return item
-
-        return super().encode(hint_tuples(obj))
-
-
-def _type_hinted_hook(obj: Any) -> Any:
-    if "__tuple__" in obj:
-        return tuple(obj["items"])
-    if "__set__" in obj:
-        return set(obj["items"])
-    if "__frozenset__" in obj:
-        return frozenset(obj["items"])
-    if "__complex__" in obj:
-        return complex(obj["real"], obj["imag"])
-    return obj
-
-
-json_dumps = partial(json.dumps, ensure_ascii=False, indent=4, cls=_TypeHintingEncoder)
-
-
-def obj_from_recipe(
-    thing: Any,
-    module: str,
-    klass: str | None = None,
-    constructor: str | None = None,
-) -> Any:
-    """Recreate an object from a recipe.
-
-    Can be module.klass(thing), module.constructor(thing), or
-    module.klass.constructor(thing).
-
-    Args:
-        thing: what will be passed to ``constructor`` / ``__init__``
-        module: the module that the function or class can be found in
-        klass: The __qualname__ of the class, if needed. If None, then
-            ``constructor`` must be a function.
-        constructor: A constructor method on a class if ``klass`` is specified,
-            otherwise a function that returns the desired object. If None, the
-            class ``klass`` will be created using its ``__init__``.
-
-    """
-    if isinstance(thing, str):
-        thing = thing.replace("'", "").replace('"', "")
-    if module == "builtins" or thing is None:
-        return thing
-
-    if constructor is None and klass is not None:
-        init_or_const = getattr(import_module(module), klass)
-    elif constructor is not None and klass is None:
-        init_or_const = getattr(import_module(module), constructor)
-    elif all((klass, constructor)):
-        init_or_const = getattr(getattr(import_module(module), klass), constructor)
-    else:
-        raise AssertionError("Must specify at least one of `klass` and `constructor`")
-
-    if isinstance(thing, dict):
-        return init_or_const(**thing)
-    if isinstance(thing, (tuple, list)):
-        return init_or_const(*thing)
-    return init_or_const(thing)
+LOGGER = logging.getLogger(__name__)
 
 
 class DataZip(ZipFile):
@@ -167,17 +41,22 @@ class DataZip(ZipFile):
             file: Either the path to the file, or a file-like object.
                 If it is a path, the file will be opened and closed by DataZip.
             mode: The mode can be either read 'r', or write 'w'.
-            recipes: add more customization on how attributes will be stored
-                organized like :py:const:`etoolbox.datazip.core.RECIPES`
+            recipes: add more customization on how objects will be stored that cannot
+                be stored as JSON and where adding ``__getstate__`` and
+                ``__setstate__`` is not feasible. Organized like
+                :py:const:`etoolbox.datazip.core.RECIPES`.
             compression: ZIP_STORED (no compression), ZIP_DEFLATED (requires zlib),
                 ZIP_BZIP2 (requires bz2) or ZIP_LZMA (requires lzma).
 
         Examples
         --------
-        First we can create a
+        First we can create a :class:`.DataZip`. In this case we are using a buffer
+        (:class:`io.BytesIO`) for convenience. In most cases though, ``file`` would be
+        a :class:`pathlib.Path` or :class:`str` that represents a file. In these cases
+        a ``.zip`` extension will be added if it is not there already.
 
         >>> buffer = BytesIO()  # can also be a file-like object
-        >>> with DataZip(buffer, "w") as z0:
+        >>> with DataZip(file=buffer, mode="w") as z0:
         ...     z0["series"] = pd.Series([1, 2, 4], name="series")
         ...     z0["df"] = pd.DataFrame({(0, "a"): [2.4, 8.9], (0, "b"): [3.5, 6.2]})
         ...     z0["foo"] = {
@@ -187,7 +66,7 @@ class DataZip(ZipFile):
         ...     }
         ...
 
-        Getting items from :class:`.DataZip`, like setting them uses standard Python
+        Getting items from :class:`.DataZip`, like setting them, uses standard Python
         subscripting.
 
         For :class:`pandas.DataFrame`, it stores them as ``parquet`` and preserves
@@ -231,10 +110,21 @@ class DataZip(ZipFile):
         >>> len(z1)
         3
 
-        When not used with a context manager, it should close itself automatically
-        but it's not a bad idea to make sure.
+        When not used with a context manager, :class:`.DataZip` should close itself
+        automatically but it's not a bad idea to make sure.
 
         >>> z1.close()
+
+        A :class:`.DataZip` is a write-once, read-many affair because of the way
+        ``zip`` files work. Appending to a :class:`.DataZip` effectively means copying
+        everything.
+
+        >>> buffer1 = BytesIO()
+        >>> with DataZip(buffer, "r") as zold, DataZip(buffer1, "w") as znew:
+        ...     for k, v in zold.items():
+        ...         znew[k] = v
+        ...     znew["new"] = "foo"
+        ...
 
         """
         if mode in ("a", "x"):
@@ -269,13 +159,12 @@ class DataZip(ZipFile):
                 "other_meta",
             ):
                 setattr(self, f"_{attr}", md.get(attr, self._json_get(attr)))
-            setattr(
-                self,
-                "_no_pqt_cols",
-                md.get("no_pqt_cols", md.get("bad_cols", self._json_get("bad_cols"))),
+            self._no_pqt_cols = md.get(
+                "no_pqt_cols", md.get("bad_cols", self._json_get("bad_cols"))
             )
             with suppress(KeyError):
                 self._recipes = {tuple(k): v for k, v in md["recipes"]}
+        self._delete_on_close = None
 
     @staticmethod
     def dump(obj: DZableObj, file: Path | str | BytesIO, **kwargs) -> None:
@@ -319,8 +208,10 @@ class DataZip(ZipFile):
                 "To dump an object, it must implement __setstate__ and __getstate__."
             )
         x = obj.__getstate__()
+        if not isinstance(x, dict):
+            raise TypeError("__getstate__ does not return a dict.")
         with DataZip(file, "w", **kwargs) as self:
-            self._obj_meta["self"] = self._objinfo(obj)
+            self._obj_meta["self"] = _objinfo(obj)
             self._other_meta.update(
                 {
                     "__obj_version__": _get_version(obj),
@@ -371,6 +262,97 @@ class DataZip(ZipFile):
             )
         return obj
 
+    @classmethod
+    def replace(cls, file_or_new_buffer, old_buffer=None, save_old=False):
+        """Replace an old :class:`DataZip` with an editable new one.
+
+        Args:
+            file_or_new_buffer: Either the path to the file to be replaced
+                or the new buffer.
+            old_buffer: only required if ``file_or_new_buffer`` is a buffer.
+            save_old: if True, the old :class:`DataZip` will be
+                saved with "_old" appended, if False it will be
+                deleted when the new :class:`DataZip` is closed.
+
+        Returns:
+            New editable :class:`DataZip` with old data copied into it.
+
+        Examples
+        --------
+        Create a new test file object and put a datazip in it.
+        >>> file = Path.home() / "test.zip"
+        >>> with DataZip(file=file, mode="w") as z0:
+        ...     z0["series"] = pd.Series([1, 2, 4], name="series")
+        ...
+
+        Create a replacement DataZip.
+        >>> z1 = DataZip.replace(file, save_old=False)
+
+        The replacement has the old content.
+        >>> z1["series"]
+        0    1
+        1    2
+        2    4
+        Name: series, dtype: int64
+
+        We can also now add to it.
+        >>> z1["foo"] = "bar"
+
+        While the replacement is open, the old verion still exists.
+        >>> (Path.home() / "test_old.zip").exists()
+        True
+
+        Now we close the replacement which deletes the old file.
+        >>> z1.close()
+        >>> (Path.home() / "test_old.zip").exists()
+        False
+
+        Reopening the replacement, we see it contains all the objects.
+        >>> z2 = DataZip(file, "r")
+
+        >>> z2["series"]
+        0    1
+        1    2
+        2    4
+        Name: series, dtype: int64
+
+        >>> z1["foo"]
+        'bar'
+
+        And now some final test cleanup.
+        >>> z2.close()
+        >>> file.unlink()
+
+        """
+        if isinstance(file_or_new_buffer, BytesIO) and not isinstance(
+            old_buffer, BytesIO
+        ):
+            raise TypeError(
+                "If file_or_new_buffer is BytesIO, then old_buffer must be as well."
+            )
+
+        _to_delete = None
+        if isinstance(file_or_new_buffer, str):
+            file_or_new_buffer = Path(file_or_new_buffer)
+
+        if isinstance(file_or_new_buffer, Path):
+            file_or_new_buffer = file_or_new_buffer.with_suffix(".zip")
+            old_buffer = Path(
+                str(file_or_new_buffer).removesuffix(".zip") + "_old"
+            ).with_suffix(".zip")
+            file_or_new_buffer.rename(old_buffer)
+            if not save_old:
+                _to_delete = old_buffer
+
+        self = cls(file_or_new_buffer, "w")
+        with DataZip(old_buffer, "r") as z:
+            for k, v in z.items():
+                self[k] = v
+
+        self._delete_on_close = _to_delete
+
+        return self
+
     def read(self, name: str | ZipInfo, pwd: bytes | None = ..., super_=False) -> Any:
         """Return obj or bytes for name."""
         stem, _, suffix = name.partition(".")
@@ -386,9 +368,10 @@ class DataZip(ZipFile):
         if suffix == "npy" or f"{stem}.npy" in self.namelist():
             return np.load(BytesIO(super().read(stem + ".npy")))
         if stem in self._attributes:
-            return obj_from_recipe(
-                self._attributes[stem], *self._obj_meta.get(stem, (None, None, None))
-            )
+            out = self._attributes[stem]
+            if stem not in self._obj_meta:
+                return out
+            return obj_from_recipe(out, *self._obj_meta[stem])
         return super().read(name)
 
     def read_dfs(self) -> Generator[tuple[str, pd.DataFrame | pd.Series]]:
@@ -411,10 +394,7 @@ class DataZip(ZipFile):
             raise FileExistsError(f"{name} already in {self.filename}")
         if isinstance(data, (pd.DataFrame, pd.Series)):
             return self._write_df(name, data, **kwargs)
-        if isinstance(
-            data,
-            (complex, dict, frozenset, float, int, list, tuple, set, bool, type(None)),
-        ):
+        if isinstance(data, STD_TYPES) and not isinstance(data, pd.Timestamp):
             try:
                 return self._write_jsonable(name, data)
             except TypeError:
@@ -424,11 +404,12 @@ class DataZip(ZipFile):
         if isinstance(data, np.ndarray):
             return self._write_numpy(name, data, **kwargs)
         if hasattr(data, "__getstate__") and hasattr(data, "__setstate__"):
-            DataZip.dump(data, temp := BytesIO())
-            self.writestr(f"{name}.zip", temp.getvalue())
-            _ = self._contents[name]
-            return True
-        if (obj_info := self._objinfo(data)) in self.recipes:
+            with suppress(TypeError):
+                DataZip.dump(data, temp := BytesIO())
+                self.writestr(f"{name}.zip", temp.getvalue())
+                _ = self._contents[name]
+                return True
+        if (obj_info := _objinfo(data)) in self.recipes:
             return self._write_using_recipe(name, data, obj_info)
         return self._write_as_str(name, data, **kwargs)
 
@@ -455,6 +436,8 @@ class DataZip(ZipFile):
                 ),
             )
         super().close()
+        if isinstance(self._delete_on_close, Path):
+            self._delete_on_close.unlink()
 
     def __contains__(self, item) -> bool:
         """Provide ``in`` check."""
@@ -475,6 +458,11 @@ class DataZip(ZipFile):
     def keys(self):
         """Set of names in DataZip as if it was a dict."""
         return self._contents.keys()
+
+    def items(self):
+        """Like a :meth:`dict.items`."""
+        for k in self._contents.keys():
+            yield k, self[k]
 
     @property
     def recipes(self) -> dict[tuple, dict]:
@@ -530,9 +518,7 @@ class DataZip(ZipFile):
     def _json_get(self, *args):
         for arg in args:
             with suppress(Exception):
-                return json.loads(
-                    super().read(f"{arg}.json"), object_hook=_type_hinted_hook
-                )
+                return json_loads(super().read(f"{arg}.json"))
         return {}
 
     def _recursive_read(self, stem: str) -> list | dict:
@@ -579,7 +565,7 @@ class DataZip(ZipFile):
             item_iter = enumerate(data)
         else:
             raise TypeError(f"{name} is a {data.__class__} which is not supported")
-        self._obj_meta.update({name: self._objinfo(data)})
+        self._obj_meta.update({name: _objinfo(data)})
         all_good = []
         for k, v in item_iter:
             good = self.writed(f"{name}<||>{k}", v)
@@ -591,7 +577,7 @@ class DataZip(ZipFile):
     def _write_numpy(self, name: str, data: np.ndarray, **kwargs) -> bool:
         np.save(temp := BytesIO(), data, allow_pickle=False)
         self.writestr(f"{name}.npy", temp.getvalue())
-        self._obj_meta.update({name: self._objinfo(data)})
+        self._obj_meta.update({name: _objinfo(data)})
         _ = self._contents[name]
         return True
 
@@ -603,11 +589,8 @@ class DataZip(ZipFile):
     ) -> bool:
         """Write a dict in the ZIP as json."""
         to_write = obj
-        if hasattr(obj, "_asdict"):
-            to_write = obj._asdict()
         _ = json_dumps(to_write)
         self._attributes.update({name: to_write})
-        self._obj_meta.update({name: self._objinfo(obj)})
         _ = self._contents[name]
         return True
 
@@ -622,7 +605,7 @@ class DataZip(ZipFile):
             }
         elif recipe["method"] == "as_str":
             to_write = str(data)
-        _ = json.dumps(to_write, ensure_ascii=False)
+        _ = json_dumps(to_write)
         self._attributes.update({name: to_write})
         self._obj_meta.update({name: recipe["constructor"]})
         _ = self._contents[name]
@@ -630,7 +613,7 @@ class DataZip(ZipFile):
 
     def _write_as_str(self, name: str, obj: Any, **kwargs) -> bool:
         """Write an object as whatever str is in the parentheses of its repr."""
-        obj_info = self._objinfo(obj)
+        obj_info = _objinfo(obj)
         self._attributes.update(
             {name: repr(obj).removeprefix(obj_info[1] + "(").removesuffix(")")}
         )
@@ -640,7 +623,7 @@ class DataZip(ZipFile):
 
     def _write_df(self, name: str, df: pd.DataFrame | pd.Series, **kwargs) -> bool:
         """Write a df in the ZIP as parquet."""
-        self._obj_meta.update({name: self._objinfo(df)})
+        self._obj_meta.update({name: _objinfo(df)})
         if isinstance(df, pd.Series):
             df = df.to_frame(name=name)
         try:
@@ -654,35 +637,10 @@ class DataZip(ZipFile):
     def _write_image(self, name: str, data: Any, **kwargs) -> bool:
         data.write_image(temp := BytesIO(), format="pdf")
         self.writestr(f"{name}.pdf", temp.getvalue())
-        self._obj_meta.update({name: self._objinfo(data)})
+        self._obj_meta.update({name: _objinfo(data)})
         _ = self._contents[name]
         return True
 
     @staticmethod
     def _str_cols(df: pd.DataFrame, *args) -> pd.DataFrame:
         return df.set_axis(list(map(str, range(df.shape[1]))), axis="columns")
-
-    @staticmethod
-    def _objinfo(obj: Any, constructor=None) -> tuple[str, ...]:
-        return obj.__class__.__module__, obj.__class__.__qualname__, constructor
-
-
-def _get_version(obj: Any) -> str:
-    mod = import_module(obj.__class__.__module__.partition(".")[0])
-    for v_attr in ("__version__", "version", "release"):
-        if hasattr(mod, v_attr):
-            return getattr(mod, v_attr)
-    return "unknown"
-
-
-def _get_username():
-    try:
-        return getpass.getuser()
-    except ModuleNotFoundError as exc0:
-        import os
-
-        try:
-            return os.getlogin()
-        except Exception as exc1:
-            LOGGER.error("No username %r from %r", exc1, exc0)
-            return "unknown"

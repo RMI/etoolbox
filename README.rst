@@ -27,7 +27,8 @@ Desciption
 
 *  datazip
 
-   *  DataZip - an extension of
+   *  `DataZip <https://rmi.github.io/etoolbox/autoapi/etoolbox/datazip/core/index.html#etoolbox.datazip.core.DataZip>`_
+      - an extension of
       `ZipFile <https://docs.python.org/3/library/zipfile.html#zipfile-objects>`_ with
       a couple useful features:
 

@@ -49,6 +49,12 @@ What's New?
    serializing a single Python object, these are designed to be similar to how
    :func:`pickle.dump` and :func:`pickle.load` work.
 *  Removing :class:`.IOWrapper`.
+*  Added a :meth:`.DataZip.replace` that copies the contents of an old
+   :class:`.DataZip` into a new copy of it after which you can add to it.
+*  Extended JSON encoding / decoding to process an expanded set of builtins and
+   standard library objects including :class:`tuple`, :class:`set`, :class:`frozenset`,
+   :class:`complex`, :class:`typing.NamedTuple`, :class:`datetime.datetime`,
+   and :class:`pathlib.Path`.
 
 
 Bug Fixes
@@ -56,6 +62,8 @@ Bug Fixes
 *  Fixed an issue where a single column :class:`pandas.DataFrame` was recreated
    as a :class:`pandas.Series`. Now this should be backwards compatible by applying
    :class:`pandas.DataFrame.squeeze` if object metadata is not available.
+*  Fixed a bug that prevented certain kinds of objects from working properly under
+   3.11.
 
 
 Known Issues

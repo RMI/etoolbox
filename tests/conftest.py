@@ -74,6 +74,8 @@ def test_dir() -> Path:
 def temp_dir(test_dir) -> Path:
     """Return the path to a temp directory that gets deleted on teardown."""
     out = test_dir / "temp"
+    if out.exists():
+        shutil.rmtree(out)
     out.mkdir(exist_ok=True)
     yield out
     shutil.rmtree(out)
