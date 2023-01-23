@@ -523,7 +523,6 @@ class DataZip(ZipFile):
     @staticmethod
     def default_getstate(obj):
         """Called if no ``__getstate__`` implementation."""
-
         def slots_dict(_slots):
             sout = {}
             for k in _slots:
