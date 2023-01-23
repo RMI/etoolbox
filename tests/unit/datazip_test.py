@@ -227,7 +227,6 @@ def test_tuple_in_testklass(temp_dir):
 
 def test_namedtuple_fallback(temp_dir):
     """Test named tuple fallback."""
-
     class NTF(NamedTuple):
         a: int
         b: int
