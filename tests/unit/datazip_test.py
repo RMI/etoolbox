@@ -17,13 +17,7 @@ from etoolbox.datazip._test_classes import (
     _TestKlassSlotsCore,
     _TestKlassSlotsDict,
 )
-
-
-def idfn(val):
-    """ID function for pytest parameterization."""
-    if isinstance(val, float):
-        return None
-    return str(val)
+from etoolbox.utils.testing import assert_equal, idfn
 
 
 def test_dfs_to_from_zip(temp_dir):
@@ -307,22 +301,7 @@ def test_types(temp_dir, key, expected):
             raise AssertionError(
                 f"test_types for {key} {type(read)} != {type(expected)}"
             )
-        _eq(read, expected)
-
-
-def _eq(read, expected):
-    if isinstance(expected, pd.Series):
-        pd.testing.assert_series_equal(read, expected)
-    elif isinstance(expected, pd.DataFrame):
-        pd.testing.assert_frame_equal(read, expected)
-    elif isinstance(expected, (list, tuple)):
-        for v0, v1 in zip(read, expected):
-            _eq(v0, v1)
-    elif isinstance(expected, dict):
-        for v0, v1 in zip(read.values(), expected.values()):
-            _eq(v0, v1)
-    else:
-        assert np.all(read == expected)
+        assert_equal(read, expected)
 
 
 @pytest.mark.parametrize("save_old", [True, False], ids=idfn)

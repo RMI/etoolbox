@@ -59,6 +59,7 @@ What's New?
    standard library, and other common objects including :class:`tuple`, :class:`set`,
    :class:`frozenset`, :class:`complex`, :class:`typing.NamedTuple`,
    :class:`datetime.datetime`, :class:`pathlib.Path`, and :class:`pandas.Timestamp`.
+*  Adding centralized testing helpers.
 
 
 Bug Fixes
