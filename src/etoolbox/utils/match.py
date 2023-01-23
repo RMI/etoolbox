@@ -197,7 +197,6 @@ class InSet(set):
     ...         print("mixed")
     ...
     cool
-
     """
 
     def __eq__(self, elem):

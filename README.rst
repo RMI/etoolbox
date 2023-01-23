@@ -64,7 +64,7 @@ To create an environment for eToolbox, navigate to the repo folder in terminal a
 .. code-block:: bash
 
    mamba update mamba
-   mamba env create --name etoolbox --file environment.yml
+   mamba env create --name etb --file environment.yml
 
 If you get a ``CondaValueError`` that the prefix already exists, that means an
 environment with the same name already exists. You must remove the old one before
@@ -73,5 +73,5 @@ creating the new one:
 .. code-block:: bash
 
    mamba update mamba
-   mamba env remove --name etoolbox
-   mamba env create --name etoolbox --file environment.yml
+   mamba env remove --name etb
+   mamba env create --name etb --file environment.yml

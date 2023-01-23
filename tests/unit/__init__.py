@@ -1,1 +1,1 @@
-"""Unit tests in this directory test individual functions, classes, and methods."""
+"""Unit tests in this directory test functions, classes, and methods."""

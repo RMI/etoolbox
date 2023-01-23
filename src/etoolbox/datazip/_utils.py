@@ -31,7 +31,6 @@ def obj_from_recipe(
         constructor: A constructor method on a class if ``klass`` is specified,
             otherwise a function that returns the desired object. If None, the
             class ``klass`` will be created using its ``__init__``.
-
     """
     if klass is None and constructor is None:
         raise AssertionError("Must specify at least one of `klass` and `constructor`")
