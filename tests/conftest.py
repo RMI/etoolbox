@@ -1,4 +1,7 @@
-"""PyTest configuration module. Defines useful fixtures, command line args."""
+"""PyTest configuration module.
+
+Defines useful fixtures, command line args.
+"""
 import logging
 import shutil
 from pathlib import Path
@@ -6,7 +9,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from etoolbox.datazip.test_classes import KlassSlots, TestKlass
+from etoolbox.datazip._test_classes import _KlassSlots, _TestKlass
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +29,7 @@ def df_dict() -> dict:
 @pytest.fixture
 def klass_w_slot(df_dict):
     """Generic class that uses slots."""
-    obj = KlassSlots()
+    obj = _KlassSlots()
     obj.foo = df_dict["a"]
     obj.tup = (1, 2)
     obj.lis = (3, 4)
@@ -37,7 +40,7 @@ def klass_w_slot(df_dict):
 @pytest.fixture
 def klass_wo_slot(df_dict):
     """Generic class that does not use slots."""
-    obj = TestKlass()
+    obj = _TestKlass()
     obj.foo = df_dict["a"]
     obj._dfs = df_dict
     return obj
@@ -46,9 +49,9 @@ def klass_wo_slot(df_dict):
 def pytest_addoption(parser: pytest.Parser) -> None:
     """Add package-specific command line options to pytest.
 
-    This is slightly magical -- pytest has a hook that will run this function
-    automatically, adding any options defined here to the internal pytest options that
-    already exist.
+    This is slightly magical -- pytest has a hook that will run this
+    function automatically, adding any options defined here to the
+    internal pytest options that already exist.
     """
     parser.addoption(
         "--sandbox",

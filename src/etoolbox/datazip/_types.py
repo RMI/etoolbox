@@ -10,18 +10,6 @@ import numpy as np
 import pandas as pd
 
 RECIPES: dict[tuple, dict] = {
-    ("pandas", "Timestamp", None): {
-        "method": "as_str",
-        "attributes": None,
-        "keep": True,
-        "constructor": ("pandas", "Timestamp", None),
-    },
-    ("numpy", "datetime64", None): {
-        "method": "as_str",
-        "attributes": None,
-        "keep": True,
-        "constructor": ("numpy", "datetime64", None),
-    },
     ("pudl.workspace.datastore", "Datastore", None): {
         "method": None,
         "attributes": None,
@@ -40,10 +28,10 @@ RECIPES: dict[tuple, dict] = {
 class DZableObj(Protocol):
     """Protocol for an object that can be serialized with :class:`DataZip`."""
 
-    def __getstate__(self) -> dict:
+    def __getstate__(self) -> dict | tuple[dict | None, dict]:
         ...
 
-    def __setstate__(self, state: dict) -> None:
+    def __setstate__(self, state: dict | tuple[dict | None, dict]) -> None:
         ...
 
 

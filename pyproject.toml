@@ -28,6 +28,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "black[jupyter] >= 22,<23",
+    "docformatter>=1.5,<1.6",
     "build>=0.9",
     "isort>=5.0,<5.12",
     "tox>=3.20,<4.4",
@@ -83,12 +84,16 @@ skips = ["B101"]
 
 [tool.black]
 line-length = 88
-target-version = ["py39", "py310", "py311"]
+target-version = ["py310", "py311"]
 include = "\\.pyi?$"
 
 [tool.doc8]
 max-line-length = 88
 ignore-path = "docs/_build"
+
+[tool.docformatter]
+wrap-summaries = 88
+wrap-descriptions = 88
 
 [tool.flake8]
 extend-ignore = [

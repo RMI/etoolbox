@@ -43,18 +43,22 @@ What's New?
    :class:`.DataZip` using :meth:`.DataZip.__contains__`, i.e. using Python's ``in``.
 *  Added support for subscript-based, getting and setting data in :class:`.DataZip`.
 *  Custom Python objects can be serialized with :class:`.DataZip` if they implement
-   ``__getstate__`` and ``__setstate__``. This replaces the use of ``to_file`` and
-   ``from_file`` by :class:`.DataZip`. :class:`.IOMixin` has been updated accordingly.
+   ``__getstate__`` and ``__setstate__``, or can be serialized using the default
+   logic described in :meth:`object.__getstate__`. That default logic is now
+   implemented in :meth:`.DataZip.default_getstate` and
+   :meth:`.DataZip.default_setstate`. This replaces the use of ``to_file``
+   and ``from_file`` by :class:`.DataZip`. :class:`.IOMixin` has been updated
+   accordingly.
 *  Added static methods :meth:`.DataZip.dump` and :meth:`.DataZip.load` for
    serializing a single Python object, these are designed to be similar to how
    :func:`pickle.dump` and :func:`pickle.load` work.
 *  Removing :class:`.IOWrapper`.
 *  Added a :meth:`.DataZip.replace` that copies the contents of an old
    :class:`.DataZip` into a new copy of it after which you can add to it.
-*  Extended JSON encoding / decoding to process an expanded set of builtins and
-   standard library objects including :class:`tuple`, :class:`set`, :class:`frozenset`,
-   :class:`complex`, :class:`typing.NamedTuple`, :class:`datetime.datetime`,
-   and :class:`pathlib.Path`.
+*  Extended JSON encoding / decoding to process an expanded set of builtins,
+   standard library, and other common objects including :class:`tuple`, :class:`set`,
+   :class:`frozenset`, :class:`complex`, :class:`typing.NamedTuple`,
+   :class:`datetime.datetime`, :class:`pathlib.Path`, and :class:`pandas.Timestamp`.
 
 
 Bug Fixes
@@ -64,6 +68,8 @@ Bug Fixes
    :class:`pandas.DataFrame.squeeze` if object metadata is not available.
 *  Fixed a bug that prevented certain kinds of objects from working properly under
    3.11.
+*  Fixed an issue where the name for a :class:`pandas.Series` might get mangled or
+   changed.
 
 
 Known Issues

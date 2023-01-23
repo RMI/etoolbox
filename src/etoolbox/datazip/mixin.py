@@ -6,7 +6,6 @@ and recovered by inheriting this mixin.
 from __future__ import annotations
 
 import logging
-from contextlib import suppress
 from io import BytesIO
 from pathlib import Path
 from typing import Any
@@ -92,8 +91,6 @@ class IOMixin:
 
     >>> dict(inst.stuff)
     {'bar': 3, 'foo': None}
-
-
     """
 
     # in case child uses __slots__
@@ -116,21 +113,3 @@ class IOMixin:
         DataZip.dump(
             self, path, compression=compression, clobber=clobber, recipes=self.recipes
         )
-
-    def __setstate__(self, state):
-        if hasattr(self, "__dict__"):
-            setattr(self, "__dict__", state)
-        else:
-            for k, v in state.items():
-                with suppress(AttributeError):
-                    setattr(self, k, v)
-
-    def __getstate__(self):
-        state = {}
-        if hasattr(self, "__slots__"):
-            for k in getattr(self, "__slots__"):
-                with suppress(AttributeError):
-                    state[k] = getattr(self, k)
-        if hasattr(self, "__dict__"):
-            state.update(getattr(self, "__dict__"))
-        return state

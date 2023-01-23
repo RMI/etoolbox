@@ -9,6 +9,8 @@ from pathlib import Path
 from types import NoneType
 from typing import Any
 
+import pandas as pd
+
 from etoolbox.datazip._utils import _objinfo, _quote_strip
 
 LOGGER = logging.getLogger(__name__)
@@ -37,6 +39,8 @@ class _TypeHintingEncoder(json.JSONEncoder):
                 return {"__frozenset__": True, "items": [hint_types(e) for e in item]}
             if isinstance(item, complex):
                 return {"__complex__": True, "real": item.real, "imag": item.imag}
+            if isinstance(item, pd.Timestamp):
+                return {"__pdTimestamp__": True, "items": str(item)}
             if isinstance(item, datetime):
                 return {"__datetime__": True, "items": str(item)}
             if isinstance(item, Path):
@@ -57,6 +61,8 @@ def _type_hinted_hook(obj: Any) -> Any:
         return complex(obj["real"], obj["imag"])
     if "__datetime__" in obj:
         return datetime.fromisoformat(_quote_strip(obj["items"]))
+    if "__pdTimestamp__" in obj:
+        return pd.Timestamp(_quote_strip(obj["items"]))
     if "__nt__" in obj:
         m, q, _ = obj["objinfo"]
         try:

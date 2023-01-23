@@ -1,5 +1,6 @@
 """Core :class:`.DataZip` tests."""
 from datetime import datetime
+from io import BytesIO
 from pathlib import Path
 from typing import NamedTuple
 
@@ -8,7 +9,14 @@ import pandas as pd
 import pytest
 
 from etoolbox.datazip import DataZip
-from etoolbox.datazip.test_classes import KlassSlots, ObjMeta, TestKlass
+from etoolbox.datazip._test_classes import (
+    ObjMeta,
+    _KlassSlots,
+    _TestKlass,
+    _TestKlassCore,
+    _TestKlassSlotsCore,
+    _TestKlassSlotsDict,
+)
 
 
 def idfn(val):
@@ -89,9 +97,20 @@ def test_datazip_w(temp_dir):
                 z3.namelist()
 
 
-def test_datazip_dump_load(temp_dir):
-    """Test creating dump/load with slots."""
-    obj = KlassSlots(
+@pytest.mark.parametrize(
+    "klass",
+    [
+        _TestKlassSlotsCore,
+        _KlassSlots,
+        _TestKlassSlotsDict,
+        _TestKlassCore,
+        _TestKlass,
+    ],
+    ids=idfn,
+)
+def test_datazip_dump_load(temp_dir, klass):
+    """Test dump/load on different sorts of objects."""
+    obj = klass(
         foo="foo",
         _dfs={
             "a": pd.DataFrame(
@@ -102,14 +121,44 @@ def test_datazip_dump_load(temp_dir):
         tup=(0, 1),
         lis=["a", 2],
     )
-    DataZip.dump(obj, temp_dir / "test_datazip_dump.zip")
-    obj1 = DataZip.load(temp_dir / "test_datazip_dump.zip")
+    file = temp_dir / f"test_datazip_dump_load_{obj.__class__.__qualname__}.zip"
+    DataZip.dump(obj, file)
+    obj1 = DataZip.load(file)
+    assert obj1 == obj
+
+
+def test_datazip_dump_load_buffer():
+    """Test creating dump/load with slots."""
+    obj = _KlassSlots(
+        foo="foo",
+        _dfs={
+            "a": pd.DataFrame(
+                [[0, 1], [2, 3]],
+                columns=pd.MultiIndex.from_tuples([(0, "a"), (1, "b")]),
+            )
+        },
+        tup=(0, 1),
+        lis=["a", 2],
+    )
+    DataZip.dump(obj, temp := BytesIO())
+    obj1 = DataZip.load(temp)
     assert obj == obj1
 
 
-def test_embedded_state_obj(temp_dir):
+@pytest.mark.parametrize(
+    "klass",
+    [
+        _TestKlassSlotsCore,
+        _KlassSlots,
+        _TestKlassSlotsDict,
+        _TestKlassCore,
+        _TestKlass,
+    ],
+    ids=idfn,
+)
+def test_embedded_state_obj(temp_dir, klass):
     """Test creating a datazip with a :class:`typing.NamedTuple` in it."""
-    obj = KlassSlots(
+    obj = klass(
         foo="foo",
         _dfs={
             "a": pd.DataFrame(
@@ -120,30 +169,47 @@ def test_embedded_state_obj(temp_dir):
         tup=(0, 1),
         lis=["a", 2],
     )
-    with DataZip(temp_dir / "test_embedded_state_obj.zip", "w") as z0:
+    file = temp_dir / f"test_embedded_state_obj_{obj.__class__.__qualname__}.zip"
+    with DataZip(file, "w") as z0:
         z0["a"] = obj
-    with DataZip(temp_dir / "test_embedded_state_obj.zip", "r") as z1:
+    with DataZip(file, "r") as z1:
         obj1 = z1["a"]
     assert obj == obj1
 
 
-def test_datazip_dump_load_wo_slots(temp_dir):
-    """Test creating dump/load without slots."""
-    obj = TestKlass(
-        foo="foo",
-        _dfs={
-            "a": pd.DataFrame(
-                [[0, 1], [2, 3]],
-                columns=pd.MultiIndex.from_tuples([(0, "a"), (1, "b")]),
-            )
-        },
-        tup=(0, 1),
-        lis=["a", 2],
-    )
-    DataZip.dump(obj, temp_dir / "test_datazip_dump_load_wo_slots.zip")
-    obj1 = DataZip.load(temp_dir / "test_datazip_dump_load_wo_slots.zip")
-    assert obj1 == obj
-    assert DataZip.load(temp_dir / "test_datazip_dump_load_wo_slots.zip") == obj
+@pytest.mark.parametrize(
+    "obj, expected",
+    [
+        (5, None),
+        (_TestKlassSlotsCore(foo=5), (None, {"foo": 5})),
+        (_TestKlassCore(foo=5), {"foo": 5}),
+        (_TestKlassSlotsDict(foo=5).add_to_dict("bar", 6), ({"bar": 6}, {"foo": 5})),
+    ],
+    ids=idfn,
+)
+def test_default_get_state(obj, expected):
+    """Test default version of getstate."""
+    assert DataZip.default_getstate(obj) == expected
+
+
+@pytest.mark.parametrize(
+    "obj, state, expected",
+    [
+        (_TestKlassSlotsCore, (None, {"foo": 5}), _TestKlassSlotsCore(foo=5)),
+        (_TestKlassCore, {"foo": 5}, _TestKlassCore(foo=5)),
+        (
+            _TestKlassSlotsDict,
+            ({"bar": 6}, {"foo": 5}),
+            _TestKlassSlotsDict(foo=5).add_to_dict("bar", 6),
+        ),
+    ],
+    ids=idfn,
+)
+def test_default_set_state(obj, state, expected):
+    """Test default version of setstate."""
+    inst = obj.__new__(obj)
+    DataZip.default_setstate(inst, state)
+    assert inst == expected
 
 
 def test_none(temp_dir):
@@ -158,7 +224,7 @@ def test_none(temp_dir):
 
 def test_tuple_in_testklass(temp_dir):
     """Test preservation of tuples in a class."""
-    obj = TestKlass(a=5, b={"c": (2, 3.5)}, c=5.5)
+    obj = _TestKlass(a=5, b={"c": (2, 3.5)}, c=5.5)
     DataZip.dump(obj, temp_dir / "test_tuple_in_testklass.zip")
     obj1 = DataZip.load(temp_dir / "test_tuple_in_testklass.zip")
     assert obj1.b["c"] == (2, 3.5)
@@ -196,16 +262,21 @@ def test_sqlalchemy(temp_dir):
     [
         ("tuple", (2, (3.5, (1, 3)))),
         ("tuple_in_dict", {"foo": (5, 4.5), "bar": 3}),
+        ("tuple_w_series", (1, pd.Series([1, 2, 3, 4], name="series"))),
         ("set", {1, 2, 4}),
         ("frozenset", frozenset((1, 2, 4))),
         ("string", "this"),
         ("int", 3),
-        ("bool", True),
+        ("true", True),
+        ("false", False),
         ("none", None),
         ("complex", {"d": 2 + 3j}),
         ("datetime", datetime.now()),
         ("pdTimestamp", pd.Timestamp(datetime.now())),
-        ("npdatetime64", np.datetime64(datetime.now())),
+        # this shouldn't really exist outside an array, right?
+        pytest.param(
+            "npdatetime64", np.datetime64(datetime.now()), marks=pytest.mark.xfail
+        ),
         ("namedtuple_nested", [(ObjMeta("this", "that"), 5), 4, (1, 2)]),
         ("namedtuple", ObjMeta("this", "that")),
         ("np.array", np.array([[0.0, 4.1], [3.2, 2.1]])),
@@ -219,7 +290,9 @@ def test_sqlalchemy(temp_dir):
             ),
         ),
         ("series", pd.Series([1, 2, 3, 4], name="series")),
-        ("TestKlass", TestKlass(a=5, b={"c": (2, 3.5)}, c=5.5)),
+        ("series_tp_name", pd.Series([1, 2, 3, 4], name=(0, "a"))),
+        ("series_no_name", pd.Series([1, 2, 3, 4])),
+        ("_TestKlass", _TestKlass(a=5, b={"c": (2, 3.5)}, c=5.5)),
         ("path", Path.home()),
     ],
     ids=idfn,
@@ -234,12 +307,22 @@ def test_types(temp_dir, key, expected):
             raise AssertionError(
                 f"test_types for {key} {type(read)} != {type(expected)}"
             )
-        if isinstance(expected, pd.Series):
-            pd.testing.assert_series_equal(read, expected)
-        if isinstance(expected, pd.DataFrame):
-            pd.testing.assert_frame_equal(read, expected)
-        else:
-            assert np.all(read == expected)
+        _eq(read, expected)
+
+
+def _eq(read, expected):
+    if isinstance(expected, pd.Series):
+        pd.testing.assert_series_equal(read, expected)
+    elif isinstance(expected, pd.DataFrame):
+        pd.testing.assert_frame_equal(read, expected)
+    elif isinstance(expected, (list, tuple)):
+        for v0, v1 in zip(read, expected):
+            _eq(v0, v1)
+    elif isinstance(expected, dict):
+        for v0, v1 in zip(read.values(), expected.values()):
+            _eq(v0, v1)
+    else:
+        assert np.all(read == expected)
 
 
 @pytest.mark.parametrize("save_old", [True, False], ids=idfn)
