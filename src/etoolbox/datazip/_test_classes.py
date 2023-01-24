@@ -49,6 +49,7 @@ def _eq_func(self, other):
 
 
 class _TestKlassSlotsCore:
+    """Test class with slots w/o get/set."""
 
     __slots__ = ("foo", "_dfs", "tup", "lis")
 
@@ -68,7 +69,7 @@ class _TestKlassSlotsCore:
 
 
 class _KlassSlots(_TestKlassSlotsCore):
-    """Generic class with slots for testing."""
+    """Generic class with slots and get/set."""
 
     __slots__ = ("foo", "_dfs", "tup", "lis")
 
@@ -87,6 +88,7 @@ class _KlassSlots(_TestKlassSlotsCore):
 
 
 class _TestKlassSlotsDict:
+    """Test class with slots and __dict__ w/o get/set."""
 
     __slots__ = (
         "foo",
@@ -113,7 +115,7 @@ class _TestKlassSlotsDict:
 
 
 class _TestKlassCore:
-    """Generic class w/o slots for testing."""
+    """Generic class w/o slots w/o get/set."""
 
     def __init__(self, **kwargs):
         """Init."""
@@ -131,7 +133,7 @@ class _TestKlassCore:
 
 
 class _TestKlass(_TestKlassCore):
-    """Generic class w/o slots for testing."""
+    """Generic class w/o slots with get/set."""
 
     def __init__(self, **kwargs):
         """Init."""
