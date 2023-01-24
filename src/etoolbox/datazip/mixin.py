@@ -1,7 +1,7 @@
 """A mixin for adding :class:`.DataZip` functionality to another class.
 
-The goal is to build this out so that most custom classes can be stored
-and recovered by inheriting this mixin.
+The goal is to build this out so that most custom classes can be stored and recovered by
+inheriting this mixin.
 """
 from __future__ import annotations
 
