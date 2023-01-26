@@ -31,7 +31,7 @@ dev = [
     "docformatter>=1.5,<1.6",
     "build>=0.9",
     "isort>=5.0,<5.12",
-    "tox>=3.20,<4.4",
+    "tox>=3.20,<4.5",
     "twine>=4.0",
 ]
 doc = [
@@ -63,7 +63,7 @@ tests = [
     "pytest-console-scripts>=1.1,<1.4",  # Allow automatic testing of scripts
     "pytest-cov>=2.10,<4.1",  # Pytest plugin for working with coverage
     "sqlalchemy>1.4,<1.5",  # required for testing ability to zip objects with engines
-    "tox>=3.20,<4.4",  # Python test environment manager
+    "tox>=3.20,<4.5",  # Python test environment manager
 ]
 
 [tool.setuptools.dynamic]
