@@ -62,7 +62,7 @@ tests = [
     "pytest>=6.2,<7.3",  # test framework
     "pytest-console-scripts>=1.1,<1.4",  # Allow automatic testing of scripts
     "pytest-cov>=2.10,<4.1",  # Pytest plugin for working with coverage
-    "sqlalchemy>1.4,<1.5",  # required for testing ability to zip objects with engines
+    "sqlalchemy>1.4,<2.1",  # required for testing ability to zip objects with engines
     "tox>=3.20,<4.5",  # Python test environment manager
 ]
 
