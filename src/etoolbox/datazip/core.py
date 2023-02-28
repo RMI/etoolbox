@@ -35,7 +35,6 @@ try:
     from sqlalchemy import create_engine
     from sqlalchemy.engine import Engine
 except (ModuleNotFoundError, ImportError):
-
     Engine = _Engine
     create_engine = _create_engine
 
@@ -43,7 +42,6 @@ except (ModuleNotFoundError, ImportError):
 try:
     from plotly.graph_objects import Figure
 except (ModuleNotFoundError, ImportError):
-
     Figure = _Figure
 
 
