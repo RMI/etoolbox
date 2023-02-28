@@ -1,8 +1,11 @@
 """Core :class:`.DataZip` tests."""
+import json
+from collections import Counter, OrderedDict, defaultdict, deque
 from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 from typing import NamedTuple
+from zipfile import ZipFile
 
 import numpy as np
 import pandas as pd
@@ -17,9 +20,11 @@ from etoolbox.datazip._test_classes import (
     _TestKlassSlotsCore,
     _TestKlassSlotsDict,
 )
+from etoolbox.datazip._utils import default_getstate, default_setstate
 from etoolbox.utils.testing import assert_equal, idfn
 
 
+@pytest.mark.xfail(reason="Functionality removed")
 def test_dfs_to_from_zip(temp_dir):
     """Dfs are same after being written and read back."""
     df_dict = {
@@ -42,7 +47,7 @@ def test_existing_name(temp_dir):
     """Test existing name protection."""
     with DataZip(temp_dir / "test_datazip.zip", "w") as z:
         z["a"] = "a"
-        with pytest.raises(FileExistsError):
+        with pytest.raises(KeyError):
             z["a"] = 5
 
 
@@ -60,7 +65,7 @@ def test_datazip_contains_len(temp_dir):
 def test_datazip_meta_safety(temp_dir, protected):
     """Test :class:`.DataZip`."""
     with DataZip(temp_dir / f"test_datazip_protection_{protected}.zip", "w") as z:
-        with pytest.raises(ValueError):
+        with pytest.raises(KeyError):
             z[protected] = 3
 
 
@@ -74,12 +79,12 @@ def test_datazip_w(temp_dir):
     }
     try:
         with DataZip(temp_dir / "test_datazip_w.zip", "w") as z0:
-            z0.writed("a", df_dict["a"])
+            z0["a"] = df_dict["a"]
     except Exception as exc:
         raise AssertionError("Something broke") from exc
     else:
         with DataZip(temp_dir / "test_datazip_w.zip", "r") as z1:
-            assert "a" in z1._no_pqt_cols
+            assert "no_pqt_cols" in z1._attributes["a"]
         with pytest.raises(ValueError):
             with DataZip(temp_dir / "test_datazip_w.zip", "a") as z2a:
                 z2a.namelist()
@@ -183,7 +188,7 @@ def test_embedded_state_obj(temp_dir, klass):
 )
 def test_default_get_state(obj, expected):
     """Test default version of getstate."""
-    assert DataZip.default_getstate(obj) == expected
+    assert default_getstate(obj) == expected
 
 
 @pytest.mark.parametrize(
@@ -202,7 +207,7 @@ def test_default_get_state(obj, expected):
 def test_default_set_state(obj, state, expected):
     """Test default version of setstate."""
     inst = obj.__new__(obj)
-    DataZip.default_setstate(inst, state)
+    default_setstate(inst, state)
     assert inst == expected
 
 
@@ -257,6 +262,24 @@ def test_sqlalchemy(temp_dir):
         ("tuple", (2, (3.5, (1, 3)))),
         ("tuple_in_dict", {"foo": (5, 4.5), "bar": 3}),
         ("tuple_w_series", (1, pd.Series([1, 2, 3, 4], name="series"))),
+        (
+            "dup_series_in_dicts",
+            (
+                {"series": pd.Series([1, 2, 3, 4], name="series")},
+                {"series": pd.Series([1, 2, 355, 4])},
+            ),
+        ),
+        (
+            "dup_objs",
+            [
+                {
+                    "a": _TestKlass(
+                        a=5, b={"c": pd.Series([1, 2, 3, 4], name="series")}, c=5.5
+                    )
+                },
+                {"a": _TestKlass(a=5, b={"c": pd.Series([1, 2, 355, 4])}, c=5.5)},
+            ],
+        ),
         ("set", {1, 2, 4}),
         ("frozenset", frozenset((1, 2, 4))),
         ("string", "this"),
@@ -288,6 +311,12 @@ def test_sqlalchemy(temp_dir):
         ("series_no_name", pd.Series([1, 2, 3, 4])),
         ("_TestKlass", _TestKlass(a=5, b={"c": (2, 3.5)}, c=5.5)),
         ("path", Path.home()),
+        ("type", [list, tuple, DataZip]),
+        ("defaultdict", defaultdict(default_factory=list, a=(1, 2, 3))),
+        ("Counter", Counter({"a": 2, (1, 2, 3): 2})),
+        ("deque", deque([1, 2, 3])),
+        ("OrderedDict", OrderedDict({"a": 2, "b": 2})),
+        ("dict_tuple_keys", {(1, 2): 5, ("a",): 3}),
     ],
     ids=idfn,
 )
@@ -295,6 +324,7 @@ def test_types(temp_dir, key, expected):
     """Test preservation of tuples."""
     with DataZip(temp_dir / f"test_types_{key}.zip", "w") as z0:
         z0[key] = expected
+        pass
     with DataZip(temp_dir / f"test_types_{key}.zip", "r") as z1:
         read = z1[key]
         if not isinstance(read, type(expected)):
@@ -302,6 +332,43 @@ def test_types(temp_dir, key, expected):
                 f"test_types for {key} {type(read)} != {type(expected)}"
             )
         assert_equal(read, expected)
+
+
+def test_dup_names(temp_dir):
+    """Test that object with the same name are both stored."""
+    expected = [
+        {"series": pd.Series([1, 2, 3, 4], name="series")},
+        {"series": pd.Series([1, 2, 355, 4])},
+    ]
+    with DataZip(temp_dir / "test_dup_names.zip", "w") as z0:
+        z0["stuff"] = expected
+        assert len(set(z0.namelist())) == 2
+    with DataZip(temp_dir / "test_dup_names.zip", "r") as z1:
+        assert_equal(z1["stuff"], expected)
+
+
+@pytest.mark.parametrize(
+    "name, obj, test",
+    [
+        pytest.param("df", pd.DataFrame([[1, 2], [4, 1000]]), "namelist"),
+        pytest.param("seires", pd.Series([1, 2, 4, 1000]), "namelist"),
+        pytest.param("nparray", np.array([1, 2, 3]), "namelist"),
+        pytest.param("obj", _TestKlass(a=5, b={"c": (2, 3.5)}, c=5.5), "state"),
+    ],
+    ids=idfn,
+)
+def test_dup(temp_dir, name, obj, test):
+    """Test that object referenced multiple times is stored once."""
+    with DataZip(temp_dir / f"test_dup_{name}.zip", "w") as z0:
+        z0["a"] = obj
+        z0["b"] = obj
+        assert len(z0) == 2
+        if test == "namelist":
+            assert "b.parquet" not in z0.namelist()
+        elif test == "state":
+            assert len(z0["__state__"]) == 1
+    with DataZip(temp_dir / f"test_dup_{name}.zip", "r") as z1:
+        assert id(z1["a"]) == id(z1["b"])
 
 
 @pytest.mark.parametrize("save_old", [True, False], ids=idfn)
@@ -322,3 +389,40 @@ def test_replace(temp_dir, save_old):
         assert z2["a"] is None
         assert z2["b"] == {"foo": None, "bar": 3}
         assert z2["c"] == {"this": "that"}
+
+
+def test_legacy(temp_dir):
+    """Test that legacy DataZip can be opened and used."""
+    expected_df = pd.DataFrame(
+        [[0.1, 1.2], [0.5, 1.9], [1.1, 3.2]],
+        columns=pd.MultiIndex.from_tuples(
+            [(56391, "onshore_wind"), (60893, "solar")],
+            names=["plant_id_eia", "generator_id"],
+        ),
+    )
+    meta = {
+        "contents": {"profs": []},
+        "no_pqt_cols": {
+            "profs": [
+                [list(x) for x in list(expected_df.columns)],
+                list(expected_df.columns.names),
+            ]
+        },
+        "obj_meta": {
+            "profs": ["pandas.core.frame", "DataFrame", None],
+        },
+    }
+    with ZipFile(temp_dir / "test_legacy.zip", "w") as z:
+        z.writestr("__attributes__.json", json.dumps({}, ensure_ascii=False, indent=4))
+        z.writestr("__metadata__.json", json.dumps(meta, ensure_ascii=False, indent=4))
+        z.writestr("profs.parquet", DataZip._str_cols(expected_df).to_parquet())
+
+    with DataZip(temp_dir / "test_legacy.zip", "r") as z1:
+        assert_equal(z1["profs"], expected_df)
+
+
+@pytest.mark.skip
+def test_d_legacy():
+    """Place to test random existing DataZips."""
+    with DataZip(Path.home() / "PycharmProjects/patio-model/re_data_2.zip", "r") as dz:
+        print(dz["a"])

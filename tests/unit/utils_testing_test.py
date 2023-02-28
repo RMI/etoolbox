@@ -1,8 +1,11 @@
 """Tests for testing utils."""
+import math
+
+import numpy as np
 import pandas as pd
 import pytest
 
-from etoolbox.utils.testing import assert_equal, idfn
+from etoolbox.utils.testing import assert_equal, capture, idfn
 
 
 @pytest.mark.parametrize(
@@ -54,3 +57,20 @@ def test_assert_equal(left, right, exception):
     else:
         with pytest.raises(exception):
             assert_equal(left, right)
+
+
+@pytest.mark.parametrize(
+    "funca, funcb, args",
+    [
+        (sum, math.fsum, (1, 2, 3)),
+        (sum, math.fsum, ("a", 2, 3)),
+        (sum, math.fsum, (1, "2", None)),
+        pytest.param(
+            sum, math.fsum, np.arange(0.0, 15.0, 0.01), marks=pytest.mark.xfail
+        ),
+    ],
+    ids=idfn,
+)
+def test_capture(funca, funcb, args):
+    """Capture test."""
+    assert capture(funca, args) == capture(funcb, args)

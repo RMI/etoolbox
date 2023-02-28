@@ -89,13 +89,15 @@ class IOMixin:
     >>> type(inst.stuff)
     <class 'collections.defaultdict'>
 
+    >>> print(inst.stuff["foobar"])
+    None
+
     >>> dict(inst.stuff)
-    {'bar': 3, 'foo': None}
+    {'bar': 3, 'foo': None, 'foobar': None}
     """
 
     # in case child uses __slots__
     __slots__ = ()
-    recipes = {}
 
     @classmethod
     def from_file(cls, path: Path | str | BytesIO, **kwargs) -> Any:
@@ -110,6 +112,4 @@ class IOMixin:
         **kwargs,
     ) -> None:
         """Write object to file or buffer."""
-        DataZip.dump(
-            self, path, compression=compression, clobber=clobber, recipes=self.recipes
-        )
+        DataZip.dump(self, path, compression=compression, clobber=clobber)

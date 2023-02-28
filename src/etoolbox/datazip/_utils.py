@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import getpass
 import logging
+from contextlib import suppress
 from importlib import import_module
 from typing import Any
 
@@ -10,46 +11,6 @@ LOGGER = logging.getLogger(__name__)
 
 def _quote_strip(string: str) -> str:
     return string.replace("'", "").replace('"', "")
-
-
-def obj_from_recipe(
-    thing: Any,
-    module: str,
-    klass: str | None = None,
-    constructor: str | None = None,
-) -> Any:
-    """Recreate an object from a recipe.
-
-    Can be module.klass(thing), module.constructor(thing), or
-    module.klass.constructor(thing).
-
-    Args:
-        thing: what will be passed to ``constructor`` / ``__init__``
-        module: the module that the function or class can be found in
-        klass: The __qualname__ of the class, if needed. If None, then
-            ``constructor`` must be a function.
-        constructor: A constructor method on a class if ``klass`` is specified,
-            otherwise a function that returns the desired object. If None, the
-            class ``klass`` will be created using its ``__init__``.
-    """
-    if klass is None and constructor is None:
-        raise AssertionError("Must specify at least one of `klass` and `constructor`")
-
-    module = import_module(module)
-    if klass is None:
-        klass_or_const = getattr(module, constructor)
-    else:
-        klass_or_const = getattr(module, klass)
-        if constructor is not None:
-            klass_or_const = getattr(klass_or_const, constructor)
-
-    if isinstance(thing, str):
-        return klass_or_const(_quote_strip(thing))
-    if isinstance(thing, dict):
-        return klass_or_const(**thing)
-    if isinstance(thing, (tuple, list)):
-        return klass_or_const(*thing)
-    return klass_or_const(thing)
 
 
 def _get_version(obj: Any) -> str:
@@ -73,5 +34,53 @@ def _get_username():
             return "unknown"
 
 
-def _objinfo(obj: Any, constructor=None) -> tuple[str, ...]:
-    return obj.__class__.__module__, obj.__class__.__qualname__, constructor
+def _objinfo(obj: Any) -> str:
+    return obj.__class__.__module__ + "|" + obj.__class__.__qualname__
+
+
+def _get_klass(mod_klass: str | list | tuple):
+    with suppress(AttributeError):
+        mod_klass = mod_klass.split("|")
+    try:
+        mod, qname, *_ = mod_klass
+        klass: type = getattr(import_module(mod), qname)
+    except (AttributeError, ModuleNotFoundError) as exc:
+        raise ImportError(f"Unable to import {qname} from {mod}.") from exc
+    else:
+        return klass
+
+
+def default_setstate(obj, state):
+    """Called if no ``__setstate__`` implementation."""
+    if state is None:
+        pass
+    elif isinstance(state, dict):
+        obj.__dict__ = state
+    elif isinstance(state, tuple):
+        d_state, s_state = state
+        if d_state is not None:
+            obj.__dict__ = d_state
+        for k, v in s_state.items():
+            setattr(obj, k, v)
+
+
+def default_getstate(obj):
+    """Called if no ``__getstate__`` implementation."""
+
+    def slots_dict(_slots):
+        sout = {}
+        for k in _slots:
+            if k != "__dict__":
+                with suppress(AttributeError):
+                    sout.update({k: getattr(obj, k)})
+        return sout
+
+    match obj:
+        case object(__dict__=d_state, __slots__=slots):
+            return d_state.copy(), slots_dict(slots)
+        case object(__dict__=d_state):
+            return d_state.copy()
+        case object(__slots__=slots):
+            return None, slots_dict(slots)
+        case _:
+            return None

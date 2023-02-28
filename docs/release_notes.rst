@@ -2,6 +2,61 @@
 eToolBox Release Notes
 =======================================================================================
 
+
+.. _release-v0-2-0:
+
+---------------------------------------------------------------------------------------
+0.2.0 (2022-XX-XX)
+---------------------------------------------------------------------------------------
+
+What's New?
+^^^^^^^^^^^
+*  Complete redesign of system internals and standardization of the data format. This
+   resulted in a couple key improvements:
+
+   *  **Performance** Decoding is now lazy, so structures and objects are only
+      rebuilt when they are retrieved, rather than when the file is opened. Encoding is
+      only done once, rather than once to make sure it will work, and then
+      again when the data is written on close. Further, the correct encoder/decoder is
+      selected using :class:`dict` lookups rather than chains of :func:`isinstance`.
+   *  **Data Format** Rather than a convoluted system to flatten the object
+      hierarchy, we preserve the hierarchy in the ``__attributes__.json`` file. We also
+      provide encoders and decoders that allows all Python builtins as well as other
+      types to be stored in ``json``. Any data that cannot be encoded to ``json`` is
+      saved elsewhere and the entry in ``__attributes__.json`` contains a pointer to
+      where the data is actually stored. Further, rather than storing some metadata in
+      ``__attributes__.json`` and some elsewhere, now **all** metadata is stored
+      alongside the data or pointer in ``__attributes__.json``.
+   *  **Custom Classes** We no longer save custom objects as their own :class:`DataZip`.
+      Their location in the object hierarchy is preserved with a pointer and associated
+      metadata. The object's state is stored separately in a hidden key, ``__state__``
+      in ``__attributes__.json``.
+   *  **References** The old format stored every object as many times as it
+      was referenced. This meant that objects could be stored multiple times and when
+      the hierarchy was recreated, these objects would be copies. The new process for
+      storing custom classes, :class:`pandas.DataFrame`, :class:`pandas.Series`, and
+      :class:`numpy.array` uses :func:`id` to make sure we only store data once and
+      that these relationships are recreated when loading data from a :class:`.DataZip`.
+   *  **API** :class:`.DataZip` behaves a little like a :class:`dict`. It
+      has :meth:`.DataZip.get`, :meth:`.DataZip.items`, and :meth:`.DataZip.keys` which
+      do what you would expect. It also implements dunder methods to allow membership
+      checking using ``in``, :func:`len`, and subscripts to get and set items (i.e.
+      ``obj[key] = value``). These all also behave as you would expect, except that
+      setting an item raises a :class:`KeyError` if the key is already in use.
+      :meth:`.DataZip.dump` and :meth:`.DataZip.load` are static methods that allow you
+      to directly save and load an object into a :class:`DataZip`, similar to
+      :func:`pickle.dump` and :func:`pickle.load` except they handle opening and
+      closing the file as well. Finally, :meth:`.DataZip.replace` is a little like
+      :meth:`collections.NamedTuple._replace`; it copies the contents of one
+      :class:`DataZip` into a new one, with select keys replaced.
+
+
+
+Known Issues
+^^^^^^^^^^^^
+*  Some legacy ``DataZip`` files cannot be fully read, especially nested structures and
+   custom classes.
+
 .. _release-v0-1-0:
 
 ---------------------------------------------------------------------------------------

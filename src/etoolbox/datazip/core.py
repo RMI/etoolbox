@@ -1,30 +1,51 @@
 """Code for :class:`.DataZip`."""
 from __future__ import annotations
 
+import json
 import logging
-from collections import defaultdict
+import warnings
+from collections import Counter, OrderedDict, defaultdict, deque
 from collections.abc import Generator
 from contextlib import suppress
 from datetime import datetime
-from importlib import import_module
+from functools import partial
 from io import BytesIO
-from pathlib import Path
+from pathlib import Path, PosixPath, WindowsPath
+from types import NoneType
 from typing import Any
-from zipfile import ZipFile, ZipInfo
+from zipfile import ZipFile
 from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
 
 from etoolbox import __version__
-from etoolbox.datazip._json import json_dumps, json_loads
-from etoolbox.datazip._types import RECIPES, STD_TYPES, DZable
+from etoolbox.datazip._types import JSONABLE, DZable, _create_engine, _Engine, _Figure
 from etoolbox.datazip._utils import (
+    _get_klass,
     _get_username,
     _get_version,
     _objinfo,
-    obj_from_recipe,
+    _quote_strip,
+    default_getstate,
+    default_setstate,
 )
+
+try:
+    from sqlalchemy import create_engine
+    from sqlalchemy.engine import Engine
+except (ModuleNotFoundError, ImportError):
+
+    Engine = _Engine
+    create_engine = _create_engine
+
+
+try:
+    from plotly.graph_objects import Figure
+except (ModuleNotFoundError, ImportError):
+
+    Figure = _Figure
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -32,19 +53,24 @@ LOGGER = logging.getLogger(__name__)
 class DataZip(ZipFile):
     """A :class:`ZipFile` with methods for easier use with Python objects."""
 
-    def __init__(
-        self, file: str | Path | BytesIO, mode="r", recipes=None, *args, **kwargs
-    ):
+    suffixes = {
+        "pdDataFrame": ".parquet",
+        "pdSeries": ".parquet",
+        "ndarray": ".npy",
+        # LEGACY type encoding
+        ("pandas.core.frame", "DataFrame", None): ".parquet",
+        ("pandas.core.series", "Series", None): ".parquet",
+        ("numpy", "ndarray", None): ".npy",
+    }
+
+    def __init__(self, file: str | Path | BytesIO, mode="r", *args, **kwargs):
         """Create a DataZip.
 
         Args:
             file: Either the path to the file, or a file-like object.
                 If it is a path, the file will be opened and closed by DataZip.
             mode: The mode can be either read 'r', or write 'w'.
-            recipes: add more customization on how objects will be stored that cannot
-                be stored as JSON and where adding ``__getstate__`` and
-                ``__setstate__`` is not feasible. Organized like
-                :py:const:`etoolbox.datazip.core.RECIPES`.
+            recipes: Deprecated.
             compression: ZIP_STORED (no compression), ZIP_DEFLATED (requires zlib),
                 ZIP_BZIP2 (requires bz2) or ZIP_LZMA (requires lzma).
 
@@ -57,7 +83,6 @@ class DataZip(ZipFile):
 
         >>> buffer = BytesIO()  # can also be a file-like object
         >>> with DataZip(file=buffer, mode="w") as z0:
-        ...     z0["series"] = pd.Series([1, 2, 4], name="series")
         ...     z0["df"] = pd.DataFrame({(0, "a"): [2.4, 8.9], (0, "b"): [3.5, 6.2]})
         ...     z0["foo"] = {
         ...         "a": (1, (2, {3})),
@@ -82,33 +107,25 @@ class DataZip(ZipFile):
         1  8.9  6.2
 
         While always preferable to use a context manager as above, here it's more
-        convenient to keep the object open.
+        convenient to keep the object open. Even more unusual types that can't normally be stored in json should work.
 
         >>> z1 = DataZip(buffer, "r")
-        >>> z1["series"]
-        0    1
-        1    2
-        2    4
-        Name: series, dtype: int64
-
-        Even more unusual types that can't normally be stored in json should work.
-
         >>> z1["foo"]
         {'a': (1, (2, {3})), 'b': frozenset({1.5, 3}), 'c': (0.9+0.2j)}
 
         Checking to see if an item is in a :class:`.DataZip` uses standard Python
         syntax.
 
-        >>> "series" in z1
+        >>> "df" in z1
         True
 
         You can also check by filename. And check the number of items.
 
-        >>> "series.parquet" in z1
+        >>> "df.parquet" in z1
         True
 
         >>> len(z1)
-        3
+        2
 
         When not used with a context manager, :class:`.DataZip` should close itself
         automatically but it's not a bad idea to make sure.
@@ -116,15 +133,15 @@ class DataZip(ZipFile):
         >>> z1.close()
 
         A :class:`.DataZip` is a write-once, read-many affair because of the way
-        ``zip`` files work. Appending to a :class:`.DataZip` effectively means copying
-        everything.
+        ``zip`` files work. Appending to a :class:`.DataZip` can be done with the
+        :meth:`.DataZip.replace` method.
 
         >>> buffer1 = BytesIO()
-        >>> with DataZip(buffer, "r") as zold, DataZip(buffer1, "w") as znew:
-        ...     for k, v in zold.items():
-        ...         znew[k] = v
-        ...     znew["new"] = "foo"
+        >>> with DataZip.replace(buffer1, buffer, foo=5, bar=6) as z:
+        ...     z["new"] = "foo"
+        ...     z["foo"]
         ...
+        5
         """
         if mode in ("a", "x"):
             raise ValueError("DataZip does not support modes 'a' or 'x'")
@@ -144,25 +161,21 @@ class DataZip(ZipFile):
                     )
 
         super().__init__(file, mode, *args, **kwargs)
-        self._no_pqt_cols, self._obj_meta, self._other_meta = {}, {}, {}
-        self._attributes, self._contents = {}, defaultdict(list)
-        self._recipes = {} if recipes is None else recipes
+        self._attributes, self._metadata = {"__state__": {}}, {"__rev__": 2}
+        self._ids, self._red = {}, {}
         if mode == "r":
             self._attributes = self._json_get(
                 "__attributes__", "attributes", "other_attrs"
             )
-            md = self._json_get("__metadata__", "metadata")
-            for attr in (
-                "obj_meta",
-                "contents",
-                "other_meta",
-            ):
-                setattr(self, f"_{attr}", md.get(attr, self._json_get(attr)))
-            self._no_pqt_cols = md.get(
-                "no_pqt_cols", md.get("bad_cols", self._json_get("bad_cols"))
-            )
-            with suppress(KeyError):
-                self._recipes = {tuple(k): v for k, v in md["recipes"]}
+            self._metadata = self._json_get("__metadata__", "metadata")
+            if self._metadata.get("__rev__", 1) != 2:
+                LOGGER.warning(
+                    "%s was created with an older version of DataZip, all data might "
+                    "not be accessible, consider using v0.1.0.",
+                    file,
+                )
+                self._attributes = self._attributes | self._load_legacy_helper()
+
         self._delete_on_close = None
 
     @staticmethod
@@ -201,22 +214,8 @@ class DataZip(ZipFile):
         >>> obj
         _TestKlass(a=5, b={'c': [2, 3.5]})
         """
-        if hasattr(obj, "__getstate__"):
-            state = obj.__getstate__()
-        else:
-            state = DataZip.default_getstate(obj)
-
         with DataZip(file, "w", **kwargs) as self:
-            self._obj_meta["self"] = _objinfo(obj)
-            self._other_meta.update(
-                {
-                    "__obj_version__": _get_version(obj),
-                    "__io_version__": __version__,
-                    "__created_by__": _get_username(),
-                    "__file_created__": str(datetime.now(tz=ZoneInfo("UTC"))),
-                },
-            )
-            self["state"] = state
+            self["state"] = obj
 
     @staticmethod
     def load(file: Path | str | BytesIO, klass: type = None):
@@ -237,24 +236,16 @@ class DataZip(ZipFile):
         See :meth:`.DataZip.dump` for examples.
         """
         with DataZip(file, "r") as self:
-            if klass is None:
-                try:
-                    mod, qname, _ = self._obj_meta["self"]
-                    klass: type = getattr(import_module(mod), qname)
-                except KeyError as exc:
-                    raise ValueError(
-                        f"Unable to use DataZip.load because {self.filename} does not contain module and class metadata."
-                    ) from exc
-            obj = klass.__new__(klass)
-            if hasattr(obj, "__setstate__"):
-                obj.__setstate__(self["state"])
-            else:
-                DataZip.default_setstate(obj, self["state"])
+            obj = DataZip._decode_obj(self, self._attributes["state"], klass)
         return obj
 
     @classmethod
-    def replace(cls, file_or_new_buffer, old_buffer=None, save_old=False):
+    def replace(cls, file_or_new_buffer, old_buffer=None, save_old=False, **kwargs):
         """Replace an old :class:`DataZip` with an editable new one.
+
+        Note: Data and keys that are copied over by this function cannot be reliably
+        mutated.``kwargs`` must be used to replace the data associated with keys that
+        exist in the old :class:`DataZip`.
 
         Args:
             file_or_new_buffer: Either the path to the file to be replaced
@@ -263,6 +254,9 @@ class DataZip(ZipFile):
             save_old: if True, the old :class:`DataZip` will be
                 saved with "_old" appended, if False it will be
                 deleted when the new :class:`DataZip` is closed.
+            kwargs: data that should be written into the new :class:`DataZip`,
+                for any keys that were in the old :class:`DataZip`, the new
+                value provided here will be used instead.
 
         Returns:
             New editable :class:`DataZip` with old data copied into it.
@@ -343,68 +337,25 @@ class DataZip(ZipFile):
 
         self = cls(file_or_new_buffer, "w")
         with DataZip(old_buffer, "r") as z:
+            if z._metadata.get("__rev__") != 2:
+                _to_delete = None
+                LOGGER.warning(
+                    "%s uses an old version of DataZip so not all data may be properly "
+                    "copied over. For this reason, %s will not be deleted.",
+                    file_or_new_buffer,
+                    old_buffer,
+                )
             for k, v in z.items():
+                if k in kwargs:
+                    self[k] = kwargs.pop(k)
+                else:
+                    self[k] = v
+            for k, v in kwargs.items():
                 self[k] = v
 
         self._delete_on_close = _to_delete
 
         return self
-
-    def read(self, name: str | ZipInfo, pwd: bytes | None = ..., super_=False) -> Any:
-        """Return obj or bytes for name."""
-        stem, _, suffix = name.partition(".")
-        if self._contents.get(stem, False):
-            return self._recursive_read(stem)
-        if suffix == "parquet" or f"{stem}.parquet" in self.namelist():
-            return self._read_df(stem)
-        if (suffix == "zip" or f"{stem}.zip" in self.namelist()) and not super_:
-            return DataZip.load(BytesIO(super().read(stem + ".zip")))
-        if suffix == "npy" or f"{stem}.npy" in self.namelist():
-            return np.load(BytesIO(super().read(stem + ".npy")))
-        if stem in self._attributes:
-            out = self._attributes[stem]
-            if stem not in self._obj_meta:
-                return out
-            return obj_from_recipe(out, *self._obj_meta[stem])
-        return super().read(name)
-
-    def read_dfs(self) -> Generator[tuple[str, pd.DataFrame | pd.Series]]:
-        """Read all dfs lazily."""
-        for name, *suffix in map(lambda x: x.split("."), self.namelist()):
-            if "parquet" in suffix:
-                yield name, self.read(name)
-
-    def writed(
-        self,
-        name: str,
-        data: DZable,
-        **kwargs,
-    ) -> bool:
-        """Write dict, df, str, or some other objects to name."""
-        name, _, suffix = name.partition(".")
-        if name in ("__metadata__", "__attributes__"):
-            raise ValueError(f"`{name}` is reserved, please use a different name")
-        if name in self._contents:
-            raise FileExistsError(f"{name} already in {self.filename}")
-        if isinstance(data, (pd.DataFrame, pd.Series)):
-            return self._write_df(name, data, **kwargs)
-        if isinstance(data, STD_TYPES):
-            try:
-                return self._write_jsonable(name, data)
-            except TypeError:
-                return self._recursive_write(name, data)
-        if hasattr(data, "write_image"):
-            return self._write_image(name, data)
-        if isinstance(data, np.ndarray):
-            return self._write_numpy(name, data, **kwargs)
-        if (obj_info := _objinfo(data)) in self.recipes:
-            return self._write_using_recipe(name, data, obj_info)
-        with suppress(TypeError):
-            DataZip.dump(data, temp := BytesIO())
-            self.writestr(f"{name}.zip", temp.getvalue())
-            _ = self._contents[name]
-            return True
-        return False
 
     def close(self) -> None:
         """Close the file, and for mode 'w' write attributes and metadata."""
@@ -414,250 +365,400 @@ class DataZip(ZipFile):
         if self.mode == "w":
             self.writestr(
                 "__attributes__.json",
-                json_dumps(self._attributes),
+                json.dumps(self._attributes, ensure_ascii=False, indent=4),
             )
             self.writestr(
                 "__metadata__.json",
-                json_dumps(
-                    {
-                        "contents": self._contents,
-                        "no_pqt_cols": self._no_pqt_cols,
-                        "obj_meta": self._obj_meta,
-                        "recipes": list(self._recipes.items()),
-                        "other_meta": self._other_meta,
-                    },
-                ),
+                json.dumps(self._metadata, ensure_ascii=False, indent=4),
             )
+        self._red = {}
         super().close()
         if isinstance(self._delete_on_close, Path):
             self._delete_on_close.unlink()
 
     def __contains__(self, item) -> bool:
         """Provide ``in`` check."""
-        return item.partition(".")[0] in self._contents
+        return item.partition(".")[0] in self._attributes
 
     def __len__(self) -> int:
         """Provide for use of ``len`` builtin."""
-        return len(self._contents)
+        return len([k for k in self._attributes if k != "__state__"])
 
-    def __getitem__(self, item: str) -> DZable:
-        """Alias for :meth:`.DataZip.read`."""
-        return self.read(item)
+    def __getitem__(self, key: int | str) -> DZable:
+        """Retrieve an item from a :class:`.DataZip`."""
+        return self._decode(self._attributes[key])
 
-    def __setitem__(self, key: str, value: DZable) -> None:
-        """Alias for :meth:`.DataZip.writed`."""
-        self.writed(key, value)
+    def __setitem__(self, key: int | str, value: DZable) -> None:
+        """Write an item to a :class:`.DataZip`."""
+        if key in ("__metadata__", "__attributes__", "__state__"):
+            raise KeyError(f"{key=} is reserved, please use a different name")
+        if key in self._attributes:
+            raise KeyError(f"{key=} already in {self.filename}")
+        if (for_attributes := self._encode(key, value)) != "__IGNORE__":
+            self._attributes.update({key: for_attributes})
 
-    def keys(self):
-        """Set of names in DataZip as if it was a dict."""
-        return self._contents.keys()
+    def get(self, key: int | str, default=None):
+        """Retrieve an item if it is there otherwise return default."""
+        return self[key] if key in self else default
 
     def items(self):
-        """Like a :meth:`dict.items`."""
-        for k in self._contents.keys():
+        """Lazily read name/key valye pairs from a :class:`.DataZip`.."""
+        for k in self._attributes.keys():
+            if k == "__state__":
+                continue
             yield k, self[k]
 
-    @property
-    def recipes(self) -> dict[tuple, dict]:
-        """Combination of internal and constant recipes."""
-        return RECIPES | self._recipes
+    def keys(self):
+        """Set of names in :class:`.DataZip` as if it was a dict."""
+        return {k: None for k in self._attributes if k != "__state__"}.keys()
 
-    @classmethod
-    def dfs_to_zip(cls, path: Path, df_dict: dict[str, pd.DataFrame], clobber=False):
-        """Create a zip of parquets.
+    def _decode(self, obj: Any) -> Any:
+        """Entry point for decoding anything stored :class:`DataZip`."""
+        if decoder := self.DECODERS.get(type(obj), None):
+            return decoder(self, obj)
+        raise TypeError(f"no decoder for {type(obj)} {obj}")
 
-        Args:
-            df_dict: dict of dfs to put into a zip
-            path: path for the zip
-            clobber: if True, overwrite exiting file with same path
+    def _decode_cache_helper(self, obj: dict, func, **kwargs) -> Any:
+        if obj["__loc__"] in self._red:
+            return self._red[obj["__loc__"]]
+        out = func(self, obj, **kwargs)
+        self._red[obj["__loc__"]] = out
+        return out
 
-        Returns: None
-        """
-        path = path.with_suffix(".zip")
-        if path.exists():
-            if not clobber:
-                raise FileExistsError(f"{path} exists, to overwrite set `clobber=True`")
-            path.unlink()
-        with cls(path, "w") as z:
-            other_stuff = {}
-            for key, val in df_dict.items():
-                if isinstance(val, (pd.Series, pd.DataFrame, dict)):
-                    z.writed(key, val)
-                elif isinstance(val, (float, int, str, tuple, dict, list)):
-                    other_stuff.update({key: val})
-            z.writed("other_stuff", other_stuff)
-
-    @classmethod
-    def dfs_from_zip(cls, path: Path) -> dict:
-        """Dict of dfs from a zip of parquets.
-
-        Args:
-            path: path of the zip to load
-
-        Returns: dict of dfs
-        """
-        with cls(path, "r") as z:
-            out_dict = dict(z.read_dfs())
-            try:
-                other = z.read("other_stuff")
-            except KeyError:
-                other = {}
-            out_dict = out_dict | other
-
-        return out_dict
+    def _decode_dict(self, obj: dict) -> Any:
+        if "__type__" in obj:
+            return self.DECODERS.get(obj["__type__"], DataZip._decode_obj)(self, obj)
+        return {k: self._decode(v) for k, v in obj.items()}
 
     @staticmethod
-    def default_setstate(obj, state):
-        """Called if no ``__setstate__`` implementation."""
-        if state is None:
-            pass
-        elif isinstance(state, dict):
-            setattr(obj, "__dict__", state)
-        elif isinstance(state, tuple):
-            d_state, s_state = state
-            if d_state is not None:
-                setattr(obj, "__dict__", d_state)
-            for k, v in s_state.items():
-                setattr(obj, k, v)
-
-    @staticmethod
-    def default_getstate(obj):
-        """Called if no ``__getstate__`` implementation."""
-
-        def slots_dict(_slots):
-            sout = {}
-            for k in _slots:
-                if k != "__dict__":
-                    with suppress(AttributeError):
-                        sout.update({k: getattr(obj, k)})
-            return sout
-
-        match obj:
-            case object(__dict__=d_state, __slots__=slots):
-                return d_state.copy(), slots_dict(slots)
-            case object(__dict__=d_state):
-                return d_state.copy()
-            case object(__slots__=slots):
-                return None, slots_dict(slots)
-            case _:
-                return None
-
-    def _json_get(self, *args):
-        for arg in args:
-            with suppress(Exception):
-                return json_loads(super().read(f"{arg}.json"))
-        return {}
-
-    def _recursive_read(self, stem: str) -> list | dict | tuple:
-        if "dict" in self._obj_meta[stem][1]:
-            out_dict = {}
-            for k in self._contents[stem]:
-                key = k.rpartition("<||>")[2]
-                try:
-                    out_dict[key] = self.read(k)
-                except KeyError as exc:
-                    LOGGER.error("Error loading %s in %s (%s). %r", key, stem, k, exc)
-            if self._obj_meta[stem][1] == "defaultdict":
-                return defaultdict(lambda: None, out_dict)
-            return out_dict
-        else:
-            out_list = []
-            for k in self._contents[stem]:
-                try:
-                    out_list.append(self.read(k))
-                except KeyError as exc:
-                    LOGGER.error("Error loading %s in %s. %r", k, stem, exc)
-            if "tuple" in self._obj_meta[stem][1]:
-                return tuple(out_list)
-            return out_list
-
-    def _read_df(self, name: str) -> pd.DataFrame | pd.Series:
-        out = pd.read_parquet(BytesIO(super().read(name + ".parquet")))
-        if name not in self._no_pqt_cols:
-            return out
-        cols, names = self._no_pqt_cols[name]
-        if isinstance(names, (tuple, list)) and len(names) > 1:
-            idx = pd.MultiIndex.from_tuples(cols, names=names)
-        else:
-            idx = pd.Index(cols, name=names[0])
-        if self._obj_meta.get(name, ("", "Series", ""))[1] == "Series":
-            return out.set_axis(idx, axis=1).squeeze()
-        return out.set_axis(idx, axis=1)
-
-    def _recursive_write(self, name: str, data: dict | list | tuple) -> bool:
-        if isinstance(data, dict):
-            item_iter = data.items()
-        elif isinstance(data, (tuple, list)):
-            item_iter = enumerate(data)
-        else:
-            raise TypeError(f"{name} is a {data.__class__} which is not supported")
-        self._obj_meta.update({name: _objinfo(data)})
-        all_good = []
-        for k, v in item_iter:
-            good = self.writed(f"{name}<||>{k}", v)
-            all_good.append(good)
-            if good:
-                self._contents[name].append(f"{name}<||>{k}")
-        return any(all_good)
-
-    def _write_numpy(self, name: str, data: np.ndarray, **kwargs) -> bool:
-        np.save(temp := BytesIO(), data, allow_pickle=False)
-        self.writestr(f"{name}.npy", temp.getvalue())
-        self._obj_meta.update({name: _objinfo(data)})
-        _ = self._contents[name]
-        return True
-
-    def _write_jsonable(
-        self,
-        name: str,
-        obj: dict[int | str, list | tuple | dict | str | float | int] | list,
-        **kwargs,
-    ) -> bool:
-        """Write a dict in the ZIP as json."""
-        to_write = obj
-        _ = json_dumps(to_write)
-        self._attributes.update({name: to_write})
-        _ = self._contents[name]
-        return True
-
-    def _write_using_recipe(self, name: str, data: DZable, obj_info) -> bool:
-        recipe = self.recipes[obj_info]
-        if not recipe["keep"]:
-            return False
-        if recipe["method"] == "by_attribute":
-            to_write = {
-                attr: (func(getattr(data, attr)) if func else getattr(data, attr))
-                for attr, func in recipe["attributes"]
-            }
-        elif recipe["method"] == "as_str":
-            to_write = str(data)
-        _ = json_dumps(to_write)
-        self._attributes.update({name: to_write})
-        self._obj_meta.update({name: recipe["constructor"]})
-        _ = self._contents[name]
-        return True
-
-    def _write_df(self, name: str, df: pd.DataFrame | pd.Series, **kwargs) -> bool:
-        """Write a df in the ZIP as parquet."""
-        self._obj_meta.update({name: _objinfo(df)})
-        if isinstance(df, pd.Series):
-            self._no_pqt_cols.update({name: ([[df.name], [None]])})
-            df = df.to_frame(name="IGNORETHISNAME")
+    def _decode_namedtuple(_, obj):
         try:
-            self.writestr(f"{name}.parquet", df.to_parquet())
-        except ValueError:
-            self._no_pqt_cols.update({name: (list(df.columns), list(df.columns.names))})
-            self.writestr(f"{name}.parquet", self._str_cols(df).to_parquet())
-        _ = self._contents[name]
-        return True
+            return _get_klass(obj["objinfo"])(**obj["items"])
+        except Exception as exc:
+            LOGGER.error("Namedtuple will be returned as a normal tuple, %r", exc)
+            return tuple(obj["items"].values())
 
-    def _write_image(self, name: str, data: Any, **kwargs) -> bool:
+    def _decode_pd_df(self, obj) -> pd.DataFrame:
+        out = pd.read_parquet(BytesIO(super().read(obj["__loc__"])))
+        if "no_pqt_cols" not in obj:
+            return out
+        cols, names = obj["no_pqt_cols"]
+        if isinstance(names, (tuple, list)) and len(names) > 1:
+            return out.set_axis(pd.MultiIndex.from_tuples(cols, names=names), axis=1)
+        return out.set_axis(pd.Index(cols, name=names[0]), axis=1)
+
+    def _decode_pd_series(self, obj) -> pd.Series:
+        out = pd.read_parquet(BytesIO(super().read(obj["__loc__"]))).squeeze()
+        cols, names = obj.get("no_pqt_cols", (None, None))
+        out.name = tuple(cols) if isinstance(cols, list) else cols
+        return out
+
+    def _decode_obj(self, obj, klass=None) -> Any:
+        if obj["__loc__"] in self._red:
+            return self._red[obj["__loc__"]]
+        if klass is None:
+            klass = _get_klass(obj["__type__"].split("|"))
+        out_obj = klass.__new__(klass)
+        state = self._decode(self._attributes["__state__"][str(obj["__loc__"])])
+        if hasattr(out_obj, "__setstate__"):
+            out_obj.__setstate__(state)
+        else:
+            default_setstate(out_obj, state)
+        self._red[str(obj["__loc__"])] = out_obj
+        return out_obj
+
+    DECODERS = {
+        str: lambda _, item: item,
+        int: lambda _, item: item,
+        bool: lambda _, item: item,
+        float: lambda _, item: item,
+        NoneType: lambda _, item: item,
+        dict: _decode_dict,
+        list: lambda self, obj: [self._decode(v) for v in obj],
+        "tuple": lambda self, obj: tuple(self._decode(v) for v in obj["items"]),
+        "set": lambda _, obj: set(obj["items"]),
+        "frozenset": lambda _, obj: frozenset(obj["items"]),
+        "complex": lambda _, obj: complex(*obj["items"]),
+        "type": lambda _, obj: _get_klass(obj["items"]),
+        "defaultdict": lambda self, obj: defaultdict(
+            self._decode(obj["default_factory"]),
+            self._decode_dict(obj["items"]),
+        ),
+        "Counter": lambda self, obj: Counter(self._decode_dict(obj["items"])),
+        "dict_aslist": lambda self, obj: dict(
+            self._decode(item) for item in obj["items"]
+        ),
+        "deque": lambda self, obj: deque([self._decode(v) for v in obj["items"]]),
+        "OrderedDict": lambda self, obj: OrderedDict(self._decode_dict(obj["items"])),
+        "datetime": lambda _, obj: datetime.fromisoformat(_quote_strip(obj["items"])),
+        "pdTimestamp": lambda _, obj: pd.Timestamp(_quote_strip(obj["items"])),
+        "Path": lambda _, obj: Path(_quote_strip(obj["items"])),
+        "namedtuple": _decode_namedtuple,
+        "pdDataFrame": partial(_decode_cache_helper, func=_decode_pd_df),
+        "pdSeries": partial(_decode_cache_helper, func=_decode_pd_series),
+        "ndarray": partial(
+            _decode_cache_helper,
+            func=lambda self, obj: np.load(BytesIO(self.read(obj["__loc__"]))),
+        ),
+        "saEngine": lambda _, obj: create_engine(obj["items"]["url"]),
+        # LEGACY type encoding
+        ("builtins", "tuple", None): lambda self, obj: tuple(
+            self._decode(v) for v in obj["items"]
+        ),
+        ("builtins", "set", None): lambda _, obj: set(obj["items"]),
+        ("builtins", "frozenset", None): lambda _, obj: frozenset(obj["items"]),
+        ("builtins", "complex", None): lambda _, obj: complex(*obj["items"]),
+        ("pandas.core.frame", "DataFrame", None): partial(
+            _decode_cache_helper, func=_decode_pd_df
+        ),
+        ("pandas.core.series", "Series", None): partial(
+            _decode_cache_helper, func=_decode_pd_series
+        ),
+        ("numpy", "ndarray", None): partial(
+            _decode_cache_helper,
+            func=lambda self, obj: np.load(BytesIO(self.read(obj["__loc__"]))),
+        ),
+    }
+
+    def _encode(self, name, item) -> JSONABLE:
+        """Entry point for encoding anything to store in :class:`DataZip`."""
+        if encoder := self.ENCODERS.get(type(item), None):
+            return encoder(self, name, item)
+        if isinstance(item, tuple):
+            if hasattr(item, "_asdict"):
+                return {
+                    "__type__": "namedtuple",
+                    "items": {k: self._encode(k, v) for k, v in item._asdict().items()},
+                    "objinfo": _objinfo(item),
+                }
+            return {
+                "__type__": "tuple",
+                "items": [self._encode(_, e) for _, e in enumerate(item)],
+            }
+
+        if id(item) in self._ids:
+            return {
+                "__type__": _objinfo(item),
+                "__loc__": self._ids[id(item)],
+            }
+
+        return self._encode_obj(name, item)
+
+    def _encode_loc_helper(self, name: str, data: Any, to_write: Any) -> str:
+        if name in self.namelist():
+            name = f"{id(data)}_{name}"
+        self.writestr(name, to_write)
+        self._ids[id(data)] = name
+        return name
+
+    def _encode_dict(self, _, data: dict) -> dict:
+        if tuple in map(type, data.keys()):
+            return {
+                "__type__": "dict_aslist",
+                "items": [self._encode(_, item) for _, item in enumerate(data.items())],
+            }
+        return {k: self._encode(k, v) for k, v in data.items()}
+
+    def _encode_pd_df(self, name: str, df: pd.DataFrame, **kwargs) -> dict:
+        """Write a df in the ZIP as parquet."""
+        if loc := self._ids.get(id(df), None):
+            return {"__type__": "pdDataFrame", "__loc__": loc}
+        try:
+            return {
+                "__type__": "pdDataFrame",
+                "__loc__": self._encode_loc_helper(
+                    f"{name}.parquet", df, df.to_parquet()
+                ),
+            }
+        except ValueError:
+            return {
+                "__type__": "pdDataFrame",
+                "__loc__": self._encode_loc_helper(
+                    f"{name}.parquet", df, self._str_cols(df).to_parquet()
+                ),
+                "no_pqt_cols": [list(df.columns), list(df.columns.names)],
+            }
+
+    def _encode_pd_series(self, name: str, df: pd.Series, **kwargs) -> dict:
+        if loc := self._ids.get(id(df), None):
+            return {"__type__": "pdSeries", "__loc__": loc}
+        return {
+            "__type__": "pdSeries",
+            "__loc__": self._encode_loc_helper(
+                f"{name}.parquet", df, df.to_frame(name="IGNORETHISNAME").to_parquet()
+            ),
+            "no_pqt_cols": [
+                list(df.name) if isinstance(df.name, tuple) else df.name,
+                None,
+            ],
+        }
+
+    def _encode_ndarray(self, name: str, data: np.ndarray, **kwargs) -> dict:
+        if loc := self._ids.get(id(data), None):
+            return {"__type__": "ndarray", "__loc__": loc}
+        np.save(temp := BytesIO(), data, allow_pickle=False)
+        return {
+            "__type__": "ndarray",
+            "__loc__": self._encode_loc_helper(f"{name}.npy", data, temp.getvalue()),
+        }
+
+    def _encode_obj(self, name: str, item: Any) -> dict:
+        if hasattr(item, "__getstate__"):
+            state = item.__getstate__()
+        elif hasattr(item, "__dict__") or hasattr(item, "__slots__"):
+            state = default_getstate(item)
+        else:
+            raise TypeError(f"no encoder for {type(item)}")
+
+        if name in self._attributes["__state__"]:
+            name = f"{id(item)}_{name}"
+
+        self._ids[id(item)] = name
+        self._attributes["__state__"][name] = self._encode("state", state)
+        return {
+            "__type__": _objinfo(item),
+            "__loc__": name,
+            "__obj_version__": _get_version(item),
+            "__io_version__": __version__,
+            "__created_by__": _get_username(),
+            "__file_created__": str(datetime.now(tz=ZoneInfo("UTC"))),
+        }
+
+    def _write_image(self, name: str, data: Any, **kwargs) -> str:
         data.write_image(temp := BytesIO(), format="pdf")
         self.writestr(f"{name}.pdf", temp.getvalue())
-        self._obj_meta.update({name: _objinfo(data)})
-        _ = self._contents[name]
-        return True
+        LOGGER.warning("Only pdf of Figure is stored")
+        return "__IGNORE__"
+
+    ENCODERS = {
+        str: lambda _, __, item: item,
+        int: lambda _, __, item: item,
+        bool: lambda _, __, item: item,
+        float: lambda _, __, item: item,
+        NoneType: lambda _, __, item: item,
+        list: lambda self, _, item: [self._encode(i, e) for i, e in enumerate(item)],
+        tuple: lambda self, _, item: {
+            "__type__": "tuple",
+            "items": [self._encode(i, e) for i, e in enumerate(item)],
+        },
+        dict: _encode_dict,
+        set: lambda self, _, item: {
+            "__type__": "set",
+            "items": [self._encode(i, e) for i, e in enumerate(item)],
+        },
+        frozenset: lambda self, _, item: {
+            "__type__": "frozenset",
+            "items": [self._encode(i, e) for i, e in enumerate(item)],
+        },
+        complex: lambda _, __, item: {
+            "__type__": "complex",
+            "items": [item.real, item.imag],
+        },
+        type: lambda self, __, item: {
+            "__type__": "type",
+            "items": [item.__module__, item.__qualname__],
+        },
+        defaultdict: lambda self, __, item: {
+            "__type__": "defaultdict",
+            "items": {key: self._encode(key, value) for key, value in item.items()},
+            "default_factory": self._encode(__, item.default_factory),
+        },
+        Counter: lambda self, __, item: {
+            "__type__": "Counter",
+            "items": self._encode_dict(__, item),
+        },
+        deque: lambda self, __, item: {
+            "__type__": "deque",
+            "items": [self._encode(_, e) for _, e in enumerate(item)],
+        },
+        OrderedDict: lambda self, __, item: {
+            "__type__": "OrderedDict",
+            "items": self._encode_dict(__, item),
+        },
+        datetime: lambda _, __, item: {"__type__": "datetime", "items": str(item)},
+        pd.Timestamp: lambda _, __, item: {
+            "__type__": "pdTimestamp",
+            "items": str(item),
+        },
+        Path: lambda _, __, item: {"__type__": "Path", "items": str(item)},
+        PosixPath: lambda _, __, item: {"__type__": "Path", "items": str(item)},
+        WindowsPath: lambda _, __, item: {"__type__": "Path", "items": str(item)},
+        np.ndarray: _encode_ndarray,
+        np.int64: lambda _, __, item: int(item),
+        pd.DataFrame: _encode_pd_df,
+        pd.Series: _encode_pd_series,
+        Engine: lambda _, __, item: {
+            "__type__": "saEngine",
+            "items": {"url": str(item.url)},
+        },
+        Figure: _write_image,
+    }
+
+    def _load_legacy_helper(self) -> dict:
+        obj_meta = self._metadata.get("obj_meta", self._json_get("obj_meta"))
+
+        def _make_attr_entry(k):
+            _attr = {}
+            if (objinfo := tuple(obj_meta.get(k, ""))) in self.DECODERS:
+                _attr.update({"__type__": objinfo})
+                if (file := (k + self.suffixes.get(objinfo, ""))) in self.namelist():
+                    _attr.update({"__loc__": file})
+                elif k in self._attributes:
+                    _attr.update({"items": self._attributes[k]})
+                if k in _no_pqt_cols:
+                    _attr.update({"no_pqt_cols": _no_pqt_cols[k]})
+            else:
+                _attr = self._attributes.get(k, {})
+            return _attr
+
+        _no_pqt_cols = self._metadata.get(
+            "no_pqt_cols", self._metadata.get("bad_cols", self._json_get("bad_cols"))
+        )
+        contents = self._metadata.get("contents", self._json_get("contents"))
+        attrs = {}
+        for k, sub_k in contents.items():
+            if sub_k:
+                LOGGER.warning(
+                    "Unable to load nested structures, %s and its children will "
+                    "not be accessible",
+                    k,
+                )
+
+            attr = _make_attr_entry(k)
+            if attr:
+                attrs.update({k: attr})
+        return attrs
 
     @staticmethod
     def _str_cols(df: pd.DataFrame, *args) -> pd.DataFrame:
         return df.set_axis(list(map(str, range(df.shape[1]))), axis="columns")
+
+    def _json_get(self, *args):
+        for arg in args:
+            with suppress(Exception):
+                return json.loads(super().read(f"{arg}.json"))
+        return {}
+
+    def read_dfs(self) -> Generator[tuple[str, pd.DataFrame | pd.Series]]:
+        """Read all dfs lazily."""
+        warnings.warn(
+            "``read_dfs`` will be removed in a future version, use ``items``.",
+            DeprecationWarning,
+        )
+        for name, *suffix in map(lambda x: x.split("."), self.namelist()):
+            if "parquet" in suffix:
+                yield name, self[name]
+
+    def writed(
+        self,
+        name: str,
+        data: Any,
+    ):
+        """Write dict, df, str, or some other objects to name."""
+        warnings.warn(
+            "``writed`` will be removed. Use `self[key] = data`", DeprecationWarning
+        )
+        self[name] = data
+
+    def __repr__(self):
+        return self.__class__.__qualname__ + f"(file={self.filename}, mode={self.mode})"
