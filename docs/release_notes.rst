@@ -52,7 +52,8 @@ What's New?
 
 Bug Fixes
 ^^^^^^^^^
-*  Allow :class:`typing.NamedTuple` to be used as keys in a :class:`dict`.
+*  Allow :class:`typing.NamedTuple` to be used as keys in a :class:`dict`, and a
+   :class:`collections.defaultdict`.
 
 Known Issues
 ^^^^^^^^^^^^

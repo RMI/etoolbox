@@ -659,7 +659,7 @@ class DataZip(ZipFile):
         },
         defaultdict: lambda self, __, item: {
             "__type__": "defaultdict",
-            "items": {key: self._encode(key, value) for key, value in item.items()},
+            "items": self._encode_dict(__, item),
             "default_factory": self._encode(__, item.default_factory),
         },
         Counter: lambda self, __, item: {

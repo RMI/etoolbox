@@ -296,6 +296,7 @@ def test_sqlalchemy(temp_dir):
         ),
         ("namedtuple_nested", [(ObjMeta("this", "that"), 5), 4, (1, 2)]),
         ("namedtuple_as_key", {ObjMeta("this", "that"): 5}),
+        ("namedtuple_as_key_in_dd", defaultdict(list, {ObjMeta("this", "that"): 5})),
         ("namedtuple", ObjMeta("this", "that")),
         ("np.array", np.array([[0.0, 4.1], [3.2, 2.1]])),
         (
