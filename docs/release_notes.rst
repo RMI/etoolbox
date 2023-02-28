@@ -6,7 +6,7 @@ eToolBox Release Notes
 .. _release-v0-2-0:
 
 ---------------------------------------------------------------------------------------
-0.2.0 (2022-XX-XX)
+0.2.0 (2023-XX-XX)
 ---------------------------------------------------------------------------------------
 
 What's New?
@@ -47,10 +47,12 @@ What's New?
       to directly save and load an object into a :class:`DataZip`, similar to
       :func:`pickle.dump` and :func:`pickle.load` except they handle opening and
       closing the file as well. Finally, :meth:`.DataZip.replace` is a little like
-      :meth:`collections.NamedTuple._replace`; it copies the contents of one
+      :meth:`typing.NamedTuple._replace`; it copies the contents of one
       :class:`DataZip` into a new one, with select keys replaced.
 
-
+Bug Fixes
+^^^^^^^^^
+*  Allow :class:`typing.NamedTuple` to be used as keys in a :class:`dict`.
 
 Known Issues
 ^^^^^^^^^^^^
@@ -60,7 +62,7 @@ Known Issues
 .. _release-v0-1-0:
 
 ---------------------------------------------------------------------------------------
-0.1.0 (2022-XX-XX)
+0.1.0 (2023-02-27)
 ---------------------------------------------------------------------------------------
 
 What's New?

@@ -550,7 +550,8 @@ class DataZip(ZipFile):
         return name
 
     def _encode_dict(self, _, data: dict) -> dict:
-        if tuple in map(type, data.keys()):
+        # we need to encode the dict differently if any keys are not int | str
+        if set(map(type, data.keys())) - {int, str}:
             return {
                 "__type__": "dict_aslist",
                 "items": [self._encode(_, item) for _, item in enumerate(data.items())],
@@ -682,6 +683,7 @@ class DataZip(ZipFile):
         PosixPath: lambda _, __, item: {"__type__": "Path", "items": str(item)},
         WindowsPath: lambda _, __, item: {"__type__": "Path", "items": str(item)},
         np.ndarray: _encode_ndarray,
+        np.float64: lambda _, __, item: float(item),
         np.int64: lambda _, __, item: int(item),
         pd.DataFrame: _encode_pd_df,
         pd.Series: _encode_pd_series,
