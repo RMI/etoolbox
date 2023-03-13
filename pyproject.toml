@@ -22,7 +22,8 @@ requires-python = ">=3.10,<3.12"
 dependencies = [
     "pandas >= 1.4,< 1.6",
     "pyarrow>=9, <12",
-    "tzdata>=2022.7; platform_system=='Windows'"
+    "tzdata>=2022.7; platform_system=='Windows'",
+    "ujson >= 5.6, <5.8",
 ]
 
 [project.optional-dependencies]

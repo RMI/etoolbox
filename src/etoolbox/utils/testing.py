@@ -10,14 +10,14 @@ def idfn(val):
     return str(val)
 
 
-def assert_equal(left, right) -> None:
+def assert_equal(left, right, check_pd_dtype=True) -> None:
     """Recursively check that left and right objects are equal."""
     if type(left) is not type(right):
         raise AssertionError(f"{type(left)=} is not {type(right)=}")
     if isinstance(right, pd.Series):
-        pd.testing.assert_series_equal(left, right)
+        pd.testing.assert_series_equal(left, right, check_dtype=check_pd_dtype)
     elif isinstance(right, pd.DataFrame):
-        pd.testing.assert_frame_equal(left, right)
+        pd.testing.assert_frame_equal(left, right, check_dtype=check_pd_dtype)
     elif isinstance(right, (list, tuple)):
         assert len(left) == len(right)
         for v0, v1 in zip(left, right):

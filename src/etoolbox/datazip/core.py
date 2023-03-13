@@ -1,7 +1,6 @@
 """Code for :class:`.DataZip`."""
 from __future__ import annotations
 
-import json
 import logging
 import warnings
 from collections import Counter, OrderedDict, defaultdict, deque
@@ -18,6 +17,7 @@ from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
+import ujson as json
 
 from etoolbox import __version__
 from etoolbox.datazip._types import JSONABLE, DZable, _create_engine, _Engine, _Figure
@@ -61,7 +61,14 @@ class DataZip(ZipFile):
         ("numpy", "ndarray", None): ".npy",
     }
 
-    def __init__(self, file: str | Path | BytesIO, mode="r", *args, **kwargs):
+    def __init__(
+        self,
+        file: str | Path | BytesIO,
+        mode="r",
+        ignore_pd_dtypes=False,
+        *args,
+        **kwargs,
+    ):
         """Create a DataZip.
 
         Args:
@@ -71,6 +78,11 @@ class DataZip(ZipFile):
             recipes: Deprecated.
             compression: ZIP_STORED (no compression), ZIP_DEFLATED (requires zlib),
                 ZIP_BZIP2 (requires bz2) or ZIP_LZMA (requires lzma).
+            ignore_pd_dtypes: if True, any dtypes stored in a DataZip for
+                :class:`pandas.DataFrame` columns or :class:`pandas.Series` will be
+                ignored. This may be useful when using global settings for
+                ``mode.dtype_backend`` or ``mode.use_nullable_dtypes`` to force the use
+                of ``pyarrow`` types.
 
         Examples
         --------
@@ -159,6 +171,7 @@ class DataZip(ZipFile):
                     )
 
         super().__init__(file, mode, *args, **kwargs)
+        self._ignore_pd_dtypes = ignore_pd_dtypes
         self._attributes, self._metadata = {"__state__": {}}, {"__rev__": 2}
         self._ids, self._red = {}, {}
         if mode == "r":
@@ -167,10 +180,10 @@ class DataZip(ZipFile):
             )
             self._metadata = self._json_get("__metadata__", "metadata")
             if self._metadata.get("__rev__", 1) != 2:
-                LOGGER.warning(
-                    "%s was created with an older version of DataZip, all data might "
-                    "not be accessible, consider using v0.1.0.",
-                    file,
+                warnings.warn(
+                    f"{file} was created with an older version of DataZip, "
+                    "all data might not be accessible, consider using v0.1.0.",
+                    UserWarning,
                 )
                 self._attributes = self._attributes | self._load_legacy_helper()
 
@@ -234,11 +247,17 @@ class DataZip(ZipFile):
         See :meth:`.DataZip.dump` for examples.
         """
         with DataZip(file, "r") as self:
-            obj = DataZip._decode_obj(self, self._attributes["state"], klass)
-        return obj
+            return DataZip._decode_obj(self, self._attributes["state"], klass)
 
     @classmethod
-    def replace(cls, file_or_new_buffer, old_buffer=None, save_old=False, **kwargs):
+    def replace(
+        cls,
+        file_or_new_buffer,
+        old_buffer=None,
+        save_old=False,
+        iterwrap=None,
+        **kwargs,
+    ):
         """Replace an old :class:`DataZip` with an editable new one.
 
         Note: Data and keys that are copied over by this function cannot be reliably
@@ -252,6 +271,9 @@ class DataZip(ZipFile):
             save_old: if True, the old :class:`DataZip` will be
                 saved with "_old" appended, if False it will be
                 deleted when the new :class:`DataZip` is closed.
+            iterwrap: this will be used to wrap the iterator that handles
+                copying data to the new :class:`DataZip` to enable a progress
+                bar, i.e. ``tqdm``.
             kwargs: data that should be written into the new :class:`DataZip`,
                 for any keys that were in the old :class:`DataZip`, the new
                 value provided here will be used instead.
@@ -334,6 +356,8 @@ class DataZip(ZipFile):
                 _to_delete = old_buffer
 
         self = cls(file_or_new_buffer, "w")
+        if iterwrap is None:
+            iterwrap = iter
         with DataZip(old_buffer, "r") as z:
             if z._metadata.get("__rev__") != 2:
                 _to_delete = None
@@ -343,12 +367,12 @@ class DataZip(ZipFile):
                     file_or_new_buffer,
                     old_buffer,
                 )
-            for k, v in z.items():
+            for k, v in iterwrap(z.items()):
                 if k in kwargs:
                     self[k] = kwargs.pop(k)
                 else:
                     self[k] = v
-            for k, v in kwargs.items():
+            for k, v in iterwrap(kwargs.items()):
                 self[k] = v
 
         self._delete_on_close = _to_delete
@@ -382,22 +406,59 @@ class DataZip(ZipFile):
         """Provide for use of ``len`` builtin."""
         return len([k for k in self._attributes if k != "__state__"])
 
-    def __getitem__(self, key: int | str) -> DZable:
-        """Retrieve an item from a :class:`.DataZip`."""
-        return self._decode(self._attributes[key])
+    def __getitem__(self, key: str | tuple) -> DZable:
+        """Retrieve an item from a :class:`.DataZip`.
 
-    def __setitem__(self, key: int | str, value: DZable) -> None:
+        Args:
+            key: name of item to retrieve. If multiple keys are provided,
+                they are looked up recursively.
+
+        Returns:
+            Data associated with key
+
+        Examples
+        --------
+        >>> with DataZip(BytesIO(), mode="w") as z0:
+        ...     z0["foo"] = {"a": [{"c": 5}]}
+        ...     z0["foo", "a", 0, "c"]
+        ...
+        5
+
+        """
+        if isinstance(key, str | int):
+            return self._decode(self._attributes[key])
+        out = self._attributes
+        for k in key:
+            out = out[k]
+            with suppress(KeyError, TypeError):
+                out = self._attributes["__state__"][out["__loc__"]]
+        return self._decode(out)
+
+    def __setitem__(self, key: str, value: DZable) -> None:
         """Write an item to a :class:`.DataZip`."""
         if key in ("__metadata__", "__attributes__", "__state__"):
             raise KeyError(f"{key=} is reserved, please use a different name")
         if key in self._attributes:
             raise KeyError(f"{key=} already in {self.filename}")
+        if not isinstance(key, str):
+            raise TypeError(f"{key=} is invalid, key must be a string.")
         if (for_attributes := self._encode(key, value)) != "__IGNORE__":
             self._attributes.update({key: for_attributes})
 
-    def get(self, key: int | str, default=None):
+    def get(self, key: str, default=None):
         """Retrieve an item if it is there otherwise return default."""
         return self[key] if key in self else default
+
+    def reset_ids(self):
+        """Reset the internal record of stored ids.
+
+        Because 'two objects with non-overlapping lifetimes may have the same
+        :func:`id` value', it can be useful to reset the set of seen ids when
+        you are adding objects with non-overlapping lifetimes.
+
+        See :func:`id`.
+        """
+        self._ids = {}
 
     def items(self):
         """Lazily read name/key valye pairs from a :class:`.DataZip`.."""
@@ -436,20 +497,47 @@ class DataZip(ZipFile):
             LOGGER.error("Namedtuple will be returned as a normal tuple, %r", exc)
             return tuple(obj["items"].values())
 
+    decode_pd_df = {
+        (True, True, True): lambda df, cols, names, dtypes: df.set_axis(
+            pd.MultiIndex.from_tuples(cols, names=names), axis=1
+        ).astype({tuple(a): b for a, b in dtypes}),
+        (True, False, True): lambda df, cols, names, _: df.set_axis(
+            pd.MultiIndex.from_tuples(cols, names=names), axis=1
+        ),
+        (True, True, False): lambda df, cols, names, dtypes: df.set_axis(
+            pd.Index(cols, name=names[0]), axis=1
+        ).astype(dict(dtypes)),
+        (True, False, False): lambda df, cols, names, _: df.set_axis(
+            pd.Index(cols, name=names[0]), axis=1
+        ),
+        (False, True, False): lambda df, _, __, dtypes: df.astype(dict(dtypes)),
+        (False, False, False): lambda df, _, __, ___: df,
+    }
+
     def _decode_pd_df(self, obj) -> pd.DataFrame:
-        out = pd.read_parquet(BytesIO(super().read(obj["__loc__"])))
-        if "no_pqt_cols" not in obj:
-            return out
-        cols, names = obj["no_pqt_cols"]
-        if isinstance(names, (tuple, list)) and len(names) > 1:
-            return out.set_axis(pd.MultiIndex.from_tuples(cols, names=names), axis=1)
-        return out.set_axis(pd.Index(cols, name=names[0]), axis=1)
+        out = pd.read_parquet(BytesIO(self.read(obj["__loc__"])))
+        dtypes = obj.get("dtypes", None)
+        cols, names = obj.get("no_pqt_cols", (None, None))
+        return self.decode_pd_df[
+            (
+                # True -> we have no_pqt_cols data
+                not all((cols is None, names is None)),
+                # True -> we have dtypes data
+                dtypes is not None and not self._ignore_pd_dtypes,
+                # True -> we need a multiindex
+                isinstance(names, list) and len(names) > 1,
+            )
+        ](out, cols, names, dtypes)
 
     def _decode_pd_series(self, obj) -> pd.Series:
-        out = pd.read_parquet(BytesIO(super().read(obj["__loc__"]))).squeeze()
+        out = pd.read_parquet(BytesIO(self.read(obj["__loc__"]))).squeeze()
         cols, names = obj.get("no_pqt_cols", (None, None))
         out.name = tuple(cols) if isinstance(cols, list) else cols
-        return out
+        return (
+            out.astype(obj["dtypes"])
+            if "dtypes" in obj and not self._ignore_pd_dtypes
+            else out
+        )
 
     def _decode_obj(self, obj, klass=None) -> Any:
         if obj["__loc__"] in self._red:
@@ -522,36 +610,34 @@ class DataZip(ZipFile):
         """Entry point for encoding anything to store in :class:`DataZip`."""
         if encoder := self.ENCODERS.get(type(item), None):
             return encoder(self, name, item)
-        if isinstance(item, tuple):
-            if hasattr(item, "_asdict"):
-                return {
-                    "__type__": "namedtuple",
-                    "items": {k: self._encode(k, v) for k, v in item._asdict().items()},
-                    "objinfo": _objinfo(item),
-                }
+        if isinstance(item, tuple) and hasattr(item, "_asdict"):
             return {
-                "__type__": "tuple",
-                "items": [self._encode(_, e) for _, e in enumerate(item)],
+                "__type__": "namedtuple",
+                "items": {k: self._encode(k, v) for k, v in item._asdict().items()},
+                "objinfo": _objinfo(item),
             }
 
-        if id(item) in self._ids:
+        if (id(item), type(item)) in self._ids:
             return {
                 "__type__": _objinfo(item),
-                "__loc__": self._ids[id(item)],
+                "__loc__": self._ids[(id(item), type(item))],
             }
 
         return self._encode_obj(name, item)
 
     def _encode_loc_helper(self, name: str, data: Any, to_write: Any) -> str:
-        if name in self.namelist():
-            name = f"{id(data)}_{name}"
-        self.writestr(name, to_write)
-        self._ids[id(data)] = name
-        return name
+        i = 0
+        new_name = name
+        while new_name in self.namelist():
+            new_name = f"{i}_{name}"
+            i += 1
+        self.writestr(new_name, to_write)
+        self._ids[(id(data), type(data))] = new_name
+        return new_name
 
     def _encode_dict(self, _, data: dict) -> dict:
         # we need to encode the dict differently if any keys are not int | str
-        if set(map(type, data.keys())) - {int, str}:
+        if set(map(type, data.keys())) - {str}:
             return {
                 "__type__": "dict_aslist",
                 "items": [self._encode(_, item) for _, item in enumerate(data.items())],
@@ -560,14 +646,17 @@ class DataZip(ZipFile):
 
     def _encode_pd_df(self, name: str, df: pd.DataFrame, **kwargs) -> dict:
         """Write a df in the ZIP as parquet."""
-        if loc := self._ids.get(id(df), None):
+        if loc := self._ids.get((id(df), type(df)), None):
             return {"__type__": "pdDataFrame", "__loc__": loc}
         try:
             return {
                 "__type__": "pdDataFrame",
                 "__loc__": self._encode_loc_helper(
-                    f"{name}.parquet", df, df.to_parquet()
+                    f"{name}.parquet",
+                    df,
+                    df.to_parquet(),
                 ),
+                "dtypes": df.dtypes.astype(str).to_dict(),
             }
         except ValueError:
             return {
@@ -576,10 +665,11 @@ class DataZip(ZipFile):
                     f"{name}.parquet", df, self._str_cols(df).to_parquet()
                 ),
                 "no_pqt_cols": [list(df.columns), list(df.columns.names)],
+                "dtypes": list(df.dtypes.astype(str).to_dict().items()),
             }
 
     def _encode_pd_series(self, name: str, df: pd.Series, **kwargs) -> dict:
-        if loc := self._ids.get(id(df), None):
+        if loc := self._ids.get((id(df), type(df)), None):
             return {"__type__": "pdSeries", "__loc__": loc}
         return {
             "__type__": "pdSeries",
@@ -590,10 +680,11 @@ class DataZip(ZipFile):
                 list(df.name) if isinstance(df.name, tuple) else df.name,
                 None,
             ],
+            "dtypes": str(df.dtypes),
         }
 
     def _encode_ndarray(self, name: str, data: np.ndarray, **kwargs) -> dict:
-        if loc := self._ids.get(id(data), None):
+        if loc := self._ids.get((id(data), type(data)), None):
             return {"__type__": "ndarray", "__loc__": loc}
         np.save(temp := BytesIO(), data, allow_pickle=False)
         return {
@@ -612,7 +703,7 @@ class DataZip(ZipFile):
         if name in self._attributes["__state__"]:
             name = f"{id(item)}_{name}"
 
-        self._ids[id(item)] = name
+        self._ids[(id(item), type(item))] = name
         self._attributes["__state__"][name] = self._encode("state", state)
         return {
             "__type__": _objinfo(item),
@@ -626,7 +717,7 @@ class DataZip(ZipFile):
     def _write_image(self, name: str, data: Any, **kwargs) -> str:
         data.write_image(temp := BytesIO(), format="pdf")
         self.writestr(f"{name}.pdf", temp.getvalue())
-        LOGGER.warning("Only pdf of Figure is stored")
+        LOGGER.info("Only pdf of Figure is stored")
         return "__IGNORE__"
 
     ENCODERS = {
@@ -696,19 +787,23 @@ class DataZip(ZipFile):
 
     def _load_legacy_helper(self) -> dict:
         obj_meta = self._metadata.get("obj_meta", self._json_get("obj_meta"))
+        locs = []
 
-        def _make_attr_entry(k):
+        def _make_attr_entry(k_, locs_):
             _attr = {}
-            if (objinfo := tuple(obj_meta.get(k, ""))) in self.DECODERS:
+            if (objinfo := tuple(obj_meta.get(k_, ""))) in self.DECODERS:
                 _attr.update({"__type__": objinfo})
-                if (file := (k + self.suffixes.get(objinfo, ""))) in self.namelist():
-                    _attr.update({"__loc__": file})
-                elif k in self._attributes:
-                    _attr.update({"items": self._attributes[k]})
-                if k in _no_pqt_cols:
-                    _attr.update({"no_pqt_cols": _no_pqt_cols[k]})
+                if (
+                    file_ := "".join((k_, self.suffixes.get(objinfo, "")))
+                ) in self.namelist():
+                    _attr.update({"__loc__": file_})
+                    locs_.append(file_)
+                elif k_ in self._attributes:
+                    _attr.update({"items": self._attributes[k_]})
+                if k_ in _no_pqt_cols:
+                    _attr.update({"no_pqt_cols": _no_pqt_cols[k_]})
             else:
-                _attr = self._attributes.get(k, {})
+                _attr = self._attributes.get(k_, {})
             return _attr
 
         _no_pqt_cols = self._metadata.get(
@@ -724,9 +819,18 @@ class DataZip(ZipFile):
                     k,
                 )
 
-            attr = _make_attr_entry(k)
+            attr = _make_attr_entry(k, locs)
             if attr:
                 attrs.update({k: attr})
+
+        for file in self.namelist():
+            stem, suffix = file.split(".")
+            if file not in locs and suffix == "parquet":
+                bc = {"no_pqt_cols": _no_pqt_cols[stem]} if stem in _no_pqt_cols else {}
+                attrs.update({stem: {"__type__": "pdDataFrame", "__loc__": file} | bc})
+            if file not in locs and suffix == "npy":
+                attrs.update({stem: {"__type__": "ndarray", "__loc__": file}})
+
         return attrs
 
     @staticmethod
@@ -736,7 +840,7 @@ class DataZip(ZipFile):
     def _json_get(self, *args):
         for arg in args:
             with suppress(Exception):
-                return json.loads(super().read(f"{arg}.json"))
+                return json.loads(self.read(f"{arg}.json"))
         return {}
 
     def read_dfs(self) -> Generator[tuple[str, pd.DataFrame | pd.Series]]:

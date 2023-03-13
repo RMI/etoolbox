@@ -74,6 +74,8 @@ intersphinx_mapping = {
     "scipy": ("https://docs.scipy.org/doc/scipy/", None),
     "setuptools": ("https://setuptools.pypa.io/en/latest/", None),
     "tox": ("https://tox.wiki/en/latest/", None),
+    "pyarrow": ("https://arrow.apache.org/docs/", None),
+    "ujson": ("https://github.com/ultrajson/ultrajson", None),
 }
 
 # Add any paths that contain templates here, relative to this directory.

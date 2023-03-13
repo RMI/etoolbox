@@ -68,3 +68,23 @@ def temp_dir(test_dir) -> Path:
     out.mkdir(exist_ok=True)
     yield out
     shutil.rmtree(out)
+
+
+@pytest.fixture(
+    scope="class",
+    params=[
+        "pandas",
+        pytest.param(
+            "pyarrow",
+            marks=pytest.mark.skipif(
+                pd.__version__ < "2.0.0",
+                reason="`pandas.options.mode.dtype_backend` option not available before 2.0.0",
+            ),
+        ),
+    ],
+)
+def pd_backend(test_dir, request) -> str:
+    """Use to run test with both pandas backends."""
+    if pd.__version__ > "2.0.0":
+        pd.set_option("mode.dtype_backend", request.param)
+    return request.param

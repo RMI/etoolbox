@@ -41,14 +41,23 @@ What's New?
       has :meth:`.DataZip.get`, :meth:`.DataZip.items`, and :meth:`.DataZip.keys` which
       do what you would expect. It also implements dunder methods to allow membership
       checking using ``in``, :func:`len`, and subscripts to get and set items (i.e.
-      ``obj[key] = value``). These all also behave as you would expect, except that
+      ``obj[key] = value``) these all also behave as you would expect, except that
       setting an item raises a :class:`KeyError` if the key is already in use.
+      One additional feature with lookups is that you can provide multiple keys which
+      are looked up recursively allowing efficient access to data in nested structures.
       :meth:`.DataZip.dump` and :meth:`.DataZip.load` are static methods that allow you
       to directly save and load an object into a :class:`DataZip`, similar to
       :func:`pickle.dump` and :func:`pickle.load` except they handle opening and
       closing the file as well. Finally, :meth:`.DataZip.replace` is a little like
       :meth:`typing.NamedTuple._replace`; it copies the contents of one
       :class:`DataZip` into a new one, with select keys replaced.
+
+*  Added dtype metadata for :mod:`pandas` objects as well as ability to ignore that
+   metadata to allow use of ``pyarrow`` dtypes.
+*  Switching to use :mod:`ujson` rather than the standard library version for
+   performance.
+
+
 
 Bug Fixes
 ^^^^^^^^^
