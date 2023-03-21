@@ -114,6 +114,14 @@ def test_invalid_keys(temp_dir, protected, error):
             z[protected] = 3
 
 
+def test_wrong_mode_write():
+    """Test that writing to DZ opened in ``r`` mode raises error."""
+    DataZip(temp := BytesIO(), "w").close()
+    with DataZip(temp, "r") as z:
+        with pytest.raises(ValueError):
+            z["3"] = 3
+
+
 def test_namedtuple_fallback(temp_dir):
     """Test named tuple fallback."""
 
@@ -567,6 +575,30 @@ class TestWPDBackend:
             tup=(0, 1),
             lis=["a", 2],
         )
+
+
+@pytest.mark.parametrize("name", ["plDataFrame", "plSeries"], ids=idfn)
+def test_polars(temp_dir, name):
+    """Test with polars."""
+    pl = pytest.importorskip("polars")
+
+    file = temp_dir / f"polars_{name}.zip"
+    if name == "plDataFrame":
+        obj = pl.DataFrame([[0, 1], [2, 1]], columns=["a", "b"])
+    else:
+        obj = pl.Series([0, 1])
+    with DataZip(file, "w") as z0:
+        z0["a"] = obj
+        z0["b"] = obj
+        assert "b.parquet" not in z0.namelist()
+    with DataZip(file, "r") as z1:
+        obj1 = z1["a"]
+        b = z1["b"]
+    if name == "plDataFrame":
+        assert obj.frame_equal(obj1)
+    else:
+        assert obj.series_equal(obj1)
+    assert id(obj1) == id(b)
 
 
 @pytest.mark.skip

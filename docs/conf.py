@@ -76,6 +76,9 @@ intersphinx_mapping = {
     "tox": ("https://tox.wiki/en/latest/", None),
     "pyarrow": ("https://arrow.apache.org/docs/", None),
     "ujson": ("https://github.com/ultrajson/ultrajson", None),
+    "polars": ("https://pola-rs.github.io/polars/py-polars/html/reference", None),
+    "plotly": ("https://plotly.com/python/", None),
+    "sqlalchemy": ("https://docs.sqlalchemy.org/en/latest/", None),
 }
 
 # Add any paths that contain templates here, relative to this directory.

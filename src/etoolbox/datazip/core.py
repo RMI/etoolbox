@@ -20,7 +20,8 @@ import pandas as pd
 import ujson as json
 
 from etoolbox import __version__
-from etoolbox.datazip._types import JSONABLE, DZable, _create_engine, _Engine, _Figure
+from etoolbox.datazip._optional import plotly, polars, sqlalchemy
+from etoolbox.datazip._types import JSONABLE, DZable
 from etoolbox.datazip._utils import (
     _get_klass,
     _get_username,
@@ -30,20 +31,6 @@ from etoolbox.datazip._utils import (
     default_getstate,
     default_setstate,
 )
-
-try:
-    from sqlalchemy import create_engine
-    from sqlalchemy.engine import Engine
-except (ModuleNotFoundError, ImportError):
-    Engine = _Engine
-    create_engine = _create_engine
-
-
-try:
-    from plotly.graph_objects import Figure
-except (ModuleNotFoundError, ImportError):
-    Figure = _Figure
-
 
 LOGGER = logging.getLogger(__name__)
 
@@ -436,6 +423,8 @@ class DataZip(ZipFile):
 
     def __setitem__(self, key: str, value: DZable) -> None:
         """Write an item to a :class:`.DataZip`."""
+        if self.mode == "r":
+            raise ValueError("Writing to DataZip requires mode 'w'")
         if key in ("__metadata__", "__attributes__", "__state__"):
             raise KeyError(f"{key=} is reserved, please use a different name")
         if key in self._attributes:
@@ -586,7 +575,21 @@ class DataZip(ZipFile):
             _decode_cache_helper,
             func=lambda self, obj: np.load(BytesIO(self.read(obj["__loc__"]))),
         ),
-        "saEngine": lambda _, obj: create_engine(obj["items"]["url"]),
+        "saEngine": lambda _, obj: sqlalchemy.create_engine(obj["items"]["url"]),
+        "plDataFrame": partial(
+            _decode_cache_helper,
+            func=lambda self, obj: polars.read_parquet(
+                BytesIO(self.read(obj["__loc__"])), use_pyarrow=True
+            ),
+        ),
+        "plSeries": partial(
+            _decode_cache_helper,
+            func=lambda self, obj: polars.read_parquet(
+                BytesIO(self.read(obj["__loc__"])), use_pyarrow=True
+            )
+            .to_series()
+            .alias(obj["col_name"]),
+        ),
         # LEGACY type encoding
         ("builtins", "tuple", None): lambda self, obj: tuple(
             self._decode(v) for v in obj["items"]
@@ -681,6 +684,35 @@ class DataZip(ZipFile):
                 None,
             ],
             "dtypes": str(df.dtypes),
+        }
+
+    def _encode_pl_df(self, name: str, df: polars.DataFrame, **kwargs) -> dict:
+        """Write a polars df in the ZIP as parquet."""
+        if loc := self._ids.get((id(df), type(df)), None):
+            return {"__type__": "plDataFrame", "__loc__": loc}
+        df.write_parquet(temp := BytesIO())
+        return {
+            "__type__": "plDataFrame",
+            "__loc__": self._encode_loc_helper(
+                f"{name}.parquet",
+                df,
+                temp.getvalue(),
+            ),
+        }
+
+    def _encode_pl_series(self, name: str, df: polars.Series, **kwargs) -> dict:
+        """Write a polars series in the ZIP as parquet."""
+        if loc := self._ids.get((id(df), type(df)), None):
+            return {"__type__": "plSeries", "__loc__": loc}
+        df.to_frame("IGNORE").write_parquet(temp := BytesIO())
+        return {
+            "__type__": "plSeries",
+            "__loc__": self._encode_loc_helper(
+                f"{name}.parquet",
+                df,
+                temp.getvalue(),
+            ),
+            "col_name": df.name,
         }
 
     def _encode_ndarray(self, name: str, data: np.ndarray, **kwargs) -> dict:
@@ -778,11 +810,13 @@ class DataZip(ZipFile):
         np.int64: lambda _, __, item: int(item),
         pd.DataFrame: _encode_pd_df,
         pd.Series: _encode_pd_series,
-        Engine: lambda _, __, item: {
+        sqlalchemy.engine.Engine: lambda _, __, item: {
             "__type__": "saEngine",
             "items": {"url": str(item.url)},
         },
-        Figure: _write_image,
+        plotly.graph_objects.Figure: _write_image,
+        polars.DataFrame: _encode_pl_df,
+        polars.Series: _encode_pl_series,
     }
 
     def _load_legacy_helper(self) -> dict:

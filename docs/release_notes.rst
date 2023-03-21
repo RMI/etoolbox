@@ -56,6 +56,7 @@ What's New?
    metadata to allow use of ``pyarrow`` dtypes.
 *  Switching to use :mod:`ujson` rather than the standard library version for
    performance.
+*  Added optional support for :class:`polars.DataFrame` and :class:`polars.Series`.
 
 
 

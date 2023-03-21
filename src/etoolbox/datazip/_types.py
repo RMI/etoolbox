@@ -37,15 +37,3 @@ DZable = (
     | pd.Series
     | None
 )
-
-
-class _Figure:
-    pass
-
-
-class _Engine:
-    pass
-
-
-def _create_engine(*args, **kwargs):
-    pass
