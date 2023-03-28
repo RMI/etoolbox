@@ -1,6 +1,5 @@
 """Tests for :class:`.IOMixin`."""
 import pytest
-
 from etoolbox.datazip import IOMixin
 
 

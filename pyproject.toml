@@ -31,7 +31,7 @@ dev = [
     "black[jupyter] >= 22,< 24",
     "docformatter>=1.5,<1.6",
     "build>=0.9",
-    "isort>=5.0,<5.13",
+    "ruff>0.0.215,<0.0.259",
     "tox>=3.20,<4.5",
     "twine>=4.0",
 ]
@@ -46,25 +46,15 @@ doc = [
     "sphinxcontrib-mermaid>0.7,<0.9.0",
 ]
 tests = [
-    "bandit[toml]>=1.6,<1.8",  # Checks code for security issues
     "blackdoc>=0.3.8,<0.3.9",  # runs black on doctests
     "coverage>=5.3,<7.3",  # Lets us track what code is being tested
-    "flake8>=4.0,<6.1",  # A framework for linting & static analysis
-    "flake8-builtins>=1.5,<2.2",  # Avoid shadowing Python built-in names
-    "flake8-docstrings>=1.5,<1.8",  # Ensure docstrings are formatted well
-    "flake8-pyproject>1.0,<1.3",  # flake8 config in pyproject.toml
-    "flake8-rst-docstrings>=0.2,<0.4",  # Allow use of ReST in docstrings
-    "flake8-use-fstring>=1.0,<1.5",  # Highlight use of old-style string formatting
-    "mccabe>=0.6,<0.8",  # Checks that code isn't overly complicated
-    "mypy>=0.942,<1.2",  # Static type checking
     "polars>=0.16,<0.18",  # for testing with polars, of course
-    "pep8-naming>=0.12,<0.14",  # Require PEP8 compliant variable names
     "pre-commit>=2.9,<3.3",  # Allow us to run pre-commit hooks in testing
-    "pydocstyle>=5.1,<6.4",  # Style guidelines for Python documentation
     "pytest>=6.2,<7.3",  # test framework
     "pytest-console-scripts>=1.1,<1.4",  # Allow automatic testing of scripts
     "pytest-cov>=2.10,<4.1",  # Pytest plugin for working with coverage
     "sqlalchemy>1.4,<2.1",  # required for testing ability to zip objects with engines
+    "ruff>0.0.215,<0.0.259",
     "tox>=3.20,<4.5",  # Python test environment manager
 ]
 
@@ -77,10 +67,6 @@ write_to = "src/etoolbox/_version.py"
 #######################################################################################
 # Configurations for linters and other tools
 #######################################################################################
-[tool.bandit]
-exclude_dirs = ["tests"]
-skips = ["B101"]
-
 [tool.black]
 line-length = 88
 target-version = ["py310", "py311"]
@@ -93,69 +79,6 @@ ignore-path = "docs/_build"
 [tool.docformatter]
 wrap-summaries = 88
 wrap-descriptions = 88
-
-[tool.flake8]
-extend-ignore = [
-    # * W503, W504: Line break before / after binary operator.
-    "W503", "W504",
-    "D401", # * D401: Imperative mood.
-    "E501", # * E501: Overlong line
-    "E203", # * E203: Space before ':' (black recommends to ignore)
-    # * RST201,RST203,RST301: Google docstrings aren't RST until after being processed by
-    #   Napoleon. See https://github.com/peterjc/flake8-rst-docstrings/issues/17
-    "RST201",  "RST203",  "RST301",
-    "D105",
-]
-max-complexity = 15
-inline-quotes = "double"
-max-line-length = 88
-docstring-convention = "google"
-# Files and directories that should not be subject to linting
-extend-exclude = [
-    ".env_tox",
-    ".eggs",
-    "build",
-]
-rst-roles =[
-    "attr",
-    "class",
-    "doc",
-    "func",
-    "meth",
-    "mod",
-    "obj",
-    "py:const",
-    "ref",
-    "user",
-]
-rst-directives =[
-    "envvar",
-    "exception",
-]
-percent-greedy = 2
-format-greedy = 2
-per-file-ignores = [
-    "__init__.py:F401"
-]
-
-[tool.isort]
-profile = "black"
-known_first_party = ["etoolbox"]
-
-[tool.mypy]
-#python_version = "3.10"
-warn_return_any = true
-warn_unused_configs = true
-#plugins = "numpy.typing.mypy_plugin"
-
-[[tool.mypy.overrides]]
-module = [
-    "numpy.*",
-    "pandas.*",
-    "pyarrow.*",
-    "sqlalchemy.*",
-]
-ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["."]
@@ -175,3 +98,51 @@ report_level = "WARNING"
 ignore_roles = ["pr", "issue", "user", "include"]
 ignore_messages = '(Hyperlink target .* is not referenced\.$|Duplicate implicit target name:|An `AttributeError` error occured.*)'
 ignore_directives = ["bibliography", "todo", "include"]
+
+[tool.ruff]
+# Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
+select = ["A", "B", "C", "D", "E", "F", "FBT", "G", "I", "N", "PD", "PGH", "S", "SIM", "TCH", "UP", "W", "RUF"]
+ignore = ["D401", "D105", "D407", "D416", "D203", "D213"]
+# Allow autofix for all enabled rules (when `--fix`) is provided.
+fixable = ["A", "B", "C", "D", "E", "F", "I", "UP", ]
+unfixable = []
+# By default, always enumerate fixed violations.
+show-fixes = true
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+]
+# Same as Black.
+line-length = 88
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+# Assume Python 3.10.
+target-version = "py310"
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+"docs/conf.py" = ["E501"]
+"tests/*.py" = ["S101", "SIM117", "F841", "D101", "PD901"]
+
+[tool.ruff.mccabe]
+# Unlike Flake8, default to a complexity level of 10.
+max-complexity = 15

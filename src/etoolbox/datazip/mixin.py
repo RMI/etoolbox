@@ -6,12 +6,15 @@ inheriting this mixin.
 from __future__ import annotations
 
 import logging
-from io import BytesIO
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from zipfile import ZIP_STORED
 
 from etoolbox.datazip.core import DataZip
+
+if TYPE_CHECKING:
+    from io import BytesIO
+    from pathlib import Path
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -21,6 +24,7 @@ class IOMixin:
 
     Examples
     --------
+    >>> from io import BytesIO
     >>> import numpy as np
     >>> import pandas as pd
 
@@ -108,7 +112,7 @@ class IOMixin:
         self,
         path: Path | str | BytesIO,
         compression=ZIP_STORED,
-        clobber=False,
+        clobber=False,  # noqa: FBT002
         **kwargs,
     ) -> None:
         """Write object to file or buffer."""

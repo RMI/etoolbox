@@ -32,9 +32,11 @@ def compare_dfs(
         decimals: Number of decimal places to round each column to.
             If an int is given, round each column to the same number of places.
             Otherwise dict and Series round to variable numbers of places.
-            Column names should be in the keys if decimals is a dict-like. Any columns not
-            included in decimals will be left as is. Elements of decimals
+            Column names should be in the keys if decimals is a dict-like. Any columns
+            not included in decimals will be left as is. Elements of decimals
             which are not columns of the input will be ignored.
+        kwargs: keyword arguments that will be passed to
+            :meth:`pandas.DataFrame.compare`.
 
     Returns: a Comparison of the two dataframes
     """
@@ -51,9 +53,10 @@ def compare_dfs(
         raise ValueError("with mismatched index, must specify `align_col`")
     if isinstance(align_col, list):
         # cat together columns for alignment
-        assert (
-            len(align_col) > 1
-        ), "if `align_col` is a list, it must represent more than one column"
+        if len(align_col) <= 1:
+            raise AssertionError(
+                "if `align_col` is a list, it must represent more than one column"
+            )
         _align_col = "+".join(align_col)
         self[_align_col] = self[align_col].astype(str).apply("___".join, axis=1)
         other[_align_col] = other[align_col].astype(str).apply("___".join, axis=1)
@@ -64,12 +67,12 @@ def compare_dfs(
     self_ = (
         self[self[align_col].isin(vals)]
         .sort_values([align_col])
-        .reset_index(drop=True)[cols + [align_col]]
+        .reset_index(drop=True)[cols + [align_col]]  # noqa: RUF005 py3.11 only
     )
     other_ = (
         other[other[align_col].isin(vals)]
         .sort_values([align_col])
-        .reset_index(drop=True)[cols + [align_col]]
+        .reset_index(drop=True)[cols + [align_col]]  # noqa: RUF005 py3.11 only
     )
 
     def _add_ix(df, name):
@@ -103,9 +106,9 @@ def compare_dfs(
     al_cols = out.iloc[:, 1].str.split("___", expand=True)
     al_cols.columns = pd.MultiIndex.from_product([align_col.split("+"), ("aligned",)])
     out = pd.concat([al_cols, out], axis=1).set_index(
-        [("merge", "")] + list(al_cols.columns)
+        [("merge", "")] + list(al_cols.columns)  # noqa: RUF005 py3.11 only
     )
-    out.index.names = ["merge"] + align_col.split("+")
+    out.index.names = ["merge"] + align_col.split("+")  # noqa: RUF005 py3.11 only
     logger.warning("category counts: %s", Counter(out.index.get_level_values(0)))
     return out.iloc[:, 1:]
 
@@ -114,7 +117,7 @@ def _isclose(i, j):
     """~Equivalent of ``np.isclose`` for arrays with strs."""
     if isinstance(i, str):
         return i == j
-    return 1e-4 > np.abs(i - j)
+    return np.abs(i - j) < 1e-4
 
 
 isclose = np.frompyfunc(_isclose, 2, 1)

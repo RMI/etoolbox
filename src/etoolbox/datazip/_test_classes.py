@@ -20,30 +20,30 @@ def _eq_func(self, other):
 
     def _comp(v0, v1):
         if isinstance(v0, dict):
-            for v01, v11 in zip(v0.values(), v1.values()):
+            for v01, v11 in zip(v0.values(), v1.values()):  # noqa: B905
                 return _comp(v01, v11)
-        if isinstance(v0, (list, tuple)):
-            for v01, v11 in zip(v0, v1):
+        if isinstance(v0, list | tuple):
+            for v01, v11 in zip(v0, v1):  # noqa: B905
                 return _comp(v01, v11)
-        if isinstance(v0, (pd.DataFrame, pd.Series)):
+        if isinstance(v0, pd.DataFrame | pd.Series):
             return v0.compare(v1).empty
         return bool(v0 == v1)
 
     r = []
 
     if hasattr(self, "__dict__"):
-        for v0, v1 in zip(
-            getattr(self, "__dict__").values(), getattr(other, "__dict__").values()
+        for v0, v1 in zip(  # noqa: B905
+            self.__dict__.values(), other.__dict__.values()
         ):
             r.append(_comp(v0, v1))
 
     if hasattr(self, "__slots__"):
-        for k in getattr(self, "__slots__"):
+        for k in self.__slots__:
             if hasattr(self, k) and hasattr(other, k):
                 v0, v1 = getattr(self, k), getattr(other, k)
                 r.append(_comp(v0, v1))
             if hasattr(self, k) and not hasattr(other, k):
-                r.append(False)
+                r.append(False)  # noqa: FBT003
 
     return all(r)
 
@@ -59,10 +59,10 @@ class _TestKlassSlotsCore:
             setattr(self, k, v)
 
     def __repr__(self):
-        return (
-            self.__class__.__qualname__
-            + f"({', '.join(f'{k}={getattr(self, k)}' for k in self.__slots__ if hasattr(self, k))})"
+        attrs = ", ".join(
+            f"{k}={getattr(self, k)}" for k in self.__slots__ if hasattr(self, k)
         )
+        return self.__class__.__qualname__ + f"({attrs})"
 
     def __eq__(self, other):
         return _eq_func(self, other)
@@ -108,10 +108,10 @@ class _TestKlassSlotsDict:
         return _eq_func(self, other)
 
     def __repr__(self):
-        return (
-            self.__class__.__qualname__
-            + f"({', '.join(f'{k}={getattr(self, k)}' for k in self.__slots__ if hasattr(self, k))})"
+        attrs = ", ".join(
+            f"{k}={getattr(self, k)}" for k in self.__slots__ if hasattr(self, k)
         )
+        return self.__class__.__qualname__ + f"({attrs})"
 
 
 class _TestKlassCore:

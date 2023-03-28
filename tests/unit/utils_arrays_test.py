@@ -1,7 +1,6 @@
 """Test for :mod:`etoolbox.utils.arrays`."""
 import numpy as np
 import pandas as pd
-
 from etoolbox.utils.arrays import isclose
 
 

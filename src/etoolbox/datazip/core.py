@@ -4,14 +4,13 @@ from __future__ import annotations
 import logging
 import warnings
 from collections import Counter, OrderedDict, defaultdict, deque
-from collections.abc import Generator
 from contextlib import suppress
 from datetime import datetime
 from functools import partial
 from io import BytesIO
 from pathlib import Path, PosixPath, WindowsPath
 from types import NoneType
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from zipfile import ZipFile
 from zoneinfo import ZoneInfo
 
@@ -21,7 +20,6 @@ import ujson as json
 
 from etoolbox import __version__
 from etoolbox.datazip._optional import plotly, polars, sqlalchemy
-from etoolbox.datazip._types import JSONABLE, DZable
 from etoolbox.datazip._utils import (
     _get_klass,
     _get_username,
@@ -31,6 +29,11 @@ from etoolbox.datazip._utils import (
     default_getstate,
     default_setstate,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from etoolbox.datazip._types import JSONABLE, DZable
 
 LOGGER = logging.getLogger(__name__)
 
@@ -52,7 +55,7 @@ class DataZip(ZipFile):
         self,
         file: str | Path | BytesIO,
         mode="r",
-        ignore_pd_dtypes=False,
+        ignore_pd_dtypes=False,  # noqa: FBT002
         *args,
         **kwargs,
     ):
@@ -70,6 +73,8 @@ class DataZip(ZipFile):
                 ignored. This may be useful when using global settings for
                 ``mode.dtype_backend`` or ``mode.use_nullable_dtypes`` to force the use
                 of ``pyarrow`` types.
+            args: additional positional will be passed to :meth:`ZipFile.__init__`.
+            kwargs: keyword arguments will be passed to :meth:`ZipFile.__init__`.
 
         Examples
         --------
@@ -104,7 +109,8 @@ class DataZip(ZipFile):
         1  8.9  6.2
 
         While always preferable to use a context manager as above, here it's more
-        convenient to keep the object open. Even more unusual types that can't normally be stored in json should work.
+        convenient to keep the object open. Even more unusual types that can't normally
+        be stored in json should work.
 
         >>> z1 = DataZip(buffer, "r")
         >>> z1["foo"]
@@ -154,7 +160,8 @@ class DataZip(ZipFile):
                     file.unlink()
                 else:
                     raise FileExistsError(
-                        f"{file} exists, you cannot write or append to an existing DataZip."
+                        f"{file} exists, you cannot write or append to an "
+                        f"existing DataZip."
                     )
 
         super().__init__(file, mode, *args, **kwargs)
@@ -171,6 +178,7 @@ class DataZip(ZipFile):
                     f"{file} was created with an older version of DataZip, "
                     "all data might not be accessible, consider using v0.1.0.",
                     UserWarning,
+                    stacklevel=2,
                 )
                 self._attributes = self._attributes | self._load_legacy_helper()
 
@@ -187,6 +195,7 @@ class DataZip(ZipFile):
                 for all of them to implement ``__getstate__`` and ``__setstate__``.
             file: a file-like object, or a buffer where the :class:`DataZip`
                 will be saved.
+            kwargs: keyword arguments will be passed to :class:`.DataZip`.
 
         Returns:
             None
@@ -241,7 +250,7 @@ class DataZip(ZipFile):
         cls,
         file_or_new_buffer,
         old_buffer=None,
-        save_old=False,
+        save_old=False,  # noqa: FBT002
         iterwrap=None,
         **kwargs,
     ):
@@ -451,7 +460,7 @@ class DataZip(ZipFile):
 
     def items(self):
         """Lazily read name/key valye pairs from a :class:`.DataZip`.."""
-        for k in self._attributes.keys():
+        for k in self._attributes.keys():  # noqa: SIM118
             if k == "__state__":
                 continue
             yield k, self[k]
@@ -882,8 +891,9 @@ class DataZip(ZipFile):
         warnings.warn(
             "``read_dfs`` will be removed in a future version, use ``items``.",
             DeprecationWarning,
+            stacklevel=2,
         )
-        for name, *suffix in map(lambda x: x.split("."), self.namelist()):
+        for name, *suffix in (x.split(".") for x in self.namelist()):
             if "parquet" in suffix:
                 yield name, self[name]
 
@@ -894,7 +904,9 @@ class DataZip(ZipFile):
     ):
         """Write dict, df, str, or some other objects to name."""
         warnings.warn(
-            "``writed`` will be removed. Use `self[key] = data`", DeprecationWarning
+            "``writed`` will be removed. Use `self[key] = data`",
+            DeprecationWarning,
+            stacklevel=2,
         )
         self[name] = data
 

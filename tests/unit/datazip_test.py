@@ -11,7 +11,6 @@ from zipfile import ZipFile
 import numpy as np
 import pandas as pd
 import pytest
-
 from etoolbox.datazip import DataZip
 from etoolbox.datazip._test_classes import (
     ObjMeta,
@@ -461,8 +460,12 @@ class TestWPDBackend:
     @pytest.mark.parametrize(
         "name, obj, reset_ids",
         [
-            pytest.param("df_reset", pd.DataFrame([[1, 2], [4, 1000]]), True),
-            pytest.param("df", pd.DataFrame([[1, 2], [4, 1000]]), False),
+            pytest.param(
+                "df_reset", pd.DataFrame([[1, 2], [4, 1000]]), True  # noqa: FBT003
+            ),
+            pytest.param(
+                "df", pd.DataFrame([[1, 2], [4, 1000]]), False  # noqa: FBT003
+            ),
         ],
         ids=idfn,
     )
@@ -623,5 +626,5 @@ def test_dfs_to_from_zip(temp_dir):
         df_dict,
     )
     df_load = DataZip.dfs_from_zip(temp_dir / "test_dfs_to_from_zip")
-    for a, b in zip(df_dict.values(), df_load.values()):
+    for a, b in zip(df_dict.values(), df_load.values()):  # noqa: B905
         assert a.compare(b).empty

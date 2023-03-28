@@ -27,10 +27,10 @@ What's New?
       where the data is actually stored. Further, rather than storing some metadata in
       ``__attributes__.json`` and some elsewhere, now **all** metadata is stored
       alongside the data or pointer in ``__attributes__.json``.
-   *  **Custom Classes** We no longer save custom objects as their own :class:`DataZip`.
-      Their location in the object hierarchy is preserved with a pointer and associated
-      metadata. The object's state is stored separately in a hidden key, ``__state__``
-      in ``__attributes__.json``.
+   *  **Custom Classes** We no longer save custom objects as their own
+      :class:`.DataZip`. Their location in the object hierarchy is preserved with a
+      pointer and associated metadata. The object's state is stored separately in a
+      hidden key, ``__state__`` in ``__attributes__.json``.
    *  **References** The old format stored every object as many times as it
       was referenced. This meant that objects could be stored multiple times and when
       the hierarchy was recreated, these objects would be copies. The new process for
@@ -46,17 +46,21 @@ What's New?
       One additional feature with lookups is that you can provide multiple keys which
       are looked up recursively allowing efficient access to data in nested structures.
       :meth:`.DataZip.dump` and :meth:`.DataZip.load` are static methods that allow you
-      to directly save and load an object into a :class:`DataZip`, similar to
+      to directly save and load an object into a :class:`.DataZip`, similar to
       :func:`pickle.dump` and :func:`pickle.load` except they handle opening and
       closing the file as well. Finally, :meth:`.DataZip.replace` is a little like
       :meth:`typing.NamedTuple._replace`; it copies the contents of one
-      :class:`DataZip` into a new one, with select keys replaced.
+      :class:`.DataZip` into a new one, with select keys replaced.
 
 *  Added dtype metadata for :mod:`pandas` objects as well as ability to ignore that
    metadata to allow use of ``pyarrow`` dtypes.
 *  Switching to use :mod:`ujson` rather than the standard library version for
    performance.
 *  Added optional support for :class:`polars.DataFrame` and :class:`polars.Series`.
+*  Added :class:`.PretendPudlTabl` when passed as the ``klass`` argument to
+   :meth:`.DataZip.load`, it allows accessing the dfs in a zipped :class:`pudl.PudlTabl`
+   as you would normally but avoiding the :mod:`pudl` dependency.
+*  Code cleanup along with adoption of ruff and removal of bandit, flake8, isort, etc.
 
 
 
@@ -67,8 +71,8 @@ Bug Fixes
 
 Known Issues
 ^^^^^^^^^^^^
-*  Some legacy ``DataZip`` files cannot be fully read, especially nested structures and
-   custom classes.
+*  Some legacy :class:`.DataZip` files cannot be fully read, especially nested
+   structures and custom classes.
 
 .. _release-v0-1-0:
 

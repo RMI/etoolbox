@@ -1,4 +1,8 @@
-"""Dummy modules and classes when optional packages are not installed."""
+"""Dummy modules and classes when optional packages are not installed.
+
+Could do something more like this:
+https://github.com/pola-rs/polars/blob/master/py-polars/polars/dependencies.py
+"""
 try:
     import sqlalchemy
 except (ModuleNotFoundError, ImportError):

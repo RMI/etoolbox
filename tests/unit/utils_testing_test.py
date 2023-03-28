@@ -4,7 +4,6 @@ import math
 import numpy as np
 import pandas as pd
 import pytest
-
 from etoolbox.utils.testing import assert_equal, capture, idfn
 
 
@@ -17,6 +16,9 @@ from etoolbox.utils.testing import assert_equal, capture, idfn
         ([1, pd.Series([1, 2, 3]), 3], [1, pd.Series([1, 45, 3]), 3], AssertionError),
         ((1, 2, 3), (1, 2, 3), None),
         ((1, 2, 3), (1, 22, 3), AssertionError),
+        ((1, 2, 3, 5), (1, 22, 3), AssertionError),
+        ((1, 2, 3, 5), (1, 2, 3), ValueError),
+        ({1: 5}, {1: 5, 2: 4}, ValueError),
         (
             {
                 0: 2,

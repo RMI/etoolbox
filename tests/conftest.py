@@ -8,7 +8,6 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-
 from etoolbox.datazip._test_classes import _KlassSlots, _TestKlass
 
 logger = logging.getLogger(__name__)
@@ -78,7 +77,8 @@ def temp_dir(test_dir) -> Path:
             "pyarrow",
             marks=pytest.mark.skipif(
                 pd.__version__ < "2.0.0",
-                reason="`pandas.options.mode.dtype_backend` option not available before 2.0.0",
+                reason="`pandas.options.mode.dtype_backend` "
+                "option not available before 2.0.0",
             ),
         ),
     ],

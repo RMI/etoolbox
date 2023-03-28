@@ -10,7 +10,7 @@ def idfn(val):
     return str(val)
 
 
-def assert_equal(left, right, check_pd_dtype=True) -> None:
+def assert_equal(left, right, check_pd_dtype=True) -> None:  # noqa: FBT002
     """Recursively check that left and right objects are equal."""
     if type(left) is not type(right):
         raise AssertionError(f"{type(left)=} is not {type(right)=}")
@@ -18,16 +18,15 @@ def assert_equal(left, right, check_pd_dtype=True) -> None:
         pd.testing.assert_series_equal(left, right, check_dtype=check_pd_dtype)
     elif isinstance(right, pd.DataFrame):
         pd.testing.assert_frame_equal(left, right, check_dtype=check_pd_dtype)
-    elif isinstance(right, (list, tuple)):
-        assert len(left) == len(right)
-        for v0, v1 in zip(left, right):
+    elif isinstance(right, list | tuple):
+        for v0, v1 in zip(left, right, strict=True):
             assert_equal(v0, v1)
     elif isinstance(right, dict):
-        assert len(left) == len(right)
-        for k0v0, k1v1 in zip(left.items(), right.items()):
+        for k0v0, k1v1 in zip(left.items(), right.items(), strict=True):
             assert_equal(k0v0, k1v1)
     else:
-        assert np.all(left == right)
+        if not np.all(left == right):
+            raise AssertionError(f"{type(left)=} is not {type(right)=}")
 
 
 def capture(func, *args, **kwargs):
