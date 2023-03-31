@@ -2,7 +2,7 @@
 
 These are the 'Miracle Tools' Raymond Hettinger describes in his PyCon [talk]_.
 This code, description, and examples were adapted from the accompanying [docs]_.
-As an introduction Hettinger offers the following:
+As an introduction, Hettinger offers the following:
 
 .. pull-quote::
 

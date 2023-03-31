@@ -58,9 +58,19 @@ autoapi_dirs = [
 autoapi_ignore = [
     "*_test.py",
     "*/package_data/*",
+    "_*.py",
 ]
 autoapi_python_class_content = "both"
 autodoc_typehints = "description"
+autoapi_options = [
+    "members",
+    # "undoc-members",
+    # "private-members",
+    "show-inheritance",
+    "show-module-summary",
+    "special-members",
+    "imported-members",
+]
 # GitHub repo
 issues_github_path = "rmi/etoolbox"
 

@@ -1,4 +1,4 @@
-"""Mocks and other objects for testing :class:`.IOWrapper`."""
+"""Mocks and other objects for testing :class:`.DataZip`."""
 from __future__ import annotations
 
 from typing import NamedTuple

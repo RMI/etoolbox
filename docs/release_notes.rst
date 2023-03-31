@@ -60,7 +60,16 @@ What's New?
 *  Added :class:`.PretendPudlTabl` when passed as the ``klass`` argument to
    :meth:`.DataZip.load`, it allows accessing the dfs in a zipped :class:`pudl.PudlTabl`
    as you would normally but avoiding the :mod:`pudl` dependency.
-*  Code cleanup along with adoption of ruff and removal of bandit, flake8, isort, etc.
+*  Code cleanup along with adoption of `ruff <https://github.com/charliermarsh/ruff>`_
+   and removal of bandit, flake8, isort, etc.
+*  Added :func:`.lazy_import` to lazily import or proxy a module, inspired by
+   :mod:`polars.dependencies.lazy_import`.
+*  Created tools for proxying :class:`pudl.PudlTabl` to provide access to cached PUDL
+   data without requiring that :mod:`pudl` is installed, or at least imported. Also
+   added a number of helpers from :mod:`pudl.helpers` that we often use.
+*  Added a very light adaptation of the
+   `python-remotezip <https://github.com/gtsystem/python-remotezip>`_ package to access
+   files within a zip archive without downloading the full archive.
 
 
 
@@ -71,8 +80,8 @@ Bug Fixes
 
 Known Issues
 ^^^^^^^^^^^^
-*  Some legacy :class:`.DataZip` files cannot be fully read, especially nested
-   structures and custom classes.
+*  Some legacy :class:`.DataZip` files cannot be fully read, especially those with
+   nested structures and custom classes.
 
 .. _release-v0-1-0:
 

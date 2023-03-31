@@ -43,12 +43,6 @@ repos:
     hooks:
       - id: absolufy-imports
 
-  # Remove f-string prefix when there's nothing in the string to format.
-  - repo: https://github.com/dannysepler/rm_unneeded_f_str
-    rev: v0.2.0
-    hooks:
-      - id: rm-unneeded-f-str
-
   # Deterministic python formatting:
   - repo: https://github.com/psf/black
     rev: 23.1.0

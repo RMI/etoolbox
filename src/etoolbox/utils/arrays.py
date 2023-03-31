@@ -110,7 +110,7 @@ def compare_dfs(
     )
     out.index.names = ["merge"] + align_col.split("+")  # noqa: RUF005 py3.11 only
     logger.warning("category counts: %s", Counter(out.index.get_level_values(0)))
-    return out.iloc[:, 1:]
+    return out.iloc[:, 1:].sort_index(axis=1)
 
 
 def _isclose(i, j):

@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+import yaml
 from etoolbox.datazip._test_classes import _KlassSlots, _TestKlass
 
 logger = logging.getLogger(__name__)
@@ -88,3 +89,14 @@ def pd_backend(test_dir, request) -> str:
     if pd.__version__ > "2.0.0":
         pd.set_option("mode.dtype_backend", request.param)
     return request.param
+
+
+@pytest.fixture(scope="session")
+def pudl_config(test_dir) -> str:
+    """Use to run test with both pandas backends."""
+    file = Path.home() / ".pudl5.yml"
+    with open(file, "w") as f:
+        yaml.safe_dump({"pudl_out": "/Users/pytest"}, f)
+    yield file
+    file.unlink()
+    assert not file.exists()
