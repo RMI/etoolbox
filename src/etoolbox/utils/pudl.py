@@ -66,6 +66,7 @@ def make_pudl_tabl(
         pudl_path.with_suffix(".zip").unlink(missing_ok=True)
         logger.info("Rebuilding PudlTabl")
 
+        pudltabl()
         pudl_out = pudltabl.PudlTabl(
             sa.create_engine(get_pudl_sql_url()),
         )

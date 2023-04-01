@@ -2,7 +2,7 @@
 
 These helpers are a selection of those included in the :mod:`pudl.helpers` module of the
 `catalystcoop.pudl <https://github.com/catalyst-cooperative/pudl>`_ package created by
-`Catalyst Cooperative <https://catalyst.coop>`. From the original:
+`Catalyst Cooperative <https://catalyst.coop>`_. From the original:
 
 Copyright 2017-2022 Catalyst Cooperative
 

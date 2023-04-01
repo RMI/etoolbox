@@ -65,8 +65,11 @@ What's New?
 *  Added :func:`.lazy_import` to lazily import or proxy a module, inspired by
    :mod:`polars.dependencies.lazy_import`.
 *  Created tools for proxying :class:`pudl.PudlTabl` to provide access to cached PUDL
-   data without requiring that :mod:`pudl` is installed, or at least imported. Also
-   added a number of helpers from :mod:`pudl.helpers` that we often use.
+   data without requiring that :mod:`pudl` is installed, or at least imported. The
+   process of either loading a :class:`.PretendPudlTabl` from cache, or creating and
+   then caching a :class:`pudl.PudlTabl` is handled by :func:`.make_pudl_tabl`.
+*  Copied a number of helper functions that we often use  from :mod:`pudl.helpers` to
+   :mod:`.pudl_helpers` so they can be used without installing or importing :mod:`pudl`.
 *  Added a very light adaptation of the
    `python-remotezip <https://github.com/gtsystem/python-remotezip>`_ package to access
    files within a zip archive without downloading the full archive.
@@ -77,6 +80,8 @@ Bug Fixes
 ^^^^^^^^^
 *  Allow :class:`typing.NamedTuple` to be used as keys in a :class:`dict`, and a
    :class:`collections.defaultdict`.
+*  Fixed a bug in :func:`.make_pudl_tabl` where creating and caching a new
+   :class:`pudl.PudlTabl` would fail to load the PUDL package.
 
 Known Issues
 ^^^^^^^^^^^^

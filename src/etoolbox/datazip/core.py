@@ -887,7 +887,14 @@ class DataZip(ZipFile):
         return {}
 
     def read_dfs(self) -> Generator[tuple[str, pd.DataFrame | pd.Series]]:
-        """Read all dfs lazily."""
+        """Read all dfs lazily.
+
+        .. admonition:: DeprecationWarning
+           :class: warning
+
+           ``read_dfs`` will be removed in a future version, use :meth:`.DataZip.items`.
+
+        """
         warnings.warn(
             "``read_dfs`` will be removed in a future version, use ``items``.",
             DeprecationWarning,
@@ -902,7 +909,14 @@ class DataZip(ZipFile):
         name: str,
         data: Any,
     ):
-        """Write dict, df, str, or some other objects to name."""
+        """Write dict, df, str, or some other objects to name.
+
+        .. admonition:: DeprecationWarning
+           :class: warning
+
+           ``writed`` will be removed in a future version, use ``self[key] = data``.
+
+        """
         warnings.warn(
             "``writed`` will be removed. Use `self[key] = data`",
             DeprecationWarning,
