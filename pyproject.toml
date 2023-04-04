@@ -29,7 +29,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "black[jupyter] >= 22,< 24",
-    "docformatter>=1.5,<1.6",
+    "docformatter>=1.5,<1.7",
     "build>=0.9",
     "ruff>0.0.215,<0.0.261",
     "tox>=3.20,<4.5",
