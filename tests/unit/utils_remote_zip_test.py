@@ -236,9 +236,9 @@ class TestRemoteZip:
             info_list = zipf.infolist()
             info_list[0], info_list[1] = info_list[1], info_list[0]
 
-    def test_unordered_fileinfo(self, test_dir):
+    def test_unordered_fileinfo(self, temp_dir):
         """Test that zip file with unordered fileinfo records works as well. Fix #13."""
-        fname = test_dir / "test_unordered_fileinfo.zip"
+        fname = temp_dir / "test_unordered_fileinfo.zip"
         self.make_unordered_zip_file(fname)
 
         with rz.RemoteZip(fname, fetcher=LocalFetcher) as zfile:

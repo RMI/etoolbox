@@ -73,8 +73,8 @@ What's New?
 *  Added a very light adaptation of the
    `python-remotezip <https://github.com/gtsystem/python-remotezip>`_ package to access
    files within a zip archive without downloading the full archive.
-
-
+*  Updates to :class:`.DataZip` encoding and decoding of :class:`pandas.DataFrame` so
+   they work with :mod:`pandas` version 2.0.0.
 
 Bug Fixes
 ^^^^^^^^^

@@ -430,7 +430,14 @@ class TestWPDBackend:
             # if mode.dtype_backend == 'pyarrow', the original type was not pyarrow,
             # and we ignore dtypes, what we read back will be a different type than
             # the original
-            if all(("arrow" in pd_backend, "arrow" not in key, ignore_dtypes)):
+            if all(
+                (
+                    "arrow" in pd_backend,
+                    "arrow" not in key,
+                    ignore_dtypes,
+                    pd.__version__ < "2.0.0",
+                )
+            ):
                 with pytest.raises(AssertionError):
                     assert_equal(read, expected)
                 assert_equal(read, expected, check_pd_dtype=False)
@@ -494,6 +501,19 @@ class TestWPDBackend:
         "name, obj, test",
         [
             pytest.param("df", pd.DataFrame([[1, 2], [4, 1000]]), "namelist"),
+            pytest.param(
+                "df_mi",
+                pd.DataFrame({(0, "a"): [1, 2], (0, "b"): [4, 1000]}),
+                "namelist",
+            ),
+            pytest.param(
+                "df_Int", pd.DataFrame([[1, 2], [4, 1000]], dtype="Int64"), "namelist"
+            ),
+            pytest.param(
+                "df_mi_Int",
+                pd.DataFrame({(0, "a"): [1, 2], (0, "b"): [4, 1000]}, dtype="Int64"),
+                "namelist",
+            ),
             pytest.param("seires", pd.Series([1, 2, 4, 1000]), "namelist"),
             pytest.param("nparray", np.array([1, 2, 3]), "namelist"),
             pytest.param("obj", _TestKlass(a=5, b={"c": (2, 3.5)}, c=5.5), "state"),
@@ -511,7 +531,11 @@ class TestWPDBackend:
             elif test == "state":
                 assert len(z0["__state__"]) == 1
         with DataZip(temp_dir / f"test_dup_{name}_{pd_backend}.zip", "r") as z1:
-            assert id(z1["a"]) == id(z1["b"])
+            a = z1["a"]
+            b = z1["b"]
+            assert id(a) == id(b)
+            assert_equal(a, obj)
+            assert_equal(b, obj)
 
     @pytest.mark.parametrize(
         "klass",

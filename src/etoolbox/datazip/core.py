@@ -496,34 +496,50 @@ class DataZip(ZipFile):
             return tuple(obj["items"].values())
 
     decode_pd_df = {
-        (True, True, True): lambda df, cols, names, dtypes: df.set_axis(
+        (True, True, True, True): lambda df, cols, names, dtypes: df.set_axis(
             pd.MultiIndex.from_tuples(cols, names=names), axis=1
         ).astype({tuple(a): b for a, b in dtypes}),
-        (True, False, True): lambda df, cols, names, _: df.set_axis(
+        (True, False, True, False): lambda df, cols, names, _: df.set_axis(
             pd.MultiIndex.from_tuples(cols, names=names), axis=1
         ),
-        (True, True, False): lambda df, cols, names, dtypes: df.set_axis(
+        (True, True, False, False): lambda df, cols, names, dtypes: df.set_axis(
             pd.Index(cols, name=names[0]), axis=1
         ).astype(dict(dtypes)),
-        (True, False, False): lambda df, cols, names, _: df.set_axis(
+        (True, False, False, False): lambda df, cols, names, _: df.set_axis(
             pd.Index(cols, name=names[0]), axis=1
         ),
-        (False, True, False): lambda df, _, __, dtypes: df.astype(dict(dtypes)),
-        (False, False, False): lambda df, _, __, ___: df,
+        (False, True, False, False): lambda df, _, __, dtypes: df.astype(dict(dtypes)),
+        (False, False, False, False): lambda df, _, __, ___: df,
+        # pandas 2.0 doesn't raise a ValueError when there are non str column names
+        # it powers through and restores them. When combined with ujson turning tuples
+        # into strings, rather than lists, we have to be able to more actively process
+        # dtype info
+        (False, True, False, True): lambda df, _, __, dtypes: df.astype(
+            {tuple(a): b for a, b in dtypes}
+        ),
+        (True, True, False, True): lambda df, cols, names, dtypes: df.set_axis(
+            pd.Index(cols, name=names[0]), axis=1
+        ).astype({tuple(a): b for a, b in dtypes}),
+        (False, False, False, True): lambda df, cols, names, dtypes: df.astype(
+            {tuple(a): b for a, b in dtypes}
+        ),
     }
 
     def _decode_pd_df(self, obj) -> pd.DataFrame:
         out = pd.read_parquet(BytesIO(self.read(obj["__loc__"])))
-        dtypes = obj.get("dtypes", None)
+        dtypes = obj.get("dtypes", [[0]])
         cols, names = obj.get("no_pqt_cols", (None, None))
         return self.decode_pd_df[
             (
                 # True -> we have no_pqt_cols data
                 not all((cols is None, names is None)),
                 # True -> we have dtypes data
-                dtypes is not None and not self._ignore_pd_dtypes,
+                dtypes != [[0]] and not self._ignore_pd_dtypes,
                 # True -> we need a multiindex
                 isinstance(names, list) and len(names) > 1,
+                # True -> we have dtypes as a list of lists
+                not any((isinstance(dtypes, dict), self._ignore_pd_dtypes))
+                and isinstance(dtypes[0][0], list),
             )
         ](out, cols, names, dtypes)
 
@@ -664,11 +680,12 @@ class DataZip(ZipFile):
             return {
                 "__type__": "pdDataFrame",
                 "__loc__": self._encode_loc_helper(
-                    f"{name}.parquet",
-                    df,
-                    df.to_parquet(),
+                    f"{name}.parquet", df, df.to_parquet()
                 ),
-                "dtypes": df.dtypes.astype(str).to_dict(),
+                # pandas 2.0 doesn't raise a ValueError when there are non str column
+                # names, which means we can end up here even when there is a column
+                # multiindex
+                "dtypes": list(df.dtypes.astype(str).to_dict().items()),
             }
         except ValueError:
             return {

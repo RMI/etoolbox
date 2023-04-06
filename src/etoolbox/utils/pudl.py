@@ -1,4 +1,4 @@
-"""A pretend PudlTabl."""
+"""Functions and objects for creating and ~mocking PudlTabl."""
 import logging
 import os
 from pathlib import Path
@@ -151,8 +151,8 @@ class PretendPudlTabl:
             pt._dfs = defaultdict(lambda: None, self.__dict__["_dfs"])
         except Exception as exc:
             raise ModuleNotFoundError(
-                "I am only a pretend PudlTabl. I tried to load a real one to get "
-                "but wasn't able to."
+                "I am only a pretend PudlTabl. I tried to load a real one "
+                "but wasn't able to because PUDL is not installed."
             ) from exc
         else:
             self._real_pt = pt
