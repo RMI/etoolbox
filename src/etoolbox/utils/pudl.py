@@ -5,8 +5,6 @@ from pathlib import Path
 
 from etoolbox.utils.lazy_import import lazy_import
 
-sa = lazy_import("sqlalchemy", wait_for_signal=False)
-pudltabl = lazy_import("pudl.output.pudltabl", wait_for_signal=True)
 PUDL_CONFIG = Path.home() / ".pudl.yml"
 logger = logging.getLogger(__name__)
 
@@ -27,6 +25,16 @@ def get_pudl_sql_url(file=PUDL_CONFIG) -> str:
 
         with open(file, "r") as f:  # noqa: UP015
             return f"sqlite:///{yaml.safe_load(f)['pudl_out']}/output/pudl.sqlite"
+
+
+def _make_pudl_tabl():
+    pudltabl = lazy_import("pudl.output.pudltabl", wait_for_signal=False)
+    sa = lazy_import("sqlalchemy", wait_for_signal=False)
+
+    pudl_out = pudltabl.PudlTabl(
+        sa.create_engine(get_pudl_sql_url()),
+    )
+    return pudl_out
 
 
 def make_pudl_tabl(
@@ -66,10 +74,7 @@ def make_pudl_tabl(
         pudl_path.with_suffix(".zip").unlink(missing_ok=True)
         logger.info("Rebuilding PudlTabl")
 
-        pudltabl()
-        pudl_out = pudltabl.PudlTabl(
-            sa.create_engine(get_pudl_sql_url()),
-        )
+        pudl_out = _make_pudl_tabl()
         for table in tables:
             try:
                 getattr(pudl_out, table)()
@@ -119,13 +124,15 @@ class PretendPudlTabl:
 
     """
 
+    _name_map = {"gen_original_eia923": "gen_og_eia923"}
+
     def __setstate__(self, state):
         self.__dict__ = state
         self._real_pt = None
 
     def __getattr__(self, item):
-        if item in self.__dict__["_dfs"]:
-            return _Faker(self.__dict__["_dfs"][item])
+        if (n_item := self._name_map.get(item, item)) in self.__dict__["_dfs"]:
+            return _Faker(self.__dict__["_dfs"][n_item])
         if self._real_pt is not None:
             return getattr(self._real_pt, item)
         if not any(("ferc" in item, "eia" in item, "epa" in item)):
@@ -140,10 +147,7 @@ class PretendPudlTabl:
         logger.warning("We're making a real PudlTabl")
 
         try:
-            pudltabl()
-            pt = pudltabl.PudlTabl(
-                sa.create_engine(get_pudl_sql_url()),
-            )
+            pt = _make_pudl_tabl()
             pt._dfs = defaultdict(lambda: None, self.__dict__["_dfs"])
         except Exception as exc:
             raise ModuleNotFoundError(
