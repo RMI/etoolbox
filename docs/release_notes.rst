@@ -146,6 +146,10 @@ What's New?
    :class:`frozenset`, :class:`complex`, :class:`typing.NamedTuple`,
    :class:`datetime.datetime`, :class:`pathlib.Path`, and :class:`pandas.Timestamp`.
 *  Adding centralized testing helpers.
+*  Added a subclass of ``PudlTabl`` that adds back ``__getstate__`` and
+   ``__setstate__`` to enable caching, this caching will not work for tables that are
+   not stored in the object which will be an increasing portion of tables as discussed
+   `here <https://github.com/orgs/catalyst-cooperative/discussions/2503>`_.
 
 
 Bug Fixes

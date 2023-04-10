@@ -15,8 +15,8 @@ from zipfile import ZipFile
 from zoneinfo import ZoneInfo
 
 import numpy as np
+import orjson as json
 import pandas as pd
-import ujson as json
 
 from etoolbox import __version__
 from etoolbox.datazip._optional import plotly, polars, sqlalchemy
@@ -383,11 +383,11 @@ class DataZip(ZipFile):
         if self.mode == "w":
             self.writestr(
                 "__attributes__.json",
-                json.dumps(self._attributes, ensure_ascii=False, indent=4),
+                json.dumps(self._attributes),
             )
             self.writestr(
                 "__metadata__.json",
-                json.dumps(self._metadata, ensure_ascii=False, indent=4),
+                json.dumps(self._metadata),
             )
         self._red = {}
         super().close()

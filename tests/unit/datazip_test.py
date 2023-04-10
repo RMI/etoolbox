@@ -611,7 +611,7 @@ def test_polars(temp_dir, name):
 
     file = temp_dir / f"polars_{name}.zip"
     if name == "plDataFrame":
-        obj = pl.DataFrame([[0, 1], [2, 1]], columns=["a", "b"])
+        obj = pl.DataFrame({"a": [0, 1], "b": [2, 1]})
     else:
         obj = pl.Series([0, 1])
     with DataZip(file, "w") as z0:

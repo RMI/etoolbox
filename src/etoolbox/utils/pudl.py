@@ -1,6 +1,7 @@
 """Functions and objects for creating and ~mocking PudlTabl."""
 import logging
 import os
+from collections import defaultdict
 from pathlib import Path
 
 from etoolbox.utils.lazy_import import lazy_import
@@ -27,13 +28,65 @@ def get_pudl_sql_url(file=PUDL_CONFIG) -> str:
             return f"sqlite:///{yaml.safe_load(f)['pudl_out']}/output/pudl.sqlite"
 
 
-def _make_pudl_tabl():
+def _make_pudl_tabl(**kwargs):
     pudltabl = lazy_import("pudl.output.pudltabl", wait_for_signal=False)
     sa = lazy_import("sqlalchemy", wait_for_signal=False)
 
-    pudl_out = pudltabl.PudlTabl(
-        sa.create_engine(get_pudl_sql_url()),
-    )
+    class PudlTabl(pudltabl.PudlTabl):
+        def __getstate__(self) -> dict:
+            """Get current object state for serializing (pickling).
+
+            This method is run as part of pickling the object. It needs to return the
+            object's current state with any un-serializable objects converted to a form
+            that can be serialized. See :meth:`object.__getstate__` for further details
+            on the expected behavior of this method.
+            """
+            return self.__dict__.copy() | {
+                # defaultdict may be serializable but lambdas are not, so it must go
+                "_dfs": dict(self.__dict__["_dfs"]),
+                # sqlalchemy engines are also a problem here, saving the URL should
+                # provide enough of what is needed to recreate it, though that means the
+                # pickle is not portable, but any fix to that will happen when the
+                # object is restored
+                "pudl_engine": str(self.__dict__["pudl_engine"].url),
+            }
+
+        def __setstate__(self, state: dict) -> None:
+            """Restore the object's state from a dictionary.
+
+            This method is run when the object is restored from a pickle. Anything
+            that was changed in :meth:`pudl.output.pudltabl.PudlTabl.__getstate__` must
+            be undone here. Another important detail is that ``__init__`` is not run
+            when an object is de-serialized, so any setup there that alters external
+            state might need to happen here as well.
+
+            Args:
+                state: the object state to restore. This is effectively the output
+                    of :meth:`pudl.output.pudltabl.PudlTabl.__getstate__`.
+            """
+            try:
+                pudl_engine = sa.create_engine(state["pudl_engine"])
+                # make sure that the URL for the engine from ``state`` is usable now
+                pudl_engine.connect()
+            except sa.exc.OperationalError:
+                # if the URL from ``state`` is not valid, e.g. because it is for a local
+                # DB on a different computer, create the engine from PUDL defaults
+                pudl_uri = get_pudl_sql_url()
+                logger.warning(
+                    "Unable to connect to the restored pudl_db URL %s. "
+                    "Will use the default pudl_db %s instead.",
+                    state["pudl_engine"],
+                    pudl_uri,
+                )
+                pudl_engine = sa.create_engine(pudl_uri)
+
+            self.__dict__ = state | {
+                # recreate the defaultdict from the vanilla one from ``state``
+                "_dfs": defaultdict(lambda: None, state["_dfs"]),
+                "pudl_engine": pudl_engine,
+            }
+
+    pudl_out = PudlTabl(sa.create_engine(get_pudl_sql_url()), **kwargs)
     return pudl_out
 
 
@@ -50,6 +103,7 @@ def make_pudl_tabl(
     ),
     *,
     clobber=False,
+    **kwargs,
 ):
     """Load a PudlTabl from cache or create a new one.
 
@@ -58,6 +112,7 @@ def make_pudl_tabl(
             not exist yet, the path to where the DataZip of the PudlTabl will be stored.
         tables: tables that will be preloaded when creating a new PudlTabl.
         clobber: create a new PudlTabl cache even if the DataZip exists.
+        kwargs: keyword arguments that will be passed to :class:`pudl.PudlTabl`.
 
     Returns: A PudlTabl or a PretendPudlTabl
 
@@ -74,7 +129,7 @@ def make_pudl_tabl(
         pudl_path.with_suffix(".zip").unlink(missing_ok=True)
         logger.info("Rebuilding PudlTabl")
 
-        pudl_out = _make_pudl_tabl()
+        pudl_out = _make_pudl_tabl(**kwargs)
         for table in tables:
             try:
                 getattr(pudl_out, table)()
