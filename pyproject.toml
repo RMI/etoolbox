@@ -58,6 +58,12 @@ tests = [
     "tox>=3.20,<4.5",  # Python test environment manager
     "requests_mock",
 ]
+pudl-test = [
+    "python-snappy>=0.6,<0.7",
+    "platformdirs >=2.6,<3.3",
+    "tqdm >= 4.63,<4.65",
+    "catalystcoop.pudl @ git+https://github.com/catalyst-cooperative/pudl.git@dev",
+]
 
 [tool.setuptools.dynamic]
 version = {attr = "etoolbox._version.__version__"}

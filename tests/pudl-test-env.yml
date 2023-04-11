@@ -1,0 +1,12 @@
+name: etoolbox
+channels:
+  - conda-forge
+dependencies:
+  # Packages required for setting up the environment
+  - pip>=21,<24
+  - python>=3.11.0,<3.12
+  - python-snappy>=0.6,<0.7
+
+  # Use pip to install the package defined by this repo for development:
+  - pip:
+      - --editable ./[dev,doc,tests,pudl-test]

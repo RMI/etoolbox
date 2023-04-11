@@ -2,11 +2,21 @@
 import logging
 import os
 from collections import defaultdict
+from datetime import date, datetime
 from pathlib import Path
+from typing import Literal
+
+import pandas as pd
 
 from etoolbox.utils.lazy_import import lazy_import
 
 PUDL_CONFIG = Path.home() / ".pudl.yml"
+TABLE_NAME_MAP = {
+    "gen_original_eia923": "gen_og_eia923",
+    "gen_fuel_by_generator_energy_source_eia923": "gen_fuel_by_genid_esc_eia923",
+    "gen_fuel_by_generator_eia923": "gen_fuel_allocated_eia923",
+    "gen_fuel_by_generator_energy_source_owner_eia923": "gen_fuel_by_genid_esc_own",
+}
 logger = logging.getLogger(__name__)
 
 
@@ -103,7 +113,14 @@ def make_pudl_tabl(
     ),
     *,
     clobber=False,
-    **kwargs,
+    freq: Literal["AS", "MS", None] = None,
+    start_date: str | date | datetime | pd.Timestamp = None,
+    end_date: str | date | datetime | pd.Timestamp = None,
+    fill_fuel_cost: bool = False,
+    roll_fuel_cost: bool = False,
+    fill_net_gen: bool = False,
+    fill_tech_desc: bool = True,
+    unit_ids: bool = False,
 ):
     """Load a PudlTabl from cache or create a new one.
 
@@ -112,8 +129,28 @@ def make_pudl_tabl(
             not exist yet, the path to where the DataZip of the PudlTabl will be stored.
         tables: tables that will be preloaded when creating a new PudlTabl.
         clobber: create a new PudlTabl cache even if the DataZip exists.
-        kwargs: keyword arguments that will be passed to :class:`pudl.PudlTabl`.
-
+        freq: A string indicating the time frequency at which to aggregate
+            reported data. ``MS`` is monththly and ``AS`` is annually. If
+            None, the data will not be aggregated.
+        start_date: Beginning date for data to pull from the PUDL DB. If
+            a string, it should use the ISO 8601 ``YYYY-MM-DD`` format.
+        end_date: End date for data to pull from the PUDL DB. If a string,
+            it should use the ISO 8601 ``YYYY-MM-DD`` format.
+        fill_fuel_cost: if True, fill in missing ``frc_eia923()`` fuel cost
+            data with state-fuel averages from EIA's bulk electricity data.
+        roll_fuel_cost: if True, apply a rolling average to a subset of
+            output table's columns (currently only ``fuel_cost_per_mmbtu``
+            for the ``fuel_receipts_costs_eia923`` table.)
+        fill_net_gen: if True, use the net generation from the
+            generation_fuel_eia923 - which is reported at the
+            plant/fuel/prime mover level and  re-allocated to generators in
+            ``mcoe()``, ``capacity_factor()`` and ``heat_rate_by_unit()``.
+        fill_tech_desc: If True, fill the technology_description
+            field to years earlier than 2013 based on plant and
+            energy_source_code_1 and fill in technologies with only one matching
+            code.
+        unit_ids: If True, use several heuristics to assign
+            individual generators to functional units. EXPERIMENTAL.
     Returns: A PudlTabl or a PretendPudlTabl
 
     """
@@ -129,10 +166,23 @@ def make_pudl_tabl(
         pudl_path.with_suffix(".zip").unlink(missing_ok=True)
         logger.info("Rebuilding PudlTabl")
 
-        pudl_out = _make_pudl_tabl(**kwargs)
+        pudl_out = _make_pudl_tabl(
+            freq=freq,
+            start_date=start_date,
+            end_date=end_date,
+            fill_fuel_cost=fill_fuel_cost,
+            roll_fuel_cost=roll_fuel_cost,
+            fill_net_gen=fill_net_gen,
+            fill_tech_desc=fill_tech_desc,
+            unit_ids=unit_ids,
+        )
         for table in tables:
             try:
-                getattr(pudl_out, table)()
+                internal_table = TABLE_NAME_MAP.get(table, table)
+                df = getattr(pudl_out, table)()  # noqa: PD901
+                if pudl_out._dfs[internal_table] is None:
+                    pudl_out._dfs[internal_table] = df
+
             except AttributeError as exc:
                 logger.error("Unable to load %s. %r", table, exc)
         DataZip.dump(pudl_out, pudl_path)
@@ -160,6 +210,8 @@ class _Faker:
         self.thing = thing
 
     def __call__(self, *args, **kwargs):
+        if args or kwargs:
+            logger.warning("all arguments to _Faker are ignored.")
         return self.thing
 
 
@@ -179,22 +231,24 @@ class PretendPudlTabl:
 
     """
 
-    _name_map = {"gen_original_eia923": "gen_og_eia923"}
-
     def __setstate__(self, state):
         self.__dict__ = state
         self._real_pt = None
 
     def __getattr__(self, item):
-        if (n_item := self._name_map.get(item, item)) in self.__dict__["_dfs"]:
+        if (n_item := TABLE_NAME_MAP.get(item, item)) in self.__dict__["_dfs"]:
             return _Faker(self.__dict__["_dfs"][n_item])
         if self._real_pt is not None:
-            return getattr(self._real_pt, item)
+            return self._get_from_real_pt(item)
         if not any(("ferc" in item, "eia" in item, "epa" in item)):
             return _Faker(None)
-        else:
-            self._make_it_real()
-            return getattr(self._real_pt, item)
+        self._make_it_real()
+        return self._get_from_real_pt(item)
+
+    def _get_from_real_pt(self, item):
+        df = getattr(self._real_pt, item)()  # noqa: PD901
+        self.__dict__["_dfs"][TABLE_NAME_MAP.get(item, item)] = df
+        return _Faker(df)
 
     def _make_it_real(self):
         from collections import defaultdict

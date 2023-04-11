@@ -75,6 +75,14 @@ What's New?
    files within a zip archive without downloading the full archive.
 *  Updates to :class:`.DataZip` encoding and decoding of :class:`pandas.DataFrame` so
    they work with :mod:`pandas` version 2.0.0.
+*  Updates to :func:`.make_pudl_tabl` and associated functions and classes so that it
+   works with new and changing aspects of :class:`pudl.PudlTabl`, specifically those
+   raised in
+   `catalyst#2503 <https://github.com/orgs/catalyst-cooperative/discussions/2503>`_.
+   Added testing for full :func:`.make_pudl_tabl` functionality.
+
+
+
 
 Bug Fixes
 ^^^^^^^^^
@@ -87,6 +95,7 @@ Known Issues
 ^^^^^^^^^^^^
 *  Some legacy :class:`.DataZip` files cannot be fully read, especially those with
    nested structures and custom classes.
+*  :class:`.DataZip` ignores :func:`functools.partial` objects, at least in most dicts.
 
 .. _release-v0-1-0:
 

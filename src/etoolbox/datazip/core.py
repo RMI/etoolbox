@@ -670,7 +670,12 @@ class DataZip(ZipFile):
                 "__type__": "dict_aslist",
                 "items": [self._encode(_, item) for _, item in enumerate(data.items())],
             }
-        return {k: self._encode(k, v) for k, v in data.items()}
+        # ecode then filter
+        return {
+            k: v
+            for k, v in {k_: self._encode(k_, v_) for k_, v_ in data.items()}.items()
+            if v != "__IGNORE__"
+        }
 
     def _encode_pd_df(self, name: str, df: pd.DataFrame, **kwargs) -> dict:
         """Write a df in the ZIP as parquet."""
@@ -772,6 +777,10 @@ class DataZip(ZipFile):
             "__file_created__": str(datetime.now(tz=ZoneInfo("UTC"))),
         }
 
+    def _encode_ignore(self, name, item):
+        LOGGER.warning("%s of type %s will not be encoded", name, type(item))
+        return "__IGNORE__"
+
     def _write_image(self, name: str, data: Any, **kwargs) -> str:
         data.write_image(temp := BytesIO(), format="pdf")
         self.writestr(f"{name}.pdf", temp.getvalue())
@@ -843,6 +852,8 @@ class DataZip(ZipFile):
         plotly.graph_objects.Figure: _write_image,
         polars.DataFrame: _encode_pl_df,
         polars.Series: _encode_pl_series,
+        # things to ignore
+        partial: _encode_ignore,
     }
 
     def _load_legacy_helper(self) -> dict:

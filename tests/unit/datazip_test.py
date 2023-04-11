@@ -1,4 +1,5 @@
 """Core :class:`.DataZip` tests."""
+import functools
 import json
 from collections import Counter, OrderedDict, defaultdict, deque
 from datetime import datetime
@@ -234,6 +235,15 @@ def test_deep_access(temp_dir):
         z0["a"] = _TestKlass(a=5, b={"c": (2, 3.5)}, c={"q": 5.5})
     with DataZip(temp_dir / "test_deep_access.zip", "r") as z1:
         assert z1["a", "c", "q"] == 5.5
+
+
+def test_partial(temp_dir):
+    """Test that :func:`functools.partial` is not stored."""
+    file = temp_dir / "test_partial.zip"
+    with DataZip(file, "w") as z0:
+        z0["a"] = functools.partial(int, base=2)
+    with DataZip(file, "r") as z1:
+        assert "a" not in z1
 
 
 class TestWPDBackend:

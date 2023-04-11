@@ -1,5 +1,6 @@
 """Test pretend PudlTabl."""
 import os
+from importlib.util import find_spec
 from pathlib import Path
 from unittest import mock
 
@@ -24,6 +25,7 @@ def test_faker():
 class TestPretendPudlTabl:
     """Tests for PretendPudlTabl."""
 
+    @pytest.mark.skip(reason="we have better tests for this now")
     def test_load_actual(self, test_dir):
         """Test with a fresh PudlTabl."""
         sa = pytest.importorskip("sqlalchemy")
@@ -46,6 +48,10 @@ class TestPretendPudlTabl:
         assert isinstance(df, pd.DataFrame)
         assert not df.empty
 
+    @pytest.mark.skipif(
+        find_spec("pudl") is not None,
+        reason="This test is for when PUDL is not installed",
+    )
     def test_load_error(self, test_dir, temp_dir):
         """Test with a sample PudlTabl."""
         pt = DataZip.load(test_dir / "pudltabl.zip", PretendPudlTabl)
@@ -59,7 +65,14 @@ class TestPretendPudlTabl:
     "table, expected",
     [
         ("epacamd_eia", "in_pt"),
-        ("plants_eia860", ModuleNotFoundError),
+        pytest.param(
+            "plants_eia860",
+            ModuleNotFoundError,
+            marks=pytest.mark.skipif(
+                find_spec("pudl") is not None,
+                reason="This test is for when PUDL is not installed",
+            ),
+        ),
         ("__slots__", None),
         ("foobar", None),
         ("unit_ids", _Faker(thing=False)),
@@ -80,21 +93,25 @@ def test_make_pudl_tabl(test_dir, table, expected):
         assert getattr(pt, table) == expected()
 
 
-@mock.patch.dict(os.environ, {"PUDL_OUTPUT": "/Users/pytest/output"})
-def test_get_pudl_sql_url_env():
-    """Test pudl.sqlite url from env variable."""
-    assert get_pudl_sql_url() == "sqlite:////Users/pytest/output/pudl.sqlite"
+class TestPudlLoc:
+    @mock.patch.dict(os.environ, {"PUDL_OUTPUT": "/Users/pytest/output"})
+    def test_get_pudl_sql_url_env(self):
+        """Test pudl.sqlite url from env variable."""
+        assert get_pudl_sql_url() == "sqlite:////Users/pytest/output/pudl.sqlite"
 
-
-def test_get_pudl_sql_url_config_good(pudl_config):
-    """Test pudl.sqlite url from config."""
-    assert get_pudl_sql_url(pudl_config) == "sqlite:////Users/pytest/output/pudl.sqlite"
-
-
-def test_get_pudl_sql_url_config_bad():
-    """Test pudl.sqlite url from config failure."""
-    with pytest.raises(FileNotFoundError):
+    @mock.patch.dict(os.environ, {}, clear=True)
+    def test_get_pudl_sql_url_config_good(self, pudl_config):
+        """Test pudl.sqlite url from config."""
         assert (
-            get_pudl_sql_url(Path.home() / ".foo.yml")
+            get_pudl_sql_url(pudl_config)
             == "sqlite:////Users/pytest/output/pudl.sqlite"
         )
+
+    @mock.patch.dict(os.environ, {}, clear=True)
+    def test_get_pudl_sql_url_config_bad(self):
+        """Test pudl.sqlite url from config failure."""
+        with pytest.raises(FileNotFoundError):
+            assert (
+                get_pudl_sql_url(Path.home() / ".foo.yml")
+                == "sqlite:////Users/pytest/output/pudl.sqlite"
+            )
