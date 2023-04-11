@@ -23,7 +23,7 @@ jobs:
       - name: Install Conda environment using mamba
         uses: mamba-org/provision-with-micromamba@v15
         with:
-          environment-file: test/pudl-test-env.yml
+          environment-file: tests/pudl-test-env.yml
           cache-env: true
           channels: conda-forge
           channel-priority: strict
