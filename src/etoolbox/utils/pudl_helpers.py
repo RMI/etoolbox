@@ -292,3 +292,67 @@ def zero_pad_numeric_string(
             f"Failed to generate zero-padded numeric strings of length {n_digits}."
         )
     return out_col
+
+
+def weighted_average(df, data_col, weight_col, by):
+    """Generate a weighted average.
+
+    Args:
+        df (pandas.DataFrame): A DataFrame containing, at minimum, the columns
+            specified in the other parameters data_col and weight_col.
+        data_col (string): column name of data column to average
+        weight_col (string): column name to weight on
+        by (list): A list of the columns to group by when calcuating
+            the weighted average value.
+
+    Returns:
+        pandas.DataFrame: a table with ``by`` columns as the index and the
+        weighted ``data_col``.
+    """
+    df["_data_times_weight"] = df[data_col] * df[weight_col]
+    df["_weight_where_notnull"] = df.loc[df[data_col].notna(), weight_col]
+    g = df.groupby(by, observed=True)
+    result = g["_data_times_weight"].sum(min_count=1) / g["_weight_where_notnull"].sum(
+        min_count=1
+    )
+    del df["_data_times_weight"], df["_weight_where_notnull"]
+    return result.to_frame(name=data_col)  # .reset_index()
+
+
+def sum_and_weighted_average_agg(
+    df_in: pd.DataFrame,
+    by: list,
+    sum_cols: list,
+    wtavg_dict: dict[str, str],
+) -> pd.DataFrame:
+    """Aggregate dataframe by summing and using weighted averages.
+
+    Many times we want to aggreate a data table using the same groupby columns
+    but with different aggregation methods. This function combines two of our
+    most common aggregation methods (summing and applying a weighted average)
+    into one function. Because pandas does not have a built-in weighted average
+    method for groupby we use :func:`weighted_average`.
+
+    Args:
+        df_in (pandas.DataFrame): input table to aggregate. Must have columns
+            in ``id_cols``, ``sum_cols`` and keys from ``wtavg_dict``.
+        by (list): columns to group/aggregate based on. These columns
+            will be passed as an argument into grouby as ``by`` arg.
+        sum_cols (list): columns to sum.
+        wtavg_dict (dictionary): dictionary of columns to average (keys) and
+            columns to weight by (values).
+
+    Returns:
+        table with join of columns from ``by``, ``sum_cols`` and keys of
+        ``wtavg_dict``. Primary key of table will be ``by``.
+    """
+    logger.debug("grouping by %s", by)
+    # we are keeping the index here for easy merging of the weighted cols below
+    df_out = df_in.groupby(by=by, as_index=True, observed=True)[sum_cols].sum(
+        min_count=1
+    )
+    for data_col, weight_col in wtavg_dict.items():
+        df_out.loc[:, data_col] = weighted_average(
+            df_in, data_col=data_col, weight_col=weight_col, by=by
+        )[data_col]
+    return df_out.reset_index()

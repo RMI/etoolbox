@@ -95,9 +95,9 @@ def pd_backend(test_dir, request) -> str:
 
 
 @pytest.fixture(scope="session")
-def pudl_config(test_dir) -> str:
+def pudl_config(temp_dir) -> str:
     """Use to run test with both pandas backends."""
-    file = Path.home() / ".pudl5.yml"
+    file = temp_dir / ".pudl5.yml"
     with open(file, "w") as f:
         yaml.safe_dump({"pudl_out": "/Users/pytest"}, f)
     yield file

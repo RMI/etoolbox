@@ -1,7 +1,6 @@
 """Test pretend PudlTabl."""
 import os
 from importlib.util import find_spec
-from pathlib import Path
 from unittest import mock
 
 import pandas as pd
@@ -108,10 +107,65 @@ class TestPudlLoc:
         )
 
     @mock.patch.dict(os.environ, {}, clear=True)
-    def test_get_pudl_sql_url_config_bad(self):
+    def test_get_pudl_sql_url_config_bad(self, temp_dir):
         """Test pudl.sqlite url from config failure."""
         with pytest.raises(FileNotFoundError):
-            assert (
-                get_pudl_sql_url(Path.home() / ".foo.yml")
-                == "sqlite:////Users/pytest/output/pudl.sqlite"
-            )
+            get_pudl_sql_url(temp_dir / ".foo.yml")
+
+
+@pytest.mark.skipif(
+    find_spec("pudl") is None,
+    reason="This test is for when PUDL is not installed",
+)
+class TestRealPudl:
+    """Test for PUDL related functionality."""
+
+    def test_pu_ferc1_in_fresh(self, pudltabl):
+        """Test that PudlTabl has expected table."""
+        assert pudltabl._dfs["pu_ferc1"] is not None
+
+    def test_pu_ferc1(self, pudltabl):
+        """Test that PudlTabl has expected table."""
+        df = pudltabl._dfs["pu_ferc1"]
+        assert not df.empty
+
+    def test_utils_eia860_not_in_pudltabl(self, pudltabl):
+        """Test that PudlTabl does not have but can create table."""
+        default = pudltabl._dfs["utils_eia860"]
+        assert default is None
+
+    def test_utils_eia860(self, pudltabl):
+        """Test that PudlTabl does not have but can create table."""
+        df = pudltabl.utils_eia860()
+        assert not df.empty
+
+    def test_pu_ferc1_in_zip(self, pudl_zip_path):
+        """Test that PudlTabl from zip has expected table."""
+        pudl_tabl = make_pudl_tabl(pudl_zip_path)
+        df = pudl_tabl._dfs["pu_ferc1"]
+        assert df is not None
+
+    def test_pu_ferc1_df_in_zip(self, pudl_zip_path):
+        """Test that PudlTabl from zip has expected table."""
+        pudl_tabl = make_pudl_tabl(pudl_zip_path)
+        df = pudl_tabl._dfs["pu_ferc1"]
+        assert not df.empty
+
+    def test_utils_eia860_from_zip(self, pudl_zip_path):
+        """Test that PudlTabl from zip does not have table."""
+        pudl_tabl = make_pudl_tabl(pudl_zip_path)
+        default = pudl_tabl._dfs.get("utils_eia860", None)
+        assert default is None
+
+    def test_sales_eia861_not_in_zip(self, pudl_zip_path):
+        """Test that PudlTabl from zip does not have table."""
+        pudl_tabl = make_pudl_tabl(pudl_zip_path)
+        default = pudl_tabl._dfs.get("sales_eia861", None)
+        assert default is None
+
+    def test_sales_eia861_from_zip(self, pudl_zip_path):
+        """Test that PudlTabl from zip does not have table."""
+        pudl_tabl = make_pudl_tabl(pudl_zip_path)
+        df = pudl_tabl.sales_eia861()
+        assert df is not None
+        assert not df.empty

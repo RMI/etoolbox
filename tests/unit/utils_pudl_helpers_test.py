@@ -6,6 +6,7 @@ from etoolbox.utils.pudl_helpers import (
     month_year_to_date,
     remove_leading_zeros_from_numeric_strings,
     simplify_columns,
+    sum_and_weighted_average_agg,
     zero_pad_numeric_string,
 )
 
@@ -178,3 +179,29 @@ def test_zero_pad_numeric_string(df, n_digits):
     assert (output.str.len() == n_digits).all()
     # Make sure all outputs are entirely numeric
     assert output.str.match(f"^[\\d]{{{n_digits}}}$").all()
+
+
+def test_sum_and_weighted_average_agg():
+    """Test weighted averages."""
+    data = pd.DataFrame(
+        {
+            "ix": [1, 1, 2, 2, 2],
+            "a": [80, 20, 150, 250, 600],
+            "b": [40, 20, 18, 30, 700],
+            "c": [25, 100, 32, 50, 90],
+        }
+    )
+    expected = pd.DataFrame(
+        {
+            "ix": [1, 2],
+            "a": [100, 1000],
+            "b": [36.0, 430.2],
+            "c": [40.0, 71.3],
+        }
+    )
+    pd.testing.assert_frame_equal(
+        sum_and_weighted_average_agg(
+            data, by=["ix"], sum_cols=["a"], wtavg_dict={"b": "a", "c": "a"}
+        ),
+        expected,
+    )
