@@ -56,12 +56,12 @@ tests = [
     "pytest-cov>=2.10,<4.1",  # Pytest plugin for working with coverage
     "ruff>0.0.215,<0.0.263",
     "tox>=3.20,<4.5",  # Python test environment manager
+    "tqdm >= 4.63,< 4.66",
     "requests_mock",
 ]
 pudl-test = [
     "python-snappy>=0.6,<0.7",
     "platformdirs >=2.6,<3.3",
-    "tqdm >= 4.63,< 4.66",
     "catalystcoop.pudl @ git+https://github.com/catalyst-cooperative/pudl.git@dev",
 ]
 
