@@ -33,7 +33,7 @@ dev = [
     "docformatter>=1.5,<1.7",
     "build>=0.9",
     "ruff>0.0.215,<0.0.264",
-    "tox>=3.20,<4.5",
+    "tox>=3.20,<4.6",
     "twine>=4.0",
 ]
 doc = [
@@ -55,7 +55,7 @@ tests = [
     "pytest-console-scripts>=1.1,<1.4",  # Allow automatic testing of scripts
     "pytest-cov>=2.10,<4.1",  # Pytest plugin for working with coverage
     "ruff>0.0.215,<0.0.264",
-    "tox>=3.20,<4.5",  # Python test environment manager
+    "tox>=3.20,<4.6",  # Python test environment manager
     "tqdm >= 4.63,< 4.66",
     "requests_mock",
 ]
