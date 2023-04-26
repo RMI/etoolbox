@@ -11,8 +11,11 @@ from etoolbox.utils.pudl import (
     _Faker,
     get_pudl_sql_url,
     make_pudl_tabl,
+    read_pudl_table,
 )
 from etoolbox.utils.testing import idfn
+
+from tests.conftest import get_pudl_loc
 
 
 def test_faker():
@@ -27,7 +30,6 @@ class TestPretendPudlTabl:
     @pytest.mark.skip(reason="we have better tests for this now")
     def test_load_actual(self, test_dir):
         """Test with a fresh PudlTabl."""
-        sa = pytest.importorskip("sqlalchemy")
         pudl = pytest.importorskip("pudl")
 
         pt = DataZip.load(test_dir / "pudltabl.zip", PretendPudlTabl)
@@ -169,3 +171,22 @@ class TestRealPudl:
         df = pudl_tabl.sales_eia861()
         assert df is not None
         assert not df.empty
+
+
+@pytest.mark.parametrize(
+    "table, expected",
+    [
+        ("plants_eia860", None),
+        ("foobar", KeyError),
+    ],
+    ids=idfn,
+)
+def test_read_pudl_table(temp_dir, table, expected):
+    """Test function to get tables from ``pudl.sqlite``."""
+    os.environ["PUDL_OUTPUT"] = get_pudl_loc(temp_dir)
+    if expected is None:
+        df = read_pudl_table(table_name=table)
+        assert not df.empty
+    else:
+        with pytest.raises(expected):
+            _ = read_pudl_table(table_name=table)

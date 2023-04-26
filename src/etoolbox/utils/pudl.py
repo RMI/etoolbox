@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Literal
 
 import pandas as pd
+import sqlalchemy as sa
 
 from etoolbox.utils.lazy_import import lazy_import
 
@@ -38,9 +39,63 @@ def get_pudl_sql_url(file=PUDL_CONFIG) -> str:
             return f"sqlite:///{yaml.safe_load(f)['pudl_out']}/output/pudl.sqlite"
 
 
+def read_pudl_table(
+    table_name,
+    *,
+    schema: str | None = None,
+    index_col: str | list[str] | None = None,
+    coerce_float: bool = True,
+    parse_dates: list[str] | dict[str, str] | None = None,
+    columns: list[str] | None = None,
+) -> pd.DataFrame:
+    """Retrieve a table (or query) from ``pudl.sqlite``.
+
+    Essentially a partial of :func:`pandas.read_sql_table`, docstring is mostly lifted
+    from there.
+
+    Args:
+        table_name: Name of SQL table in database.
+        schema: Name of SQL schema in database to query (if database flavor
+            supports this). Uses default schema if None (default).
+        index_col: str or list of str, optional, default: None
+            Column(s) to set as index(MultiIndex).
+        coerce_float: Attempts to convert values of non-string, non-numeric objects
+            (like decimal.Decimal) to floating point. Can result in loss of Precision.
+        parse_dates:
+            - List of column names to parse as dates.
+            - Dict of ``{column_name: format string}`` where format string is
+              strftime compatible in case of parsing string times or is one of
+              (D, s, ns, ms, us) in case of parsing integer timestamps.
+            - Dict of ``{column_name: arg dict}``, where the arg dict corresponds
+              to the keyword arguments of :func:`pandas.to_datetime`
+              Especially useful with databases without native Datetime support,
+              such as SQLite.
+        columns: List of column names to select from SQL table.
+
+    Returns: a table from Pudl as a df.
+
+    """
+    con = sa.create_engine(get_pudl_sql_url())
+    try:
+        con.connect()
+    except sa.exc.OperationalError as exc:
+        raise FileNotFoundError(f"Unable to connect to database at {con.url}") from exc
+    else:
+        if table_name not in sa.inspect(con).get_table_names():
+            raise KeyError(f"{table_name} is not in {con.url}")
+        return pd.read_sql_table(
+            table_name=table_name,
+            con=con,
+            schema=schema,
+            index_col=index_col,
+            coerce_float=coerce_float,
+            parse_dates=parse_dates,
+            columns=columns,
+        )
+
+
 def _make_pudl_tabl(**kwargs):
     pudltabl = lazy_import("pudl.output.pudltabl", wait_for_signal=False)
-    sa = lazy_import("sqlalchemy", wait_for_signal=False)
 
     class PudlTabl(pudltabl.PudlTabl):
         def __getstate__(self) -> dict:

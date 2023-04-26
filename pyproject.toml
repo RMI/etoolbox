@@ -20,10 +20,11 @@ classifiers = [
 ]
 requires-python = ">=3.10,<3.12"
 dependencies = [
+    "orjson >= 3.8, <3.10",
     "pandas >= 1.4,< 2.1",
     "pyarrow>=9, <12",
+    "sqlalchemy>1.4,<2.1",
     "tzdata>=2022.7; platform_system=='Windows'",
-    "orjson >= 3.8, <3.10",
 ]
 
 [project.optional-dependencies]
@@ -53,7 +54,6 @@ tests = [
     "pytest>=6.2,<7.4",  # test framework
     "pytest-console-scripts>=1.1,<1.4",  # Allow automatic testing of scripts
     "pytest-cov>=2.10,<4.1",  # Pytest plugin for working with coverage
-    "sqlalchemy>1.4,<2.1",  # required for testing ability to zip objects with engines
     "ruff>0.0.215,<0.0.263",
     "tox>=3.20,<4.5",  # Python test environment manager
     "requests_mock",

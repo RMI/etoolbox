@@ -80,7 +80,8 @@ What's New?
    raised in
    `catalyst#2503 <https://github.com/orgs/catalyst-cooperative/discussions/2503>`_.
    Added testing for full :func:`.make_pudl_tabl` functionality.
-
+*  Added to :func:`.get_pudl_table` which reads a table from a ``pudl.sqlite`` that is
+   stored where it is expected.
 
 
 
