@@ -182,8 +182,11 @@ def test_sqlalchemy(temp_dir):
         ("OrderedDict", OrderedDict({"a": 2, "b": 2})),
         ("dict_tuple_keys", {(1, 2): 5, ("a",): 3}),
         (
-            "TracebackException",
-            TracebackException.from_exception(RuntimeWarning("whops")),
+            "nested_TracebackException",
+            {
+                "a": [TracebackException.from_exception(RuntimeWarning("whops"))],
+                "b": [TracebackException.from_exception(KeyError("whops"))],
+            },
         ),
     ],
     ids=idfn,
