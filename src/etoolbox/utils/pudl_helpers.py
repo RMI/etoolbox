@@ -322,8 +322,9 @@ def weighted_average(df, data_col, weight_col, by):
 def sum_and_weighted_average_agg(
     df_in: pd.DataFrame,
     by: list,
-    sum_cols: list,
-    wtavg_dict: dict[str, str],
+    sum_cols: list | None = None,
+    agg_dict: dict | None = None,
+    wtavg_dict: dict[str, str] | None = None,
 ) -> pd.DataFrame:
     """Aggregate dataframe by summing and using weighted averages.
 
@@ -334,12 +335,14 @@ def sum_and_weighted_average_agg(
     method for groupby we use :func:`weighted_average`.
 
     Args:
-        df_in (pandas.DataFrame): input table to aggregate. Must have columns
+        df_in: input table to aggregate. Must have columns
             in ``id_cols``, ``sum_cols`` and keys from ``wtavg_dict``.
-        by (list): columns to group/aggregate based on. These columns
+        by: columns to group/aggregate based on. These columns
             will be passed as an argument into grouby as ``by`` arg.
-        sum_cols (list): columns to sum.
-        wtavg_dict (dictionary): dictionary of columns to average (keys) and
+        sum_cols: columns to sum.
+        agg_dict: dictionary of columns (keys) and function (values) passed to
+            :meth:`pandas.DataFrame.agg`.
+        wtavg_dict: dictionary of columns to average (keys) and
             columns to weight by (values).
 
     Returns:
@@ -348,11 +351,18 @@ def sum_and_weighted_average_agg(
     """
     logger.debug("grouping by %s", by)
     # we are keeping the index here for easy merging of the weighted cols below
-    df_out = df_in.groupby(by=by, as_index=True, observed=True)[sum_cols].sum(
-        min_count=1
-    )
-    for data_col, weight_col in wtavg_dict.items():
-        df_out.loc[:, data_col] = weighted_average(
-            df_in, data_col=data_col, weight_col=weight_col, by=by
-        )[data_col]
+    if sum(x is None for x in (sum_cols, agg_dict)) != 1:
+        raise ValueError("specify one and only one of sum_cols or agg_dict")
+    elif sum_cols is not None:
+        df_out = df_in.groupby(by=by, as_index=True, observed=True)[sum_cols].sum(
+            min_count=1
+        )
+    else:
+        df_out = df_in.groupby(by=by, as_index=True, observed=True).agg(agg_dict)
+
+    if wtavg_dict is not None:
+        for data_col, weight_col in wtavg_dict.items():
+            df_out.loc[:, data_col] = weighted_average(
+                df_in, data_col=data_col, weight_col=weight_col, by=by
+            )[data_col]
     return df_out.reset_index()

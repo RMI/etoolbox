@@ -9,6 +9,7 @@ from etoolbox.utils.pudl_helpers import (
     sum_and_weighted_average_agg,
     zero_pad_numeric_string,
 )
+from etoolbox.utils.testing import idfn
 
 
 def test_fix_eia_na():
@@ -181,7 +182,53 @@ def test_zero_pad_numeric_string(df, n_digits):
     assert output.str.match(f"^[\\d]{{{n_digits}}}$").all()
 
 
-def test_sum_and_weighted_average_agg():
+@pytest.mark.parametrize(
+    "kwargs, expected",
+    [
+        (
+            {"sum_cols": ["a"], "wtavg_dict": {"b": "a", "c": "a"}},
+            pd.DataFrame(
+                {
+                    "ix": [1, 2],
+                    "a": [100, 1000],
+                    "b": [36.0, 430.2],
+                    "c": [40.0, 71.3],
+                }
+            ),
+        ),
+        (
+            {
+                "agg_dict": {"a": "sum", "d": "first"},
+                "wtavg_dict": {"b": "a", "c": "a"},
+            },
+            pd.DataFrame(
+                {
+                    "ix": [1, 2],
+                    "a": [100, 1000],
+                    "d": ["a", "c"],
+                    "b": [36.0, 430.2],
+                    "c": [40.0, 71.3],
+                }
+            ),
+        ),
+        (
+            {
+                "agg_dict": {"a": "sum", "d": "first"},
+            },
+            pd.DataFrame(
+                {
+                    "ix": [1, 2],
+                    "a": [100, 1000],
+                    "d": ["a", "c"],
+                }
+            ),
+        ),
+        ({"wtavg_dict": {"b": "a", "c": "a"}}, ValueError),
+        ({"agg_dict": {"a": "sum", "d": "first"}, "sum_cols": ["b"]}, ValueError),
+    ],
+    ids=idfn,
+)
+def test_sum_and_weighted_average_agg(kwargs, expected):
     """Test weighted averages."""
     data = pd.DataFrame(
         {
@@ -189,19 +236,14 @@ def test_sum_and_weighted_average_agg():
             "a": [80, 20, 150, 250, 600],
             "b": [40, 20, 18, 30, 700],
             "c": [25, 100, 32, 50, 90],
+            "d": ["a", "b", "c", "d", "e"],
         }
     )
-    expected = pd.DataFrame(
-        {
-            "ix": [1, 2],
-            "a": [100, 1000],
-            "b": [36.0, 430.2],
-            "c": [40.0, 71.3],
-        }
-    )
-    pd.testing.assert_frame_equal(
-        sum_and_weighted_average_agg(
-            data, by=["ix"], sum_cols=["a"], wtavg_dict={"b": "a", "c": "a"}
-        ),
-        expected,
-    )
+    if isinstance(expected, pd.DataFrame):
+        pd.testing.assert_frame_equal(
+            sum_and_weighted_average_agg(data, by=["ix"], **kwargs),
+            expected,
+        )
+    else:
+        with pytest.raises(expected):
+            sum_and_weighted_average_agg(data, by=["ix"], **kwargs)
