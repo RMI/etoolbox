@@ -781,7 +781,7 @@ class _Faker:
         return self.thing
 
 
-class PretendPudlTabl:
+class PretendPudlTablCore:
     """A DataZip of a PudlTabl can be recreated with this to avoid importing PUDL.
 
     Examples
@@ -810,6 +810,31 @@ class PretendPudlTabl:
             return _Faker(None)
         self._make_it_real()
         return self._get_from_real_pt(item)
+
+    def _get_from_real_pt(self, item):
+        raise KeyError(
+            f"{item} not found, available tables: {tuple(self.__dict__['_dfs'])}"
+        )
+
+    def _make_it_real(self):
+        return None
+
+
+class PretendPudlTabl(PretendPudlTablCore):
+    """A DataZip of a PudlTabl can be recreated with this to avoid importing PUDL.
+
+    Examples
+    --------
+    .. code-block:: python
+
+        from pathlib import Path
+        from etoolbox.datazip.core import DataZip
+        from etoolbox.utils.pudl import PretendPudlTabl
+
+        pudl_tabl = DataZip.load(Path("path_to_zip"), PretendPudlTabl)
+        df = pudl_tabl.epacamd_eia()
+
+    """
 
     def _get_from_real_pt(self, item):
         df = getattr(self._real_pt, item)()  # noqa: PD901
