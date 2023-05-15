@@ -32,16 +32,10 @@ repos:
 
   # Linter and formatter that replaces flake8, isort, etc.
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.0.263"
+    rev: "v0.0.265"
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
-
-  # Convert relative imports to absolute imports
-  - repo: https://github.com/MarcoGorelli/absolufy-imports
-    rev: v0.3.1
-    hooks:
-      - id: absolufy-imports
 
   # Deterministic python formatting:
   - repo: https://github.com/psf/black

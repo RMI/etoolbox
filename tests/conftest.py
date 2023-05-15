@@ -17,7 +17,7 @@ from etoolbox.utils.pudl import get_pudl_sql_url
 logger = logging.getLogger(__name__)
 
 
-@pytest.fixture
+@pytest.fixture()
 def df_dict() -> dict:
     """Dictionary of dfs."""
     return {
@@ -29,7 +29,7 @@ def df_dict() -> dict:
     }
 
 
-@pytest.fixture
+@pytest.fixture()
 def klass_w_slot(df_dict):
     """Generic class that uses slots."""
     obj = _KlassSlots()
@@ -40,7 +40,7 @@ def klass_w_slot(df_dict):
     return obj
 
 
-@pytest.fixture
+@pytest.fixture()
 def klass_wo_slot(df_dict):
     """Generic class that does not use slots."""
     obj = _TestKlass()

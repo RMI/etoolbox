@@ -43,7 +43,7 @@ def _eq_func(self, other):
                 v0, v1 = getattr(self, k), getattr(other, k)
                 r.append(_comp(v0, v1))
             if hasattr(self, k) and not hasattr(other, k):
-                r.append(False)  # noqa: FBT003
+                r.append(False)
 
     return all(r)
 

@@ -276,14 +276,11 @@ class TestWPDBackend:
             raise AssertionError("Something broke") from exc
         else:
             with pytest.raises(ValueError):
-                with DataZip(file, "a") as z2a:
-                    z2a.namelist()
+                _ = DataZip(file, "a")
             with pytest.raises(ValueError):
-                with DataZip(file, "x") as z2x:
-                    z2x.namelist()
+                _ = DataZip(file, "x")
             with pytest.raises(FileExistsError):
-                with DataZip(file, "w") as z3:
-                    z3.namelist()
+                _ = DataZip(file, "w")
             with DataZip(file, "w", clobber=True) as z4:
                 z4["b"] = 16
             with DataZip(file, "r") as z5:
@@ -481,10 +478,10 @@ class TestWPDBackend:
         "name, obj, reset_ids",
         [
             pytest.param(
-                "df_reset", pd.DataFrame([[1, 2], [4, 1000]]), True  # noqa: FBT003
+                "df_reset", pd.DataFrame([[1, 2], [4, 1000]]), True
             ),
             pytest.param(
-                "df", pd.DataFrame([[1, 2], [4, 1000]]), False  # noqa: FBT003
+                "df", pd.DataFrame([[1, 2], [4, 1000]]), False
             ),
         ],
         ids=idfn,
@@ -641,7 +638,7 @@ def test_polars(temp_dir, name):
     assert id(obj1) == id(b)
 
 
-@pytest.mark.skip
+@pytest.mark.skip()
 def test_d_legacy():
     """Place to test random existing DataZips."""
     with DataZip(Path.home() / "PycharmProjects/patio-model/re_data_2.zip", "r") as dz:
