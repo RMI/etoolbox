@@ -166,6 +166,7 @@ strict = true
 
 ]
 "tests/unit/utils_remote_zip_test.py" = ["D102", "D103", "D107", "FBT002"]
+"_test_classes.py" = ["FBT003"]
 "pudl_helpers.py" = ["PD901"]
 
 [tool.ruff.mccabe]
