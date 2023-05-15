@@ -38,18 +38,26 @@ __all__ = ["RemoteIOError", "RemoteZip"]
 
 
 class RemoteZipError(Exception):
+    """Generic RemoteZip error."""
+
     pass
 
 
 class OutOfBoundError(RemoteZipError):
+    """Another error."""
+
     pass
 
 
-class RemoteIOError(RemoteZipError):  # noqa: D101
+class RemoteIOError(RemoteZipError):
+    """IO error for RemoteZip."""
+
     pass
 
 
 class RangeNotSupportedError(RemoteZipError):
+    """Another range error."""
+
     pass
 
 

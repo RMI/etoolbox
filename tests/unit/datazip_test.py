@@ -477,12 +477,8 @@ class TestWPDBackend:
     @pytest.mark.parametrize(
         "name, obj, reset_ids",
         [
-            pytest.param(
-                "df_reset", pd.DataFrame([[1, 2], [4, 1000]]), True
-            ),
-            pytest.param(
-                "df", pd.DataFrame([[1, 2], [4, 1000]]), False
-            ),
+            pytest.param("df_reset", pd.DataFrame([[1, 2], [4, 1000]]), True),
+            pytest.param("df", pd.DataFrame([[1, 2], [4, 1000]]), False),
         ],
         ids=idfn,
     )
