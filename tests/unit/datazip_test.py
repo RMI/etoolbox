@@ -1,5 +1,6 @@
 """Core :class:`.DataZip` tests."""
 import functools
+import importlib
 import json
 from collections import Counter, OrderedDict, defaultdict, deque
 from datetime import datetime
@@ -12,6 +13,7 @@ from zipfile import ZipFile
 import numpy as np
 import pandas as pd
 import pytest
+from etoolbox._optional import polars
 from etoolbox.datazip import DataZip
 from etoolbox.datazip._test_classes import (
     ObjMeta,
@@ -187,6 +189,30 @@ def test_sqlalchemy(temp_dir):
                 "a": [TracebackException.from_exception(RuntimeWarning("whops"))],
                 "b": [TracebackException.from_exception(KeyError("whops"))],
             },
+        ),
+        pytest.param(
+            "plDataFrame",
+            polars.DataFrame({"a": [1, 2, 3]}),
+            marks=pytest.mark.skipif(
+                importlib.util.find_spec("polars") is None,
+                reason="polars not installed",
+            ),
+        ),
+        pytest.param(
+            "plLazyFrame",
+            polars.LazyFrame({"a": [1, 2, 3]}),
+            marks=pytest.mark.skipif(
+                importlib.util.find_spec("polars") is None,
+                reason="polars not installed",
+            ),
+        ),
+        pytest.param(
+            "plSeries",
+            polars.Series([1, 2, 3]),
+            marks=pytest.mark.skipif(
+                importlib.util.find_spec("polars") is None,
+                reason="polars not installed",
+            ),
         ),
     ],
     ids=idfn,

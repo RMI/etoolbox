@@ -19,7 +19,7 @@ import orjson as json
 import pandas as pd
 
 from etoolbox import __version__
-from etoolbox.datazip._optional import plotly, polars, sqlalchemy
+from etoolbox._optional import plotly, polars, sqlalchemy
 from etoolbox.datazip._utils import (
     _get_klass,
     _get_username,
@@ -609,6 +609,12 @@ class DataZip(ZipFile):
                 BytesIO(self.read(obj["__loc__"])), use_pyarrow=True
             ),
         ),
+        "plLazyFrame": partial(
+            _decode_cache_helper,
+            func=lambda self, obj: polars.read_parquet(
+                BytesIO(self.read(obj["__loc__"])), use_pyarrow=True
+            ).lazy(),
+        ),
         "plSeries": partial(
             _decode_cache_helper,
             func=lambda self, obj: polars.read_parquet(
@@ -726,6 +732,20 @@ class DataZip(ZipFile):
         df.write_parquet(temp := BytesIO())
         return {
             "__type__": "plDataFrame",
+            "__loc__": self._encode_loc_helper(
+                f"{name}.parquet",
+                df,
+                temp.getvalue(),
+            ),
+        }
+
+    def _encode_pl_ldf(self, name: str, df: polars.LazyFrame, **kwargs) -> dict:
+        """Write a polars df in the ZIP as parquet."""
+        if loc := self._ids.get((id(df), type(df)), None):
+            return {"__type__": "plLazyFrame", "__loc__": loc}
+        df.collect().write_parquet(temp := BytesIO())
+        return {
+            "__type__": "plLazyFrame",
             "__loc__": self._encode_loc_helper(
                 f"{name}.parquet",
                 df,
@@ -853,6 +873,7 @@ class DataZip(ZipFile):
         },
         plotly.graph_objects.Figure: _write_image,
         polars.DataFrame: _encode_pl_df,
+        polars.LazyFrame: _encode_pl_ldf,
         polars.Series: _encode_pl_series,
         # things to ignore
         partial: _encode_ignore,

@@ -1,6 +1,9 @@
 """Helpers for tests."""
 import numpy as np
 import pandas as pd
+import polars as pl
+
+from etoolbox._optional import pl_testing
 
 
 def idfn(val):
@@ -18,6 +21,10 @@ def assert_equal(left, right, check_pd_dtype=True) -> None:  # noqa: FBT002
         pd.testing.assert_series_equal(left, right, check_dtype=check_pd_dtype)
     elif isinstance(right, pd.DataFrame):
         pd.testing.assert_frame_equal(left, right, check_dtype=check_pd_dtype)
+    elif isinstance(right, pl.Series):
+        pl_testing.assert_series_equal(left, right, check_dtype=check_pd_dtype)
+    elif isinstance(right, pl.DataFrame | pl.LazyFrame):
+        pl_testing.assert_frame_equal(left, right, check_dtype=check_pd_dtype)
     elif isinstance(right, list | tuple):
         for v0, v1 in zip(left, right, strict=True):
             assert_equal(v0, v1)

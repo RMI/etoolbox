@@ -158,6 +158,7 @@ strict = true
     "D100",  # Missing docstring in public module
     "D101",  # Missing docstring in public class
     "F841",  # Local variable `pudl` is assigned to but never used
+    "FBT003", # Boolean positional value in function call, can't fix it pytest.param
     "PD901",
     "PT006",  # Wrong name(s) type in `@pytest.mark.parametrize`, expected `tuple`
     "PT011",  # `pytest.raises(ValueError)` is too broad, set the `match` parameter or use a more specific exception

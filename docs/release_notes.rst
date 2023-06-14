@@ -56,7 +56,8 @@ What's New?
    metadata to allow use of ``pyarrow`` dtypes.
 *  Switching to use :mod:`ujson` rather than the standard library version for
    performance.
-*  Added optional support for :class:`polars.DataFrame` and :class:`polars.Series`.
+*  Added optional support for :class:`polars.DataFrame`, :class:`polars.LazyFrame`, and
+   :class:`polars.Series` in :class:`.DataZip`.
 *  Added :class:`.PretendPudlTabl` when passed as the ``klass`` argument to
    :meth:`.DataZip.load`, it allows accessing the dfs in a zipped :class:`pudl.PudlTabl`
    as you would normally but avoiding the :mod:`pudl` dependency.
@@ -82,7 +83,8 @@ What's New?
    Added testing for full :func:`.make_pudl_tabl` functionality.
 *  Added to :func:`.get_pudl_table` which reads a table from a ``pudl.sqlite`` that is
    stored where it is expected.
-
+*  Added support for :class:`polars.DataFrame`, :class:`polars.LazyFrame`, and
+   :class:`polars.Series` to :func:`etoolbox.utils.testing.assert_equal`.
 
 
 Bug Fixes

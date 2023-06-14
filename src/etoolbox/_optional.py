@@ -42,6 +42,8 @@ except (ModuleNotFoundError, ImportError):
 
 try:
     import polars
+    import polars.testing as pl_testing
+
 except (ModuleNotFoundError, ImportError):
 
     class polars:  # noqa: N801
@@ -60,4 +62,17 @@ except (ModuleNotFoundError, ImportError):
         @staticmethod
         def read_parquet(*args, **kwargs):
             """Dummy for :func:`polars.read_parquet` when not installed."""
+            pass
+
+    class pl_testing:  # noqa: N801
+        """Dummy for :mod:`polars.testing` when not installed."""
+
+        @staticmethod
+        def assert_frame_equal(*args, **kwargs):
+            """:func:`polars.testing.assert_frame_equal` when not installed."""
+            pass
+
+        @staticmethod
+        def assert_series_equal(*args, **kwargs):
+            """:func:`polars.testing.assert_series_equal` when not installed."""
             pass
