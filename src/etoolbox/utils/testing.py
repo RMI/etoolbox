@@ -1,9 +1,9 @@
 """Helpers for tests."""
 import numpy as np
 import pandas as pd
-import polars as pl
 
 from etoolbox._optional import pl_testing
+from etoolbox._optional import polars as pl
 
 
 def idfn(val):

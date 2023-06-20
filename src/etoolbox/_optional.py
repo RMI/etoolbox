@@ -46,15 +46,26 @@ try:
 
 except (ModuleNotFoundError, ImportError):
 
+    class _Generic:
+        """Dummy base that can be instantiated."""
+
+        def __init__(self, *args, **kwargs):
+            pass
+
     class polars:  # noqa: N801
         """Dummy for :mod:`polars` when not installed."""
 
-        class DataFrame:
+        class DataFrame(_Generic):
             """Dummy for :class:`polars.DataFrame` when not installed."""
 
             pass
 
-        class Series:
+        class LazyFrame(_Generic):
+            """Dummy for :class:`polars.DataFrame` when not installed."""
+
+            pass
+
+        class Series(_Generic):
             """Dummy for :class:`polars.Series` when not installed."""
 
             pass

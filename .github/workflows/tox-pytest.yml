@@ -23,7 +23,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install tox
-      - name: Test with tox
+      - name: Core test with tox
+        run: tox -e core
+      - name: Full test with tox
         run: tox -e ci
 
       - name: Coveralls

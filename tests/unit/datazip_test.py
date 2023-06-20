@@ -13,7 +13,7 @@ from zipfile import ZipFile
 import numpy as np
 import pandas as pd
 import pytest
-from etoolbox._optional import polars
+from etoolbox._optional import polars as pl
 from etoolbox.datazip import DataZip
 from etoolbox.datazip._test_classes import (
     ObjMeta,
@@ -192,7 +192,7 @@ def test_sqlalchemy(temp_dir):
         ),
         pytest.param(
             "plDataFrame",
-            polars.DataFrame({"a": [1, 2, 3]}),
+            pl.DataFrame({"a": [1, 2, 3]}),
             marks=pytest.mark.skipif(
                 importlib.util.find_spec("polars") is None,
                 reason="polars not installed",
@@ -200,7 +200,7 @@ def test_sqlalchemy(temp_dir):
         ),
         pytest.param(
             "plLazyFrame",
-            polars.LazyFrame({"a": [1, 2, 3]}),
+            pl.LazyFrame({"a": [1, 2, 3]}),
             marks=pytest.mark.skipif(
                 importlib.util.find_spec("polars") is None,
                 reason="polars not installed",
@@ -208,7 +208,7 @@ def test_sqlalchemy(temp_dir):
         ),
         pytest.param(
             "plSeries",
-            polars.Series([1, 2, 3]),
+            pl.Series([1, 2, 3]),
             marks=pytest.mark.skipif(
                 importlib.util.find_spec("polars") is None,
                 reason="polars not installed",

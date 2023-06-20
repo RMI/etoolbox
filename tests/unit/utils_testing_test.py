@@ -1,10 +1,11 @@
 """Tests for testing utils."""
+import importlib
 import math
 
 import numpy as np
 import pandas as pd
-import polars as pl
 import pytest
+from etoolbox._optional import polars as pl
 from etoolbox.utils.testing import assert_equal, capture, idfn
 
 
@@ -13,8 +14,24 @@ from etoolbox.utils.testing import assert_equal, capture, idfn
     [
         (pd.Series([1, 2, 3]), pd.Series([1, 2, 3]), None),
         (pd.Series([1, 2, 3]), pd.Series([1, 45, 3]), AssertionError),
-        (pl.Series([1, 2, 3]), pl.Series([1, 2, 3]), None),
-        (pl.Series([1, 2, 3]), pl.Series([1, 45, 3]), AssertionError),
+        pytest.param(
+            pl.Series([1, 2, 3]),
+            pl.Series([1, 2, 3]),
+            None,
+            marks=pytest.mark.skipif(
+                importlib.util.find_spec("polars") is None,
+                reason="polars not installed",
+            ),
+        ),
+        pytest.param(
+            pl.Series([1, 2, 3]),
+            pl.Series([1, 45, 3]),
+            AssertionError,
+            marks=pytest.mark.skipif(
+                importlib.util.find_spec("polars") is None,
+                reason="polars not installed",
+            ),
+        ),
         ([1, pd.Series([1, 2, 3]), 3], [1, pd.Series([1, 2, 3]), 3], None),
         ([1, pd.Series([1, 2, 3]), 3], [1, pd.Series([1, 45, 3]), 3], AssertionError),
         ((1, 2, 3), (1, 2, 3), None),
@@ -52,25 +69,41 @@ from etoolbox.utils.testing import assert_equal, capture, idfn
             },
             AssertionError,
         ),
-        (
+        pytest.param(
             pl.DataFrame({"a": [0.1, 2.1, 2.0], "b": [0.1, 3.1, 2.0]}),
             pl.DataFrame({"a": [0.1, 2.1, 2.0], "b": [0.1, 3.1, 2.0]}),
             None,
+            marks=pytest.mark.skipif(
+                importlib.util.find_spec("polars") is None,
+                reason="polars not installed",
+            ),
         ),
-        (
+        pytest.param(
             pl.DataFrame({"a": [0.1, 66.2, 2.0], "b": [0.1, 3.1, 2.0]}),
             pl.DataFrame({"a": [0.1, 2.1, 2.0], "b": [0.1, 3.1, 2.0]}),
             AssertionError,
+            marks=pytest.mark.skipif(
+                importlib.util.find_spec("polars") is None,
+                reason="polars not installed",
+            ),
         ),
-        (
+        pytest.param(
             pl.LazyFrame({"a": [0.1, 2.1, 2.0], "b": [0.1, 3.1, 2.0]}),
             pl.LazyFrame({"a": [0.1, 2.1, 2.0], "b": [0.1, 3.1, 2.0]}),
             None,
+            marks=pytest.mark.skipif(
+                importlib.util.find_spec("polars") is None,
+                reason="polars not installed",
+            ),
         ),
-        (
+        pytest.param(
             pl.LazyFrame({"a": [0.1, 66.2, 2.0], "b": [0.1, 3.1, 2.0]}),
             pl.LazyFrame({"a": [0.1, 2.1, 2.0], "b": [0.1, 3.1, 2.0]}),
             AssertionError,
+            marks=pytest.mark.skipif(
+                importlib.util.find_spec("polars") is None,
+                reason="polars not installed",
+            ),
         ),
     ],
     ids=idfn,
