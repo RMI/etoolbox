@@ -623,6 +623,9 @@ class DataZip(ZipFile):
             .to_series()
             .alias(obj["col_name"]),
         ),
+        "pgoFigure": lambda self, obj: plotly.graph_objects.Figure(
+            self._decode_dict(obj["items"])
+        ),
         # LEGACY type encoding
         ("builtins", "tuple", None): lambda self, obj: tuple(
             self._decode(v) for v in obj["items"]
@@ -871,7 +874,10 @@ class DataZip(ZipFile):
             "__type__": "saEngine",
             "items": {"url": str(item.url)},
         },
-        plotly.graph_objects.Figure: _write_image,
+        plotly.graph_objects.Figure: lambda self, __, item: {
+            "__type__": "pgoFigure",
+            "items": self._encode_dict(__, item.__reduce__()[1][0]),
+        },
         polars.DataFrame: _encode_pl_df,
         polars.LazyFrame: _encode_pl_ldf,
         polars.Series: _encode_pl_series,

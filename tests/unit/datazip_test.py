@@ -660,6 +660,20 @@ def test_polars(temp_dir, name):
     assert id(obj1) == id(b)
 
 
+def test_plotly(temp_dir):
+    """Test ability to store/restore plotly Figures."""
+    px = pytest.importorskip("plotly.express")
+
+    fig = px.scatter(x=[1, 2, 3], y=[15, 30, 55])
+    file = temp_dir / "plotly.zip"
+    with DataZip(file, "w") as z0:
+        z0["fig"] = fig
+
+    with DataZip(file, "r") as z1:
+        f2 = z1["fig"]
+    assert fig == f2
+
+
 @pytest.mark.skip()
 def test_d_legacy():
     """Place to test random existing DataZips."""

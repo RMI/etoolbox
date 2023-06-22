@@ -85,7 +85,7 @@ What's New?
    stored where it is expected.
 *  Added support for :class:`polars.DataFrame`, :class:`polars.LazyFrame`, and
    :class:`polars.Series` to :func:`etoolbox.utils.testing.assert_equal`.
-
+*  :class:`plotly.Figure` are now stored as objects so they can be recreated.
 
 Bug Fixes
 ^^^^^^^^^
