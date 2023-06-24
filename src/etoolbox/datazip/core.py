@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import pickle
 import warnings
 from collections import Counter, OrderedDict, defaultdict, deque
 from contextlib import suppress
@@ -623,8 +624,8 @@ class DataZip(ZipFile):
             .to_series()
             .alias(obj["col_name"]),
         ),
-        "pgoFigure": lambda self, obj: plotly.graph_objects.Figure(
-            self._decode_dict(obj["items"])
+        "pgoFigure": lambda self, obj: pickle.load(  # noqa: S301
+            BytesIO(self.read(obj["__loc__"]))
         ),
         # LEGACY type encoding
         ("builtins", "tuple", None): lambda self, obj: tuple(
@@ -806,12 +807,6 @@ class DataZip(ZipFile):
         LOGGER.warning("%s of type %s will not be encoded", name, type(item))
         return "__IGNORE__"
 
-    def _write_image(self, name: str, data: Any, **kwargs) -> str:
-        data.write_image(temp := BytesIO(), format="pdf")
-        self.writestr(f"{name}.pdf", temp.getvalue())
-        LOGGER.info("Only pdf of Figure is stored")
-        return "__IGNORE__"
-
     ENCODERS = {
         str: lambda _, __, item: item,
         int: lambda _, __, item: item,
@@ -874,9 +869,13 @@ class DataZip(ZipFile):
             "__type__": "saEngine",
             "items": {"url": str(item.url)},
         },
-        plotly.graph_objects.Figure: lambda self, __, item: {
+        plotly.graph_objects.Figure: lambda self, name, item: {
             "__type__": "pgoFigure",
-            "items": self._encode_dict(__, item.__reduce__()[1][0]),
+            "__loc__": self._encode_loc_helper(
+                f"{name}.pkl",
+                item,
+                pickle.dumps(item),
+            ),
         },
         polars.DataFrame: _encode_pl_df,
         polars.LazyFrame: _encode_pl_ldf,
