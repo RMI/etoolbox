@@ -30,7 +30,7 @@ SOFTWARE.
 import sys
 from importlib import import_module
 from types import ModuleType
-from typing import Any
+from typing import Any, ClassVar
 
 
 class _LazyModule(ModuleType):
@@ -38,7 +38,7 @@ class _LazyModule(ModuleType):
 
     __lazy__ = True
 
-    _mod_pfx: dict[str, str] = {
+    _mod_pfx: ClassVar[dict[str, str]] = {
         "numpy": "np.",
         "pandas": "pd.",
         "pyarrow": "pa.",

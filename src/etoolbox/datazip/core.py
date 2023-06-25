@@ -11,7 +11,7 @@ from functools import partial
 from io import BytesIO
 from pathlib import Path, PosixPath, WindowsPath
 from types import NoneType
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 from zipfile import ZipFile
 from zoneinfo import ZoneInfo
 
@@ -32,7 +32,7 @@ from etoolbox.datazip._utils import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Callable, Generator
 
     from etoolbox.datazip._types import JSONABLE, DZable
 
@@ -42,7 +42,7 @@ LOGGER = logging.getLogger(__name__)
 class DataZip(ZipFile):
     """A :class:`ZipFile` with methods for easier use with Python objects."""
 
-    suffixes = {
+    suffixes: ClassVar[dict[str | tuple, str]] = {
         "pdDataFrame": ".parquet",
         "pdSeries": ".parquet",
         "ndarray": ".npy",
@@ -226,7 +226,7 @@ class DataZip(ZipFile):
             self["state"] = obj
 
     @staticmethod
-    def load(file: Path | str | BytesIO, klass: type = None):
+    def load(file: Path | str | BytesIO, klass: type | None = None):
         """Return the reconstituted object specified in the file.
 
         Args:
@@ -498,7 +498,7 @@ class DataZip(ZipFile):
             LOGGER.error("Namedtuple will be returned as a normal tuple, %r", exc)
             return tuple(obj["items"].values())
 
-    decode_pd_df = {
+    decode_pd_df: ClassVar[dict[tuple, Callable]] = {
         (True, True, True, True): lambda df, cols, names, dtypes: df.set_axis(
             pd.MultiIndex.from_tuples(cols, names=names), axis=1
         ).astype({tuple(a): b for a, b in dtypes}),
@@ -570,7 +570,7 @@ class DataZip(ZipFile):
         self._red[str(obj["__loc__"])] = out_obj
         return out_obj
 
-    DECODERS = {
+    DECODERS: ClassVar[dict[type | str | tuple, Callable]] = {
         str: lambda _, item: item,
         int: lambda _, item: item,
         bool: lambda _, item: item,
@@ -807,7 +807,7 @@ class DataZip(ZipFile):
         LOGGER.warning("%s of type %s will not be encoded", name, type(item))
         return "__IGNORE__"
 
-    ENCODERS = {
+    ENCODERS: ClassVar[dict[type, Callable]] = {
         str: lambda _, __, item: item,
         int: lambda _, __, item: item,
         bool: lambda _, __, item: item,
