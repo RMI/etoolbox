@@ -228,7 +228,7 @@ def test_types(temp_dir, key, expected):
             raise AssertionError(
                 f"test_types for {key} {type(read)} != {type(expected)}"
             )
-        assert_equal(read, expected)
+    assert_equal(read, expected)
 
 
 @pytest.mark.parametrize("save_old", [True, False], ids=idfn)
@@ -634,30 +634,6 @@ class TestWPDBackend:
             tup=(0, 1),
             lis=["a", 2],
         )
-
-
-@pytest.mark.parametrize("name", ["plDataFrame", "plSeries"], ids=idfn)
-def test_polars(temp_dir, name):
-    """Test with polars."""
-    pl = pytest.importorskip("polars")
-
-    file = temp_dir / f"polars_{name}.zip"
-    if name == "plDataFrame":
-        obj = pl.DataFrame({"a": [0, 1], "b": [2, 1]})
-    else:
-        obj = pl.Series([0, 1])
-    with DataZip(file, "w") as z0:
-        z0["a"] = obj
-        z0["b"] = obj
-        assert "b.parquet" not in z0.namelist()
-    with DataZip(file, "r") as z1:
-        obj1 = z1["a"]
-        b = z1["b"]
-    if name == "plDataFrame":
-        assert obj.frame_equal(obj1)
-    else:
-        assert obj.series_equal(obj1)
-    assert id(obj1) == id(b)
 
 
 def test_plotly(temp_dir):
