@@ -50,7 +50,7 @@ tests = [
     "blackdoc>=0.3.8,<0.3.9",  # runs black on doctests
     "coverage>=5.3,<7.3",  # Lets us track what code is being tested
     "pre-commit>=2.9,<3.4",  # Allow us to run pre-commit hooks in testing
-    "pytest>=6.2,<7.4",  # test framework
+    "pytest>=6.2,<7.5",  # test framework
     "pytest-console-scripts>=1.1,<1.5",  # Allow automatic testing of scripts
     "pytest-cov>=2.10,<4.2",  # Pytest plugin for working with coverage
     "ruff>0.0.215,<0.0.276",
