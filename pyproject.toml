@@ -55,7 +55,7 @@ tests = [
     "pytest-cov>=2.10,<4.2",  # Pytest plugin for working with coverage
     "ruff>0.0.215,<0.0.283",
     "tox>=3.20,<4.7",  # Python test environment manager
-    "tqdm >= 4.63,< 4.66",
+    "tqdm >= 4.63,< 4.67",
     "requests_mock",
 ]
 optional = [
