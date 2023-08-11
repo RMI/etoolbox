@@ -542,6 +542,7 @@ class DataZip(ZipFile):
                 isinstance(names, list) and len(names) > 1,
                 # True -> we have dtypes as a list of lists
                 not any((isinstance(dtypes, dict), self._ignore_pd_dtypes))
+                and len(dtypes) > 0
                 and isinstance(dtypes[0][0], list),
             )
         ](out, cols, names, dtypes)

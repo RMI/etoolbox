@@ -382,6 +382,7 @@ class TestWPDBackend:
                     ),
                 ),
             ),
+            ("mtdf", False, pd.DataFrame()),
             (
                 "df_arrow",
                 False,
@@ -432,6 +433,7 @@ class TestWPDBackend:
                     ),
                 ),
             ),
+            ("mtdf", True, pd.DataFrame()),
             (
                 "df_arrow",
                 True,
