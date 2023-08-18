@@ -32,7 +32,7 @@ dev = [
     "black[jupyter] >= 22,< 24",
     "docformatter>=1.5,<1.8",
     "build>=0.9",
-    "ruff>0.0.215,<0.0.285",
+    "ruff>0.0.215,<0.0.286",
     "tox>=3.20,<4.10",
     "twine>=4.0",
 ]
@@ -53,7 +53,7 @@ tests = [
     "pytest>=6.2,<7.5",  # test framework
     "pytest-console-scripts>=1.1,<1.5",  # Allow automatic testing of scripts
     "pytest-cov>=2.10,<4.2",  # Pytest plugin for working with coverage
-    "ruff>0.0.215,<0.0.285",
+    "ruff>0.0.215,<0.0.286",
     "tox>=3.20,<4.10",  # Python test environment manager
     "tqdm >= 4.63,< 4.67",
     "requests_mock",
