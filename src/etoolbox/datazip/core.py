@@ -714,6 +714,11 @@ class DataZip(ZipFile):
                 "no_pqt_cols": [list(df.columns), list(df.columns.names)],
                 "dtypes": list(df.dtypes.astype(str).to_dict().items()),
             }
+        except Exception as exc:
+            dt = df.dtypes.to_string().replace("\n", "\n\t")
+            raise TypeError(
+                f"Unable to write {type(df)} '{name}' as parquet with types\n {dt}"
+            ) from exc
 
     def _encode_pd_series(self, name: str, df: pd.Series, **kwargs) -> dict:
         if loc := self._ids.get((id(df), type(df)), None):
