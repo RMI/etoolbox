@@ -59,7 +59,7 @@ tests = [
     "requests_mock",
 ]
 optional = [
-    "polars>=0.16,<0.19",  # for testing with polars, of course
+    "polars>=0.16,<0.20",  # for testing with polars, of course
     "plotly>5.10,<5.17",
 ]
 pudl-test = [
