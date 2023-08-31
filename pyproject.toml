@@ -21,7 +21,7 @@ classifiers = [
 requires-python = ">=3.10,<3.12"
 dependencies = [
     "orjson >= 3.8, <3.10",
-    "pandas >= 1.4,< 2.1",
+    "pandas >= 1.4,< 2.2",
     "pyarrow>=9, <14",
     "sqlalchemy>1.4,<2.1",
     "tzdata>=2022.7; platform_system=='Windows'",
