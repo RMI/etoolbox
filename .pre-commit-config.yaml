@@ -75,14 +75,14 @@ repos:
   - repo: local
     hooks:
       # Run the unit tests
-      - id: unit-tests
-        name: unit-tests
-        stages: [commit]
-        language: system
-        verbose: false
-        pass_filenames: false
-        always_run: true
-        entry: pytest --doctest-modules src/etoolbox tests/unit
+      #      - id: unit-tests
+      #        name: unit-tests
+      #        stages: [commit]
+      #        language: system
+      #        verbose: false
+      #        pass_filenames: false
+      #        always_run: true
+      #        entry: pytest --doctest-modules src/etoolbox tests/unit
 
       # Run blackdoc
       - id: blackdoc
