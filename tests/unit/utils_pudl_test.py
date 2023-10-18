@@ -1,5 +1,6 @@
 """Test pretend PudlTabl."""
 import os
+import sys
 from importlib.util import find_spec
 from unittest import mock
 
@@ -173,6 +174,10 @@ class TestRealPudl:
         assert not df.empty
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="autodownload sometimes fails on windows",
+)
 @pytest.mark.parametrize(
     "table, expected",
     [

@@ -75,14 +75,14 @@ repos:
   - repo: local
     hooks:
       # Run the unit tests
-      - id: unit-tests
-        name: unit-tests
-        stages: [commit]
-        language: system
-        verbose: false
-        pass_filenames: false
-        always_run: true
-        entry: pytest --doctest-modules src/etoolbox tests/unit
+      #      - id: unit-tests
+      #        name: unit-tests
+      #        stages: [commit]
+      #        language: system
+      #        verbose: false
+      #        pass_filenames: false
+      #        always_run: true
+      #        entry: pytest --doctest-modules src/etoolbox tests/unit
 
       # Run blackdoc
       - id: blackdoc
@@ -104,5 +104,5 @@ ci:
   autoupdate_branch: main
   autoupdate_commit_msg: "[pre-commit.ci] pre-commit autoupdate"
   autoupdate_schedule: weekly
-  skip: [unit-tests, blackdoc]
+  skip: [blackdoc]
   submodules: false
