@@ -60,7 +60,7 @@ tests = [
 ]
 optional = [
     "polars>=0.16,<0.20",  # for testing with polars, of course
-    "plotly>5.10,<5.18",
+    "plotly>5.10,<5.19",
 ]
 pudl-test = [
     "python-snappy>=0.6,<0.7",
