@@ -668,8 +668,7 @@ def _make_pudl_tabl(**kwargs):
 
 def make_pudl_tabl(
     pudl_path: Path | str,
-    tables: tuple
-    | list = (
+    tables: tuple | list = (
         "gf_eia923",
         "gen_original_eia923",
         "bf_eia923",
