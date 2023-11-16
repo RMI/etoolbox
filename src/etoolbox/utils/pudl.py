@@ -504,19 +504,23 @@ logger = logging.getLogger(__name__)
 def get_pudl_sql_url(file=PUDL_CONFIG) -> str:
     """Get the URL for the pudl.sqlite DB."""
     try:
-        return f"sqlite:///{os.environ['PUDL_OUTPUT']}/pudl.sqlite"
+        pudl_path = f"{os.environ['PUDL_OUTPUT']}/pudl.sqlite"
     except KeyError:
-        if not file.exists():
-            raise FileNotFoundError(
-                ".pudl.yml is missing and 'PUDL_OUTPUT' environment variable is "
-                "missing. For more info see: "
-                "https://catalystcoop-pudl.readthedocs.io/en/dev/dev/dev_setup.html"
-            ) from None
+        if file.exists():
+            import yaml
 
-        import yaml
-
-        with open(file, "r") as f:  # noqa: UP015
-            return f"sqlite:///{yaml.safe_load(f)['pudl_out']}/output/pudl.sqlite"
+            with open(file, "r") as f:  # noqa: UP015
+                pudl_path = f"{yaml.safe_load(f)['pudl_out']}/output/pudl.sqlite"
+        else:
+            pudl_path = Path.home() / "pudl-work/output/pudl.sqlite"
+            if not pudl_path.exists():
+                raise FileNotFoundError(
+                    f"~/.pudl.yml is missing, 'PUDL_OUTPUT' environment variable is "
+                    f"not set, and pudl.sqlite is not at {pudl_path}. Please move your "
+                    f"pudl.sqlite to {pudl_path}. The sqlite file can be downloaded "
+                    f"from https://s3.us-west-2.amazonaws.com/pudl.catalyst.coop/dev/pudl.sqlite"
+                ) from None
+    return f"sqlite:///{pudl_path}"
 
 
 def read_pudl_table(

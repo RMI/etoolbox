@@ -86,6 +86,9 @@ What's New?
 *  Added support for :class:`polars.DataFrame`, :class:`polars.LazyFrame`, and
    :class:`polars.Series` to :func:`etoolbox.utils.testing.assert_equal`.
 *  :class:`plotly.Figure` are now stored as pickles so they can be recreated.
+*  Updates to :func:`.get_pudl_sql_url` so that it doesn't require PUDL environment
+   variables or config files if the sqlite is at ``pudl-work/output/pudl.sqlite``, and
+   tells the user to put the sqlite there if the it cannot be found another way.
 
 Bug Fixes
 ^^^^^^^^^
