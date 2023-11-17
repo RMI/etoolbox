@@ -4,12 +4,14 @@ import sys
 from importlib.util import find_spec
 from unittest import mock
 
+import numpy as np
 import pandas as pd
 import pytest
 from etoolbox.datazip.core import DataZip
 from etoolbox.utils.pudl import (
     PretendPudlTabl,
     _Faker,
+    conform_pudl_dtypes,
     get_pudl_sql_url,
     make_pudl_tabl,
     read_pudl_table,
@@ -59,22 +61,15 @@ class TestPretendPudlTabl:
         pt = DataZip.load(test_dir / "pudltabl.zip", PretendPudlTabl)
         with pytest.raises(ModuleNotFoundError):
             import pudl  # noqa: F401
-        with pytest.raises(ModuleNotFoundError):
-            df = pt.plants_eia860()
+        with pytest.raises(RuntimeError):
+            _ = pt.plants_eia860()
 
 
 @pytest.mark.parametrize(
     "table, expected",
     [
         ("epacamd_eia", "in_pt"),
-        pytest.param(
-            "plants_eia860",
-            ModuleNotFoundError,
-            marks=pytest.mark.skipif(
-                find_spec("pudl") is not None,
-                reason="This test is for when PUDL is not installed",
-            ),
-        ),
+        ("plants_eia860", RuntimeError),
         ("__slots__", None),
         ("foobar", None),
         ("unit_ids", _Faker(thing=False)),
@@ -196,3 +191,24 @@ def test_read_pudl_table(temp_dir, table, expected):
     else:
         with pytest.raises(expected):
             _ = read_pudl_table(table_name=table)
+
+
+def test_fix_types():
+    """Test fix_types function."""
+    df = pd.DataFrame(
+        {
+            "plant_id_eia": [1.0, 2.0, np.nan],
+            "generator_id": [1, 2, 3],
+            "foobar": ["a", "b", "c"],
+        }
+    )
+    assert (
+        df.pipe(conform_pudl_dtypes)
+        .dtypes.astype(str)
+        .compare(
+            pd.Series(
+                {"plant_id_eia": "Int64", "generator_id": "string", "foobar": "object"}
+            )
+        )
+        .empty
+    )

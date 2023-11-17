@@ -86,9 +86,40 @@ What's New?
 *  Added support for :class:`polars.DataFrame`, :class:`polars.LazyFrame`, and
    :class:`polars.Series` to :func:`etoolbox.utils.testing.assert_equal`.
 *  :class:`plotly.Figure` are now stored as pickles so they can be recreated.
-*  Updates to :func:`.get_pudl_sql_url` so that it doesn't require PUDL environment
-   variables or config files if the sqlite is at ``pudl-work/output/pudl.sqlite``, and
-   tells the user to put the sqlite there if the it cannot be found another way.
+*  Updates to :func:`.get_pudl_sql_url` so that it doesn't require
+   PUDL environment variables or config files if the sqlite is at
+   ``pudl-work/output/pudl.sqlite``, and tells the user to put the sqlite there if the
+   it cannot be found another way.
+*  New :func:`.conform_pudl_dtypes` function that casts PUDL columns to
+   the dtypes used in :class:`PudlTabl`, useful when loading tables from a sqlite that
+   doesn't preserve all dtype info.
+*  **Deprecations**:
+
+   *  ``PUDL_DTYPES``, use :func:`.conform_pudl_dtypes` instead.
+   *  :func:`.make_pudl_tabl`, :class:`.PretendPudlTablCore`,
+      :class:`.PretendPudlTablCore`; read tables directly from the sqlite:
+
+      .. code-block:: python
+
+         import pandas as pd
+         import sqlalchemy as sa
+
+         from etoolbox.utils.pudl import get_pudl_sql_url, conform_pudl_dtypes
+
+         pd.read_sql_table(table_name, sa.create_engine(get_pudl_sql_url())).pipe(
+              conform_pudl_dtypes
+          )
+
+
+      .. code-block:: python
+
+          import polars as pl
+
+          from etoolbox.utils.pudl import get_pudl_sql_url
+
+          pl.read_database("SELECT * FROM table_name", get_pudl_sql_url())
+
+
 
 Bug Fixes
 ^^^^^^^^^
