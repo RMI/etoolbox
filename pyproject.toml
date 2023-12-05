@@ -64,7 +64,7 @@ optional = [
 ]
 pudl-test = [
     "python-snappy>=0.6,<0.7",
-    "platformdirs >=2.6,<4.1",
+    "platformdirs >=2.6,<4.2",
     "catalystcoop.pudl @ git+https://github.com/catalyst-cooperative/pudl.git@dev",
 ]
 
