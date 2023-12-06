@@ -93,6 +93,8 @@ What's New?
 *  New :func:`.conform_pudl_dtypes` function that casts PUDL columns to
    the dtypes used in :class:`PudlTabl`, useful when loading tables from a sqlite that
    doesn't preserve all dtype info.
+*  Added :func:`ungzip` to help with un-gzipping ``pudl.sqlite.gz`` and now using the
+   gzipped version in tests.
 *  **Deprecations**:
 
    *  ``PUDL_DTYPES``, use :func:`.conform_pudl_dtypes` instead.

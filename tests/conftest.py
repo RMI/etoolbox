@@ -11,7 +11,7 @@ import pandas as pd
 import pytest
 import yaml
 from etoolbox.datazip._test_classes import _KlassSlots, _TestKlass
-from etoolbox.utils.misc import download
+from etoolbox.utils.misc import download, ungzip
 from etoolbox.utils.pudl import get_pudl_sql_url
 
 logger = logging.getLogger(__name__)
@@ -122,10 +122,12 @@ def get_pudl_loc(temp_dir):
     except FileNotFoundError:
         pudl_temp_sqlite_path = temp_dir / "pudl.sqlite"
         if not pudl_temp_sqlite_path.exists():
+            zip_path = pudl_temp_sqlite_path.with_suffix(".sqlite.gz")
             download(
-                "https://s3.us-west-2.amazonaws.com/intake.catalyst.coop/dev/pudl.sqlite",
-                pudl_temp_sqlite_path,
+                "https://s3.us-west-2.amazonaws.com/intake.catalyst.coop/dev/pudl.sqlite.gz",
+                zip_path,
             )
+            ungzip(zip_path, pudl_temp_sqlite_path)
         return str(pudl_temp_sqlite_path.parent)
     else:
         return str(pudl_sql_path.parent)
