@@ -177,7 +177,7 @@ class TestRealPudl:
 @pytest.mark.parametrize(
     "table, expected",
     [
-        ("plants_eia860", None),
+        ("out_eia__yearly_plants", None),
         ("foobar", KeyError),
     ],
     ids=idfn,
