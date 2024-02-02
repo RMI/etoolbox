@@ -131,6 +131,7 @@ Bug Fixes
    :class:`pudl.PudlTabl` would fail to load the PUDL package.
 *  Fixed a bug where attempting to retrieve an empty :class:`pandas.DataFrame` raised
    an :class:`IndexError` when ``ignore_pd_dtypes`` is ``False``.
+*  Updated the link for the PUDL database.
 
 Known Issues
 ^^^^^^^^^^^^

@@ -397,7 +397,7 @@ def get_pudl_sql_url(file=PUDL_CONFIG) -> str:
                     f"~/.pudl.yml is missing, 'PUDL_OUTPUT' environment variable is "
                     f"not set, and pudl.sqlite is not at {pudl_path}. Please move your "
                     f"pudl.sqlite to {pudl_path}. The sqlite file can be downloaded "
-                    f"from https://s3.us-west-2.amazonaws.com/pudl.catalyst.coop/dev/pudl.sqlite"
+                    f"from https://s3.us-west-2.amazonaws.com/pudl.catalyst.coop/nightly/pudl.sqlite.gz"
                 ) from None
     return f"sqlite:///{pudl_path}"
 
@@ -438,6 +438,8 @@ def read_pudl_table(
     Returns: a table from Pudl as a df.
 
     """
+    warnings.warn(WARNING_TEXT, DeprecationWarning, stacklevel=2)
+
     con = sa.create_engine(get_pudl_sql_url())
     try:
         con.connect()

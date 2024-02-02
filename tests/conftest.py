@@ -124,7 +124,7 @@ def get_pudl_loc(temp_dir):
         if not pudl_temp_sqlite_path.exists():
             zip_path = pudl_temp_sqlite_path.with_suffix(".sqlite.gz")
             download(
-                "https://s3.us-west-2.amazonaws.com/intake.catalyst.coop/dev/pudl.sqlite.gz",
+                "https://s3.us-west-2.amazonaws.com/pudl.catalyst.coop/nightly/pudl.sqlite.gz",
                 zip_path,
             )
             ungzip(zip_path, pudl_temp_sqlite_path)
