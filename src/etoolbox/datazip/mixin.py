@@ -32,7 +32,6 @@ class IOMixin:
 
     >>> class MyClass(IOMixin):
     ...     pass
-    ...
 
     Create an instance of the class with many kinds of things in it.
     As nested as you like.
@@ -72,7 +71,6 @@ class IOMixin:
     ...         self.__dict__ = state | {
     ...             "stuff": defaultdict(lambda: None, state["stuff"])
     ...         }
-    ...
 
     Instantiate the class and use the :class:`defaultdict`.
 

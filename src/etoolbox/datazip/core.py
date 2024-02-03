@@ -92,7 +92,6 @@ class DataZip(ZipFile):
         ...         "b": frozenset({1.5, 3}),
         ...         "c": 0.9 + 0.2j,
         ...     }
-        ...
 
         Getting items from :class:`.DataZip`, like setting them, uses standard Python
         subscripting.
@@ -103,7 +102,6 @@ class DataZip(ZipFile):
 
         >>> with DataZip(buffer, "r") as z1:
         ...     z1["df"]  # doctest: +NORMALIZE_WHITESPACE
-        ...
              0
              a    b
         0  2.4  3.5
@@ -144,7 +142,6 @@ class DataZip(ZipFile):
         >>> with DataZip.replace(buffer1, buffer, foo=5, bar=6) as z:
         ...     z["new"] = "foo"
         ...     z["foo"]
-        ...
         5
         """
         if mode in ("a", "x"):
@@ -285,7 +282,6 @@ class DataZip(ZipFile):
         >>> file = Path.home() / "test.zip"
         >>> with DataZip(file=file, mode="w") as z0:
         ...     z0["series"] = pd.Series([1, 2, 4], name="series")
-        ...
 
         Create a replacement DataZip.
 
@@ -388,10 +384,7 @@ class DataZip(ZipFile):
                     self._attributes, option=json.OPT_NON_STR_KEYS | json.OPT_INDENT_2
                 ),
             )
-            self.writestr(
-                "__metadata__.json",
-                json.dumps(self._metadata),
-            )
+            self.writestr("__metadata__.json", json.dumps(self._metadata))
         self._red = {}
         super().close()
         if isinstance(self._delete_on_close, Path):
@@ -420,7 +413,6 @@ class DataZip(ZipFile):
         >>> with DataZip(BytesIO(), mode="w") as z0:
         ...     z0["foo"] = {"a": [{"c": 5}]}
         ...     z0["foo", "a", 0, "c"]
-        ...
         5
 
         """
@@ -585,8 +577,7 @@ class DataZip(ZipFile):
         "complex": lambda _, obj: complex(*obj["items"]),
         "type": lambda _, obj: _get_klass(obj["items"]),
         "defaultdict": lambda self, obj: defaultdict(
-            self._decode(obj["default_factory"]),
-            self._decode_dict(obj["items"]),
+            self._decode(obj["default_factory"]), self._decode_dict(obj["items"])
         ),
         "Counter": lambda self, obj: Counter(self._decode_dict(obj["items"])),
         "dict_aslist": lambda self, obj: dict(
@@ -742,11 +733,7 @@ class DataZip(ZipFile):
         df.write_parquet(temp := BytesIO())
         return {
             "__type__": "plDataFrame",
-            "__loc__": self._encode_loc_helper(
-                f"{name}.parquet",
-                df,
-                temp.getvalue(),
-            ),
+            "__loc__": self._encode_loc_helper(f"{name}.parquet", df, temp.getvalue()),
         }
 
     def _encode_pl_ldf(self, name: str, df: polars.LazyFrame, **kwargs) -> dict:
@@ -756,11 +743,7 @@ class DataZip(ZipFile):
         df.collect().write_parquet(temp := BytesIO())
         return {
             "__type__": "plLazyFrame",
-            "__loc__": self._encode_loc_helper(
-                f"{name}.parquet",
-                df,
-                temp.getvalue(),
-            ),
+            "__loc__": self._encode_loc_helper(f"{name}.parquet", df, temp.getvalue()),
         }
 
     def _encode_pl_series(self, name: str, df: polars.Series, **kwargs) -> dict:
@@ -770,11 +753,7 @@ class DataZip(ZipFile):
         df.to_frame("IGNORE").write_parquet(temp := BytesIO())
         return {
             "__type__": "plSeries",
-            "__loc__": self._encode_loc_helper(
-                f"{name}.parquet",
-                df,
-                temp.getvalue(),
-            ),
+            "__loc__": self._encode_loc_helper(f"{name}.parquet", df, temp.getvalue()),
             "col_name": df.name,
         }
 
@@ -877,11 +856,7 @@ class DataZip(ZipFile):
         },
         plotly.graph_objects.Figure: lambda self, name, item: {
             "__type__": "pgoFigure",
-            "__loc__": self._encode_loc_helper(
-                f"{name}.pkl",
-                item,
-                pickle.dumps(item),
-            ),
+            "__loc__": self._encode_loc_helper(f"{name}.pkl", item, pickle.dumps(item)),
         },
         polars.DataFrame: _encode_pl_df,
         polars.LazyFrame: _encode_pl_ldf,
@@ -966,11 +941,7 @@ class DataZip(ZipFile):
             if "parquet" in suffix:
                 yield name, self[name]
 
-    def writed(
-        self,
-        name: str,
-        data: Any,
-    ):
+    def writed(self, name: str, data: Any):
         """Write dict, df, str, or some other objects to name.
 
         .. admonition:: DeprecationWarning

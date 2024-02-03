@@ -43,7 +43,6 @@ class Var:
     ...         print('Matches "x"')
     ...     case _:
     ...         print("No match")
-    ...
     Matches "x"
     """
 
@@ -63,7 +62,6 @@ class Const:
     ...         print('Matches "pi"')
     ...     case Var.x:
     ...         print('Matches "x"')
-    ...
     Matches "pi"
     """
 
@@ -79,7 +77,6 @@ class FuncCall:
     >>> class A:
     ...     x = FuncCall(ord)
     ...     y = FuncCall(ord)
-    ...
     >>> A.x
     120
     >>> A.y
@@ -168,7 +165,6 @@ class RegexEqual(str):
     ...         print("A mixed tale")
     ...     case "s..a":
     ...         print("A long read")
-    ...
     A mixed tale
     """
 
@@ -195,7 +191,6 @@ class InSet(set):
     ...         print("cool")
     ...     case Colors.mixed:
     ...         print("mixed")
-    ...
     cool
     """
 

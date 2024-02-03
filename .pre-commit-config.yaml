@@ -38,13 +38,6 @@ repos:
         args: [--fix, --exit-non-zero-on-fix]
       - id: ruff-format
 
-  #  # Deterministic python formatting:
-  #  - repo: https://github.com/psf/black
-  #    rev: 23.10.1
-  #    hooks:
-  #      - id: black
-  #        language_version: python3
-
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v4.0.0-alpha.8
     hooks:
@@ -70,31 +63,6 @@ repos:
         additional_dependencies: ["rstcheck[toml, sphinx]"]
         args: ["--config", "pyproject.toml"]
 
-  ########################################################################################
-  # Custom local hooks
-  ########################################################################################
-  - repo: local
-    hooks:
-      # Run the unit tests
-      #      - id: unit-tests
-      #        name: unit-tests
-      #        stages: [commit]
-      #        language: system
-      #        verbose: false
-      #        pass_filenames: false
-      #        always_run: true
-      #        entry: pytest --doctest-modules src/etoolbox tests/unit
-
-      # Run blackdoc
-      - id: blackdoc
-        name: blackdoc
-        stages: [commit]
-        language: system
-        verbose: false
-        pass_filenames: false
-        always_run: true
-        entry: blackdoc src/etoolbox
-
 # Configuration for pre-commit.ci
 ci:
   autofix_commit_msg: |
@@ -105,5 +73,4 @@ ci:
   autoupdate_branch: main
   autoupdate_commit_msg: "[pre-commit.ci] pre-commit autoupdate"
   autoupdate_schedule: weekly
-  skip: [blackdoc]
   submodules: false
