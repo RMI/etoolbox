@@ -5,7 +5,6 @@ import logging
 import pickle
 import warnings
 from collections import Counter, OrderedDict, defaultdict, deque
-from contextlib import suppress
 from datetime import datetime
 from functools import partial
 from io import BytesIO
@@ -421,8 +420,10 @@ class DataZip(ZipFile):
         out = self._attributes
         for k in key:
             out = out[k]
-            with suppress(KeyError, TypeError):
+            try:  # noqa: SIM105
                 out = self._attributes["__state__"][out["__loc__"]]
+            except (KeyError, TypeError):
+                pass
         return self._decode(out)
 
     def __setitem__(self, key: str, value: DZable) -> None:
@@ -440,7 +441,7 @@ class DataZip(ZipFile):
 
     def get(self, key: str, default=None):
         """Retrieve an item if it is there otherwise return default."""
-        return self[key] if key in self else default
+        return self[key] if key in self else default  # noqa: SIM401
 
     def reset_ids(self):
         """Reset the internal record of stored ids.
@@ -919,8 +920,10 @@ class DataZip(ZipFile):
 
     def _json_get(self, *args):
         for arg in args:
-            with suppress(Exception):
+            try:
                 return json.loads(self.read(f"{arg}.json"))
+            except Exception:  # noqa: S110
+                pass
         return {}
 
     def read_dfs(self) -> Generator[tuple[str, pd.DataFrame | pd.Series]]:

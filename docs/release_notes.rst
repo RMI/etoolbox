@@ -95,6 +95,8 @@ What's New?
    doesn't preserve all dtype info.
 *  Added :func:`ungzip` to help with un-gzipping ``pudl.sqlite.gz`` and now using the
    gzipped version in tests.
+*  Switching two cases of ``with suppress...`` to ``try - except - pass`` in
+   :class:`.DataZip` to take advantage of zero-cost exceptions.
 *  **Deprecations**:
 
    *  ``PUDL_DTYPES``, use :func:`.conform_pudl_dtypes` instead.
