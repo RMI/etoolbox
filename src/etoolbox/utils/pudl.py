@@ -462,25 +462,25 @@ def _gcs_token(token: str | None) -> str:
 
 def _write_access_key_json() -> None:
     """Create a json file for PUDL GCS access from environment variable."""
+    import os
+    from base64 import b64decode
+
+    import orjson as json
+
     key_json_path = CONFIG_PATH / ".pudl-access-key.json"
     if key_json_path.exists():
         return None
-
-    import os
 
     if (key := os.environ.get("PUDL_ACCESS_KEY")) is None:
         raise RuntimeError(
             "This is running outside a GHA action with a PUDL_ACCESS_KEY secret. "
             "If running locally, please run 'rmi-pudl-init' first."
         )
-
     if not CONFIG_PATH.exists():
         CONFIG_PATH.mkdir(parents=True)
 
-    import orjson as json
-
     with open(key_json_path, "wb") as f:
-        f.write(json.dumps(json.loads(key), option=json.OPT_INDENT_2))
+        f.write(json.dumps(json.loads(b64decode(key)), option=json.OPT_INDENT_2))
 
 
 def conform_pudl_dtypes(df: pd.DataFrame) -> pd.DataFrame:
