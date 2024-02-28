@@ -22,6 +22,7 @@ requires-python = ">=3.10,<3.13"
 dependencies = [
     "orjson >= 3.8, <3.10",
     "pandas[gcp] >= 1.4,< 2.3",
+    "platformdirs >=2.6,<4.3",
     "polars[fsspec]>=0.16,<0.21",  # for testing with polars, of course
     "pyarrow>=9, <16",
     "sqlalchemy>1.4,<2.1",
@@ -59,11 +60,7 @@ tests = [
 optional = [
     "plotly>5.10,<5.20",
 ]
-pudl-test = [
-    "python-snappy>=0.6,<0.8",
-    "platformdirs >=2.6,<4.3",
-    "catalystcoop.pudl @ git+https://github.com/catalyst-cooperative/pudl.git@dev",
-]
+pudl-test = []
 
 [tool.setuptools.dynamic]
 version = {attr = "etoolbox._version.__version__"}
