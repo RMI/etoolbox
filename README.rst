@@ -23,6 +23,16 @@ eToolBox: A set of tools and functions we use across projects
     :alt: Ruff
 
 
+.. attention::
+
+   Version 0.2.0 is the last version that supports the legacy PUDL objects such as
+   ``PudlTable`` and contains tools for replicating and working with those objects. You
+   can install a specific version like this:
+
+   .. code-block:: bash
+
+      pip install git+https://github.com/rmi/etoolbox.git@0.2.0
+
 Desciption
 =======================================================================================
 
@@ -35,6 +45,7 @@ Desciption
 
       *  Support for easily storing and retrieving a range of Python objects, including
          builtins, pandas and numpy objects, and certain custom objects.
+      *  Store dataframes as parquets for space efficiency.
 
    *  IOMixin - a mixin that allows a class to be stored in a DataZip. Usually.
 
@@ -42,6 +53,7 @@ Desciption
 
    * arrays - pandas and numpy comparison aids.
    * match - helpers for Python's ``match`` syntax.
+   * pudl - tools for interacting with
 
 Installation
 =======================================================================================
