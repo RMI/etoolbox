@@ -23,7 +23,7 @@ eToolBox: A set of tools and functions we use across projects
     :alt: Ruff
 
 
-.. attention::
+.. warning::
 
    Version 0.2.0 is the last version that supports the legacy PUDL objects such as
    ``PudlTable`` and contains tools for replicating and working with those objects. You
