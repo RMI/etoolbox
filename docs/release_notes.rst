@@ -2,6 +2,18 @@
 eToolBox Release Notes
 =======================================================================================
 
+.. _release-v0-3-0:
+
+---------------------------------------------------------------------------------------
+0.3.0 (2024-XX-XX)
+---------------------------------------------------------------------------------------
+
+What's New?
+^^^^^^^^^^^
+*  New functions to read pudl tables from parquets in google cloud using
+   :func:`.pd_read_pudl` which handles authentication and caching. :func:`.pl_read_pudl`
+   and :func:`.pl_scan_pudl` only do authentication. To set up authentication you will
+   need an access key json and to run ``rmi-pudl-init``.
 
 .. _release-v0-2-0:
 
@@ -9,8 +21,7 @@ eToolBox Release Notes
 0.2.0 (2024-02-28)
 ---------------------------------------------------------------------------------------
 
-What's New?
-^^^^^^^^^^^
+
 *  Complete redesign of system internals and standardization of the data format. This
    resulted in a couple key improvements:
 

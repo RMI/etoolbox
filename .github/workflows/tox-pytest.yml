@@ -26,6 +26,8 @@ jobs:
       #      - name: Core test with tox
       #        run: tox -e core
       - name: Full test with tox
+        env:
+          PUDL_ACCESS_KEY: ${{ secrets.PUDL_ACCESS_KEY }}
         run: tox -e ci
 
       - name: Coveralls

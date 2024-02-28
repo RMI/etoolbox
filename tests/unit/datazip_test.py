@@ -12,8 +12,8 @@ from zipfile import ZipFile
 
 import numpy as np
 import pandas as pd
+import polars as pl
 import pytest
-from etoolbox._optional import polars as pl
 from etoolbox.datazip import DataZip
 from etoolbox.datazip._test_classes import (
     ObjMeta,
