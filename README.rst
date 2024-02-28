@@ -22,17 +22,6 @@ eToolBox: A set of tools and functions we use across projects
     :target: https://github.com/astral-sh/ruff
     :alt: Ruff
 
-
-.. warning::
-
-   Version 0.2.0 is the last version that supports the legacy PUDL objects such as
-   ``PudlTable`` and contains tools for replicating and working with those objects. You
-   can install a specific version like this:
-
-   .. code-block:: bash
-
-      pip install git+https://github.com/rmi/etoolbox.git@0.2.0
-
 Desciption
 =======================================================================================
 
@@ -53,7 +42,7 @@ Desciption
 
    * arrays - pandas and numpy comparison aids.
    * match - helpers for Python's ``match`` syntax.
-   * pudl - tools for interacting with
+   * pudl - tools for reading data from PUDL
 
 Installation
 =======================================================================================
@@ -72,6 +61,17 @@ Or from the dev branch:
    pip install git+https://github.com/rmi/etoolbox.git@dev
 
 
+.. warning::
+
+   Version 0.2.0 is the last version that supports the legacy PUDL objects such as
+   ``PudlTable`` and contains tools for replicating and working with those objects. You
+   can install a specific version like this:
+
+   .. code-block:: bash
+
+      pip install git+https://github.com/rmi/etoolbox.git@0.2.0
+
+
 To create an environment for eToolbox, navigate to the repo folder in terminal and run:
 
 .. code-block:: bash
@@ -88,3 +88,93 @@ creating the new one:
    mamba update mamba
    mamba env remove --name etb
    mamba env create --name etb --file environment.yml
+
+
+PUDL Data Access
+=======================================================================================
+Setup
+---------------------------------------------------------------------------------------
+To use the new process for accessing PUDL data you will need to have the ``etoolbox``
+library installed. This setup procedure only needs to be done once per user per machine.
+
+Authentication to Google Cloud uses a service account access key which you will need to
+get from Alex or Catalyst. Once you have that, run the following command in an
+environment where ``etoolbox`` is installed.
+
+.. code-block:: bash
+
+   rmi-pudl-init <access_key>
+
+Where ``<access_key>`` is the absolute path of the service account access key as a JSON
+file obtained from Catalyst.
+
+Usage
+---------------------------------------------------------------------------------------
+Any table that is in the ``pudl.sqlite`` can be read using these functions without
+needing to download the entire database.
+
+.. code-block:: python
+
+   from etoolbox.utils.pudl import pd_read_pudl
+
+   df = pd_read_pudl("core_eia__codes_balancing_authorities")
+
+
+More information about the tables are available in
+`this data dictionary <https://catalystcoop-pudl.readthedocs.io/en/nightly/data_dictionaries/pudl_db.html#pudl-data-dictionary>`_.
+New and old names for the tables are available
+`here <https://docs.google.com/spreadsheets/d/1RBuKl_xKzRSLgRM7GIZbc5zUYieWFE20cXumWuv5njo/edit#gid=1126117325>`_.
+
+
+GitHub Actions
+---------------------------------------------------------------------------------------
+To enable accessing PUDL data from tests run in GitHub Actions, additional steps are
+required. Note: these instructions assume that you use ``pytest`` and ``tox``.
+
+1. Make sure that the ``PUDL_ACCESS_KEY`` secret is available to your repository,
+   this should be the case for all rmi-electricity repositories. Note: it will not
+   automatically be available to forks of those repositories.
+2. Add the following to the Action configuration file above where ``tox`` is run, you
+   can see an example in ``.github/workflows/tox-pytest.yml``.
+
+   .. code-block:: yaml
+
+      env:
+        PUDL_ACCESS_KEY: ${{ secrets.PUDL_ACCESS_KEY }}
+
+3. Add the following to ``tox.ini`` in the global [testenv] section or at least the one
+   where ``pytest`` runs, you can see an example in this repository.
+
+   .. code-block::
+
+      passenv = PUDL_ACCESS_KEY
+
+4. Before any test that uses a PUDL access function runs, a special CI setup function
+   must run. There are different ways to do this but this is one example that we use
+   here.
+
+   conftest.py
+
+   .. code-block:: python
+
+      from etoolbox.utils.pudl import setup_access_key_for_ci
+
+
+      @pytest.fixture(scope="session")
+      def pudl_access_key_setup():
+         """Set up PUDL access key for testing."""
+         setup_access_key_for_ci()
+
+
+   pudl_access_test.py
+
+   .. code-block:: python
+
+      from etoolbox.utils.pudl import pd_read_pudl
+
+
+      @pytest.mark.usefixtures("pudl_access_key_setup")
+      def test_pd_read_pudl_table():
+         """Test reading table from GCS as :func:`pandas.DataFrame."""
+         df = pd_read_pudl("core_eia__codes_balancing_authorities")
+         assert not df.empty

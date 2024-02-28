@@ -3,7 +3,6 @@
 Defines useful fixtures, command line args.
 """
 import logging
-import os
 import shutil
 from pathlib import Path
 
@@ -11,8 +10,7 @@ import pandas as pd
 import pytest
 import yaml
 from etoolbox.datazip._test_classes import _KlassSlots, _TestKlass
-from etoolbox.utils.misc import download, ungzip
-from etoolbox.utils.pudl import _write_access_key_json, get_pudl_sql_url
+from etoolbox.utils.pudl import setup_access_key_for_ci
 
 logger = logging.getLogger(__name__)
 
@@ -105,46 +103,35 @@ def pudl_config(temp_dir) -> str:
     assert not file.exists()
 
 
+# @pytest.fixture(scope="session")
+# def pudl_zip_path(temp_dir):
+#     """Path to save pudl.zip."""
+#     pudl = pytest.importorskip("pudl")
+#
+#     return temp_dir / "pudl.zip"
+
+
+# def get_pudl_loc(temp_dir):
+#     """Download pudl sqlite for testing if we don't have a local one."""
+#     try:
+#         pudl_sql_path = Path(get_pudl_sql_url().replace("sqlite:///", ""))
+#         if not pudl_sql_path.exists():
+#             raise FileNotFoundError
+#     except FileNotFoundError:
+#         pudl_temp_sqlite_path = temp_dir / "pudl.sqlite"
+#         if not pudl_temp_sqlite_path.exists():
+#             zip_path = pudl_temp_sqlite_path.with_suffix(".sqlite.gz")
+#             download(
+#                 "https://s3.us-west-2.amazonaws.com/pudl.catalyst.coop/nightly/pudl.sqlite.gz",
+#                 zip_path,
+#             )
+#             ungzip(zip_path, pudl_temp_sqlite_path)
+#         return str(pudl_temp_sqlite_path.parent)
+#     else:
+#         return str(pudl_sql_path.parent)
+
+
 @pytest.fixture(scope="session")
-def pudl_zip_path(temp_dir):
-    """Path to save pudl.zip."""
-    pudl = pytest.importorskip("pudl")
-
-    return temp_dir / "pudl.zip"
-
-
-def get_pudl_loc(temp_dir):
-    """Download pudl sqlite for testing if we don't have a local one."""
-    try:
-        pudl_sql_path = Path(get_pudl_sql_url().replace("sqlite:///", ""))
-        if not pudl_sql_path.exists():
-            raise FileNotFoundError
-    except FileNotFoundError:
-        pudl_temp_sqlite_path = temp_dir / "pudl.sqlite"
-        if not pudl_temp_sqlite_path.exists():
-            zip_path = pudl_temp_sqlite_path.with_suffix(".sqlite.gz")
-            download(
-                "https://s3.us-west-2.amazonaws.com/pudl.catalyst.coop/nightly/pudl.sqlite.gz",
-                zip_path,
-            )
-            ungzip(zip_path, pudl_temp_sqlite_path)
-        return str(pudl_temp_sqlite_path.parent)
-    else:
-        return str(pudl_sql_path.parent)
-
-
-@pytest.fixture(scope="class")
-def pudltabl(pudl_zip_path, temp_dir):
-    """Create a PudlTabl."""
-    pudl = pytest.importorskip("pudl")
-    from etoolbox.utils.pudl import make_pudl_tabl
-
-    os.environ["PUDL_OUTPUT"] = get_pudl_loc(temp_dir)
-    pudl_tabl = make_pudl_tabl(pudl_zip_path, tables=("pu_ferc1",))
-    return pudl_tabl
-
-
-@pytest.fixture(scope="class")
-def _pudl_access_key_setup():
-    """Set up PUDL token for testing."""
-    _write_access_key_json()
+def pudl_access_key_setup():  # noqa: PT004
+    """Set up PUDL access key for testing."""
+    setup_access_key_for_ci()

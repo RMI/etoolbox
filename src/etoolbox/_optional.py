@@ -3,6 +3,8 @@
 Could do something more like this:
 https://github.com/pola-rs/polars/blob/master/py-polars/polars/dependencies.py
 """
+import warnings
+
 try:
     import sqlalchemy
 except (ModuleNotFoundError, ImportError):
@@ -38,3 +40,24 @@ except (ModuleNotFoundError, ImportError):
                 """Dummy for :mod:`plotly.graph_objects.Figure` when not installed."""
 
                 pass
+
+
+try:
+    from tqdm.auto import tqdm
+    from tqdm.contrib.logging import logging_redirect_tqdm  # noqa: F401
+except (ImportError, ModuleNotFoundError):
+
+    class tqdm:  # noqa: N801
+        """Dummy for :class:`tqdm` when not installed."""
+
+        def __init__(self, *args, **kwargs):
+            """Dummy init for :class:`.tqdm` when not installed."""
+            warnings.warn(
+                "tqdm is not installed, progress bar will be disabled",
+                UserWarning,
+                stacklevel=2,
+            )
+
+        def update(self, *args, **kwargs):
+            """Dummy update for :class:`.tqdm` when not installed."""
+            pass

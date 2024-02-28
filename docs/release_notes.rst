@@ -14,6 +14,15 @@ What's New?
    :func:`.pd_read_pudl` which handles authentication and caching. :func:`.pl_read_pudl`
    and :func:`.pl_scan_pudl` only do authentication. To set up authentication you will
    need an access key json and to run ``rmi-pudl-init``.
+*  **Removed**:
+
+   *  :func:`read_pudl_table`
+   *  :func:`get_pudl_tables_as_dz`
+   *  :func:`make_pudl_tabl`
+   *  :class:`PretendPudlTablCore`
+   *  :class:`PretendPudlTabl`
+   *  :func:`lazy_import`
+
 
 .. _release-v0-2-0:
 
