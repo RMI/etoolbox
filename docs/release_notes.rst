@@ -6,7 +6,7 @@ eToolBox Release Notes
 .. _release-v0-2-0:
 
 ---------------------------------------------------------------------------------------
-0.2.0 (2023-XX-XX)
+0.2.0 (2024-02-28)
 ---------------------------------------------------------------------------------------
 
 What's New?
@@ -97,8 +97,10 @@ What's New?
    gzipped version in tests.
 *  Switching two cases of ``with suppress...`` to ``try - except - pass`` in
    :class:`.DataZip` to take advantage of zero-cost exceptions.
-*  **Deprecations**:
+*  **Deprecations** these will be removed in the next release along with supporting
+   infrastructure:
 
+   * :func:`.lazy_import` and the rest of the :mod:`.lazy_import` module.
    *  ``PUDL_DTYPES``, use :func:`.conform_pudl_dtypes` instead.
    *  :func:`.make_pudl_tabl`, :class:`.PretendPudlTablCore`,
       :class:`.PretendPudlTablCore`; read tables directly from the sqlite:
