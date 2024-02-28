@@ -17,9 +17,10 @@ from zoneinfo import ZoneInfo
 import numpy as np
 import orjson as json
 import pandas as pd
+import polars as pl
 
 from etoolbox import __version__
-from etoolbox._optional import plotly, polars, sqlalchemy
+from etoolbox._optional import plotly, sqlalchemy
 from etoolbox.datazip._utils import (
     _get_klass,
     _get_username,
@@ -599,19 +600,19 @@ class DataZip(ZipFile):
         "saEngine": lambda _, obj: sqlalchemy.create_engine(obj["items"]["url"]),
         "plDataFrame": partial(
             _decode_cache_helper,
-            func=lambda self, obj: polars.read_parquet(
+            func=lambda self, obj: pl.read_parquet(
                 BytesIO(self.read(obj["__loc__"])), use_pyarrow=True
             ),
         ),
         "plLazyFrame": partial(
             _decode_cache_helper,
-            func=lambda self, obj: polars.read_parquet(
+            func=lambda self, obj: pl.read_parquet(
                 BytesIO(self.read(obj["__loc__"])), use_pyarrow=True
             ).lazy(),
         ),
         "plSeries": partial(
             _decode_cache_helper,
-            func=lambda self, obj: polars.read_parquet(
+            func=lambda self, obj: pl.read_parquet(
                 BytesIO(self.read(obj["__loc__"])), use_pyarrow=True
             )
             .to_series()
@@ -727,7 +728,7 @@ class DataZip(ZipFile):
             "dtypes": str(df.dtypes),
         }
 
-    def _encode_pl_df(self, name: str, df: polars.DataFrame, **kwargs) -> dict:
+    def _encode_pl_df(self, name: str, df: pl.DataFrame, **kwargs) -> dict:
         """Write a polars df in the ZIP as parquet."""
         if loc := self._ids.get((id(df), type(df)), None):
             return {"__type__": "plDataFrame", "__loc__": loc}
@@ -737,7 +738,7 @@ class DataZip(ZipFile):
             "__loc__": self._encode_loc_helper(f"{name}.parquet", df, temp.getvalue()),
         }
 
-    def _encode_pl_ldf(self, name: str, df: polars.LazyFrame, **kwargs) -> dict:
+    def _encode_pl_ldf(self, name: str, df: pl.LazyFrame, **kwargs) -> dict:
         """Write a polars df in the ZIP as parquet."""
         if loc := self._ids.get((id(df), type(df)), None):
             return {"__type__": "plLazyFrame", "__loc__": loc}
@@ -747,7 +748,7 @@ class DataZip(ZipFile):
             "__loc__": self._encode_loc_helper(f"{name}.parquet", df, temp.getvalue()),
         }
 
-    def _encode_pl_series(self, name: str, df: polars.Series, **kwargs) -> dict:
+    def _encode_pl_series(self, name: str, df: pl.Series, **kwargs) -> dict:
         """Write a polars series in the ZIP as parquet."""
         if loc := self._ids.get((id(df), type(df)), None):
             return {"__type__": "plSeries", "__loc__": loc}
@@ -859,9 +860,9 @@ class DataZip(ZipFile):
             "__type__": "pgoFigure",
             "__loc__": self._encode_loc_helper(f"{name}.pkl", item, pickle.dumps(item)),
         },
-        polars.DataFrame: _encode_pl_df,
-        polars.LazyFrame: _encode_pl_ldf,
-        polars.Series: _encode_pl_series,
+        pl.DataFrame: _encode_pl_df,
+        pl.LazyFrame: _encode_pl_ldf,
+        pl.Series: _encode_pl_series,
         # things to ignore
         partial: _encode_ignore,
     }

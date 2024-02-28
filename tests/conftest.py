@@ -12,7 +12,7 @@ import pytest
 import yaml
 from etoolbox.datazip._test_classes import _KlassSlots, _TestKlass
 from etoolbox.utils.misc import download, ungzip
-from etoolbox.utils.pudl import get_pudl_sql_url
+from etoolbox.utils.pudl import _write_access_key_json, get_pudl_sql_url
 
 logger = logging.getLogger(__name__)
 
@@ -142,3 +142,9 @@ def pudltabl(pudl_zip_path, temp_dir):
     os.environ["PUDL_OUTPUT"] = get_pudl_loc(temp_dir)
     pudl_tabl = make_pudl_tabl(pudl_zip_path, tables=("pu_ferc1",))
     return pudl_tabl
+
+
+@pytest.fixture(scope="class")
+def _pudl_access_key_setup():
+    """Set up PUDL token for testing."""
+    _write_access_key_json()

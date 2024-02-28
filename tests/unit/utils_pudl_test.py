@@ -14,6 +14,9 @@ from etoolbox.utils.pudl import (
     conform_pudl_dtypes,
     get_pudl_sql_url,
     make_pudl_tabl,
+    pd_read_pudl,
+    pl_read_pudl,
+    pl_scan_pudl,
     read_pudl_table,
 )
 from etoolbox.utils.testing import idfn
@@ -212,3 +215,21 @@ def test_fix_types():
         )
         .empty
     )
+
+
+@pytest.mark.usefixtures("_pudl_access_key_setup")
+class TestGCSPudl:
+    def test_pl_read_pudl_table(self):
+        """Test reading table from GCS as :func:`polars.DataFrame."""
+        df = pl_read_pudl("core_eia__codes_balancing_authorities")
+        assert not df.is_empty()
+
+    def test_pl_scan_pudl_table(self):
+        """Test reading table from GCS as :func:`polars.LazyFrame."""
+        df = pl_scan_pudl("core_eia__codes_balancing_authorities")
+        assert not df.collect().is_empty()
+
+    def test_pd_read_pudl_table(self):
+        """Test reading table from GCS as :func:`pandas.DataFrame."""
+        df = pd_read_pudl("core_eia__codes_balancing_authorities")
+        assert not df.empty

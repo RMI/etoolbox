@@ -1,4 +1,5 @@
 """Functions and objects for creating and ~mocking PudlTabl."""
+
 import logging
 import os
 import warnings
@@ -10,7 +11,9 @@ from pathlib import Path
 from typing import Literal
 
 import pandas as pd
+import polars as pl
 import sqlalchemy as sa
+from platformdirs import user_cache_path, user_config_path
 
 from etoolbox.utils.lazy_import import lazy_import
 
@@ -321,6 +324,12 @@ DTYPES = pd.Series(
     }
 )
 SUGGESTION = """
+    from etoolbox.utils.pudl import pd_read_pudl
+
+    pd_read_pudl(table_name)
+
+    --- OR ---
+
     import pandas as pd
     import sqlalchemy as sa
 
@@ -329,6 +338,8 @@ SUGGESTION = """
     pd.read_sql_table(table_name, sa.create_engine(get_pudl_sql_url())).pipe(
         conform_pudl_dtypes
     )
+
+    --- OR ---
 
     import polars as pl
 
@@ -353,6 +364,123 @@ class _WarnDict(dict):
 
 
 PUDL_DTYPES = _WarnDict()
+CONFIG_PATH = user_config_path("rmi.pudl")
+CACHE_PATH = user_cache_path("rmi.pudl")
+
+
+def rmi_pudl_init():
+    """Setup rmi.pudl to provide access to PUDL tables from GCS with local caching."""
+    from argparse import ArgumentParser
+
+    parser = ArgumentParser(
+        description="Setup rmi.pudl to provide access to PUDL tables "
+        "from GCS with local caching."
+    )
+    parser.add_argument(
+        "token_file", help="Path to service_account json for PUDL GCS access"
+    )
+
+    token_file = Path(parser.parse_args().token_file)
+    if not token_file.exists() or token_file.suffix != ".json":
+        raise RuntimeError("Please provide a service_account json for PUDL GCS access")
+
+    if not CONFIG_PATH.exists():
+        CONFIG_PATH.mkdir(parents=True)
+    token_file.rename(CONFIG_PATH / ".pudl-access-key.json")
+    if not CACHE_PATH.exists():
+        CACHE_PATH.mkdir(parents=True)
+
+
+def pd_read_pudl(table_name: str, token: str | None = None) -> pd.DataFrame:
+    """Read PUDL table from GCS as :class:`pandas.DataFrame`.
+
+    Args:
+        table_name: name of table in PUDL sqlite database
+        token: token or path to token for PUDL GCS access
+
+    """
+    return pd.read_parquet(
+        f"gs://parquet.catalyst.coop/nightly/{table_name}.parquet",
+        filesystem=_gcs_filecache_filesystem(token),
+    )
+
+
+def pl_read_pudl(table_name: str, token: str | None = None) -> pl.DataFrame:
+    """Read PUDL table from GCS as :class:`polars.DataFrame`.
+
+    Args:
+        table_name: name of table in PUDL sqlite database
+        token: path to token for PUDL GCS access
+
+    """
+    return pl.read_parquet(
+        f"gs://parquet.catalyst.coop/nightly/{table_name}.parquet",
+        storage_options={"google_service_account_path": _gcs_token(token)},
+    )
+
+
+def pl_scan_pudl(table_name: str, token: str | None = None) -> pl.LazyFrame:
+    """Read PUDL table from GCS as :class:`polars.LazyFrame`.
+
+    Args:
+        table_name: name of table in PUDL sqlite database
+        token: path to token for PUDL GCS access
+
+    """
+    return pl.scan_parquet(
+        f"gs://parquet.catalyst.coop/nightly/{table_name}.parquet",
+        storage_options={"google_service_account_path": _gcs_token(token)},
+    )
+
+
+def _gcs_filecache_filesystem(token):
+    """Create a fsspec/GCS filesystem with a filecache.
+
+    Args:
+        token: token or path to token for PUDL GCS access
+
+    """
+    from fsspec import filesystem
+
+    return filesystem(
+        "filecache",
+        target_protocol="gcs",
+        target_options={"token": _gcs_token(token)},
+        cache_storage=str(CACHE_PATH),
+    )
+
+
+def _gcs_token(token: str | None) -> str:
+    if token is None:
+        token = CONFIG_PATH / ".pudl-access-key.json"
+        if not token.exists():
+            raise RuntimeError(
+                "Provide a token for PUDL GCS access or run 'rmi-pudl-init' first"
+            )
+    return str(token)
+
+
+def _write_access_key_json() -> None:
+    """Create a json file for PUDL GCS access from environment variable."""
+    key_json_path = CONFIG_PATH / ".pudl-access-key.json"
+    if key_json_path.exists():
+        return None
+
+    import os
+
+    if (key := os.environ.get("PUDL_ACCESS_KEY")) is None:
+        raise RuntimeError(
+            "This is running outside a GHA action with a PUDL_ACCESS_KEY secret. "
+            "If running locally, please run 'rmi-pudl-init' first."
+        )
+
+    if not CONFIG_PATH.exists():
+        CONFIG_PATH.mkdir(parents=True)
+
+    import orjson as json
+
+    with open(key_json_path, "wb") as f:
+        f.write(json.dumps(json.loads(key), option=json.OPT_INDENT_2))
 
 
 def conform_pudl_dtypes(df: pd.DataFrame) -> pd.DataFrame:
@@ -480,6 +608,8 @@ def get_pudl_tables_as_dz(tables: Sequence[str]) -> BytesIO:
     Returns: DataZip
 
     """
+    warnings.warn(WARNING_TEXT, DeprecationWarning, stacklevel=2)
+
     from etoolbox.datazip import DataZip
 
     with DataZip(buffer := BytesIO()) as dz:
