@@ -341,6 +341,10 @@ SUGGESTION = """
 WARNING_TEXT = (
     "This function will soon be removed. Read tables directly:\n" + SUGGESTION
 )
+PL_VERSION_ERROR = (
+    f"Accessing PUDL tables directly from GCS using polars requires "
+    f"version 0.20 or higher, current version: {pl.__version__}"
+)
 
 
 class _WarnDict(dict):
@@ -401,16 +405,26 @@ def pl_read_pudl(
 ) -> pl.DataFrame:
     """Read PUDL table from GCS as :class:`polars.DataFrame`.
 
+    .. note::
+
+       Accessing PUDL tables directly from GCS using polars requires version 0.20
+       or higher.
+
     Args:
         table_name: name of table in PUDL sqlite database
         release: ``nightly`` or ``stable``
         token: path to token for PUDL GCS access
 
     """
-    return pl.read_parquet(
-        f"gs://parquet.catalyst.coop/{release}/{table_name}.parquet",
-        storage_options={"google_service_account_path": _gcs_token(token)},
-    )
+    try:
+        return pl.read_parquet(
+            f"gs://parquet.catalyst.coop/{release}/{table_name}.parquet",
+            storage_options={"google_service_account_path": _gcs_token(token)},
+        )
+    except Exception as exc:
+        if pl.__version__ < "0.20.0":
+            raise RuntimeError(PL_VERSION_ERROR) from exc
+        raise exc
 
 
 def pl_scan_pudl(
@@ -418,16 +432,26 @@ def pl_scan_pudl(
 ) -> pl.LazyFrame:
     """Read PUDL table from GCS as :class:`polars.LazyFrame`.
 
+    .. note::
+
+       Accessing PUDL tables directly from GCS using polars requires version 0.20
+       or higher.
+
     Args:
         table_name: name of table in PUDL sqlite database
         release: ``nightly`` or ``stable``
         token: path to token for PUDL GCS access
 
     """
-    return pl.scan_parquet(
-        f"gs://parquet.catalyst.coop/{release}/{table_name}.parquet",
-        storage_options={"google_service_account_path": _gcs_token(token)},
-    )
+    try:
+        return pl.scan_parquet(
+            f"gs://parquet.catalyst.coop/{release}/{table_name}.parquet",
+            storage_options={"google_service_account_path": _gcs_token(token)},
+        )
+    except Exception as exc:
+        if pl.__version__ < "0.20.0":
+            raise RuntimeError(PL_VERSION_ERROR) from exc
+        raise exc
 
 
 def _gcs_filecache_filesystem(token):
