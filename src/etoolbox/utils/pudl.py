@@ -8,6 +8,7 @@ from typing import ClassVar
 
 import pandas as pd
 import polars as pl
+from platformdirs import __version__ as platformdirs_version
 from platformdirs import user_cache_path, user_config_path
 
 logger = logging.getLogger(__name__)
@@ -450,6 +451,10 @@ def _gcs_token(token: str | None) -> str:
     if token is None:
         token = CONFIG_PATH / ".pudl-access-key.json"
         if not token.exists():
+            if platformdirs_version < "3.0.0":
+                raise RuntimeError(
+                    f"{platformdirs_version=} < 3.0.0 required for PUDL GCS access."
+                )
             raise RuntimeError(
                 "Provide a token for PUDL GCS access or run 'rmi-pudl-init' first"
             )
