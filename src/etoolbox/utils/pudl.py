@@ -2,7 +2,9 @@
 
 import logging
 import os
+import warnings
 from pathlib import Path
+from typing import ClassVar
 
 import pandas as pd
 import polars as pl
@@ -10,6 +12,8 @@ from platformdirs import user_cache_path, user_config_path
 
 logger = logging.getLogger(__name__)
 PUDL_CONFIG = Path.home() / ".pudl.yml"
+CONFIG_PATH = user_config_path("rmi.pudl")
+CACHE_PATH = user_cache_path("rmi.pudl")
 DTYPES = pd.Series(
     {
         "address_2": "string",
@@ -349,8 +353,6 @@ class _WarnDict(dict):
 
 
 PUDL_DTYPES = _WarnDict()
-CONFIG_PATH = user_config_path("rmi.pudl")
-CACHE_PATH = user_cache_path("rmi.pudl")
 
 
 def rmi_pudl_init():
@@ -526,3 +528,58 @@ def get_pudl_sql_url(file=PUDL_CONFIG) -> str:
                     f"from https://s3.us-west-2.amazonaws.com/pudl.catalyst.coop/nightly/pudl.sqlite.gz"
                 ) from None
     return f"sqlite:///{pudl_path}"
+
+
+class _Faker:
+    """Return a thing when called.
+
+    >>> fake = _Faker(5)
+    >>> fake()
+    5
+
+    """
+
+    def __init__(self, thing):
+        self.thing = thing
+
+    def __call__(self, *args, **kwargs):
+        if args or kwargs:
+            logger.warning("all arguments to _Faker are ignored.")
+        return self.thing
+
+
+class PretendPudlTablCore:
+    """A DataZip of a PudlTabl can be recreated with this to avoid importing PUDL.
+
+    .. admonition:: DeprecationWarning
+       :class: warning
+
+       ``PretendPudlTablCore`` will be removed in a future version, read tables directly
+       from the sqlite.
+
+    """
+
+    table_name_map: ClassVar[dict[str, str]] = {
+        "gen_original_eia923": "gen_og_eia923",
+        "gen_fuel_by_generator_energy_source_eia923": "gen_fuel_by_genid_esc_eia923",
+        "gen_fuel_by_generator_eia923": "gen_fuel_allocated_eia923",
+        "gen_fuel_by_generator_energy_source_owner_eia923": "gen_fuel_by_genid_esc_own",
+    }
+
+    def __setstate__(self, state):
+        warnings.warn(WARNING_TEXT, DeprecationWarning, stacklevel=2)
+
+        self.__dict__ = state
+        self._real_pt = None
+
+    def __getattr__(self, item):
+        warnings.warn(WARNING_TEXT, DeprecationWarning, stacklevel=2)
+
+        if (n_item := self.table_name_map.get(item, item)) in self.__dict__["_dfs"]:
+            return _Faker(self.__dict__["_dfs"][n_item])
+        raise KeyError(
+            f"{item} not found, available tables: {tuple(self.__dict__['_dfs'])}"
+        )
+
+
+PretendPudlTabl = PretendPudlTablCore

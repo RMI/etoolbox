@@ -19,8 +19,6 @@ What's New?
    *  :func:`read_pudl_table`
    *  :func:`get_pudl_tables_as_dz`
    *  :func:`make_pudl_tabl`
-   *  :class:`PretendPudlTablCore`
-   *  :class:`PretendPudlTabl`
    *  :func:`lazy_import`
 
 

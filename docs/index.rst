@@ -1,5 +1,5 @@
 ===============================================================================
-The RMI Python Project Template
+eToolBox: A set of tools and functions we use across projects
 ===============================================================================
 
 .. include:: ../README.rst

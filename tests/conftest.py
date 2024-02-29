@@ -2,6 +2,7 @@
 
 Defines useful fixtures, command line args.
 """
+import gzip
 import logging
 import shutil
 from pathlib import Path
@@ -135,3 +136,13 @@ def pudl_config(temp_dir) -> str:
 def pudl_access_key_setup():  # noqa: PT004
     """Set up PUDL access key for testing."""
     setup_access_key_for_ci()
+
+
+@pytest.fixture(scope="session")
+def gzip_test_data(temp_dir):
+    """Download pudl sqlite for testing if we don't have a local one."""
+    gzip_path = temp_dir / "test_file.txt.gz"
+    content = b"What hath G-d wrought"
+    with gzip.open(gzip_path, "wb") as f:
+        f.write(content)
+    return gzip_path, content

@@ -23,9 +23,8 @@ dependencies = [
     "orjson >= 3.8, <3.10",
     "pandas[gcp] >= 1.4,< 2.3",
     "platformdirs >=2.6,<4.3",
-    "polars[fsspec]>=0.16,<0.21",  # for testing with polars, of course
+    "polars[fsspec]>=0.16,<0.21",
     "pyarrow>=9, <16",
-    "sqlalchemy>1.4,<2.1",
     "tzdata>=2022.7; platform_system=='Windows'",
 ]
 
@@ -59,6 +58,7 @@ tests = [
 ]
 optional = [
     "plotly>5.10,<5.20",
+    "sqlalchemy>1.4,<2.1",
 ]
 pudl-test = []
 
@@ -74,18 +74,9 @@ rmi-pudl-init = "etoolbox.utils.pudl:rmi_pudl_init"
 #######################################################################################
 # Configurations for linters and other tools
 #######################################################################################
-[tool.black]
-line-length = 88
-target-version = ["py310", "py311"]
-include = "\\.pyi?$"
-
 [tool.doc8]
 max-line-length = 88
 ignore-path = "docs/_build"
-
-[tool.docformatter]
-wrap-summaries = 88
-wrap-descriptions = 88
 
 [tool.pytest.ini_options]
 testpaths = ["."]

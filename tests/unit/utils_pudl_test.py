@@ -5,13 +5,49 @@ from unittest import mock
 import numpy as np
 import pandas as pd
 import pytest
+from etoolbox.datazip import DataZip
 from etoolbox.utils.pudl import (
+    PUDL_DTYPES,
+    PretendPudlTabl,
     conform_pudl_dtypes,
     get_pudl_sql_url,
     pd_read_pudl,
     pl_read_pudl,
     pl_scan_pudl,
 )
+
+
+def test_fix_types():
+    """Test fix_types function."""
+    df = pd.DataFrame(
+        {
+            "plant_id_eia": [1.0, 2.0, np.nan],
+            "generator_id": [1, 2, 3],
+            "foobar": ["a", "b", "c"],
+        }
+    )
+    assert (
+        df.pipe(conform_pudl_dtypes)
+        .dtypes.astype(str)
+        .compare(
+            pd.Series(
+                {"plant_id_eia": "Int64", "generator_id": "string", "foobar": "object"}
+            )
+        )
+        .empty
+    )
+
+
+def test_pudl_dtypes_getitem():
+    """Test that PUDL_DTYPES item access fails."""
+    with pytest.raises(DeprecationWarning):
+        _ = PUDL_DTYPES["foo"]
+
+
+def test_pudl_dtypes_get():
+    """Test that PUDL_DTYPES item access fails."""
+    with pytest.raises(DeprecationWarning):
+        _ = PUDL_DTYPES.get("foo")
 
 
 class TestPudlLoc:
@@ -36,25 +72,26 @@ class TestPudlLoc:
             get_pudl_sql_url(temp_dir / ".foo.yml")
 
 
-def test_fix_types():
-    """Test fix_types function."""
-    df = pd.DataFrame(
-        {
-            "plant_id_eia": [1.0, 2.0, np.nan],
-            "generator_id": [1, 2, 3],
-            "foobar": ["a", "b", "c"],
-        }
-    )
-    assert (
-        df.pipe(conform_pudl_dtypes)
-        .dtypes.astype(str)
-        .compare(
-            pd.Series(
-                {"plant_id_eia": "Int64", "generator_id": "string", "foobar": "object"}
-            )
-        )
-        .empty
-    )
+class TestPretendPudlTabl:
+    """Tests for PretendPudlTabl."""
+
+    def test_type(self, test_dir, temp_dir):
+        """Test with a sample PudlTabl."""
+        pt = DataZip.load(test_dir / "pudltabl.zip", PretendPudlTabl)
+        assert type(pt) is PretendPudlTabl
+
+    def test_load(self, test_dir, temp_dir):
+        """Test with a sample PudlTabl."""
+        pt = DataZip.load(test_dir / "pudltabl.zip", PretendPudlTabl)
+        df = pt.epacamd_eia()
+        assert isinstance(df, pd.DataFrame)
+        assert not df.empty
+
+    def test_load_error(self, test_dir, temp_dir):
+        """Test with a sample PudlTabl."""
+        pt = DataZip.load(test_dir / "pudltabl.zip", PretendPudlTabl)
+        with pytest.raises(KeyError):
+            _ = pt.foo()
 
 
 @pytest.mark.usefixtures("pudl_access_key_setup")
