@@ -81,7 +81,10 @@ class _PartialBuffer:
         return self._size
 
     def __repr__(self):
-        return f"<_PartialBuffer off={self._offset} size={self._size} stream={self._stream}>"
+        return (
+            f"<_PartialBuffer off={self._offset} "
+            f"size={self._size} stream={self._stream}>"
+        )
 
     def read(self, size=0):
         """Read data from the buffer from the current position."""
