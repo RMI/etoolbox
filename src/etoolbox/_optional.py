@@ -3,6 +3,7 @@
 Could do something more like this:
 https://github.com/pola-rs/polars/blob/master/py-polars/polars/dependencies.py
 """
+
 import warnings
 
 try:

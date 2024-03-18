@@ -12,11 +12,9 @@ import pandas as pd
 class DZableObj(Protocol):
     """Protocol for an object that can be serialized with :class:`DataZip`."""
 
-    def __getstate__(self) -> dict | tuple[dict | None, dict]:
-        ...
+    def __getstate__(self) -> dict | tuple[dict | None, dict]: ...
 
-    def __setstate__(self, state: dict | tuple[dict | None, dict]) -> None:
-        ...
+    def __setstate__(self, state: dict | tuple[dict | None, dict]) -> None: ...
 
 
 JSONABLE = float | int | dict | list | str | bool | None
