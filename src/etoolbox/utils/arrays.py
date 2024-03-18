@@ -1,4 +1,5 @@
 """Utilities for working with :mod:`pandas` objects."""
+
 from __future__ import annotations
 
 import logging
