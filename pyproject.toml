@@ -57,7 +57,7 @@ tests = [
     "requests_mock",
 ]
 optional = [
-    "plotly>5.10,<5.20",
+    "plotly>5.10,<5.21",
     "sqlalchemy>1.4,<2.1",
 ]
 pudl-test = []
