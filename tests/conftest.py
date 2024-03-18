@@ -2,6 +2,7 @@
 
 Defines useful fixtures, command line args.
 """
+
 import gzip
 import logging
 import shutil

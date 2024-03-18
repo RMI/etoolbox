@@ -1,4 +1,5 @@
 """Test utils.misc."""
+
 from etoolbox.utils.misc import download, ungzip
 
 

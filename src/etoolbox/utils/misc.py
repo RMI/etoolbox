@@ -1,4 +1,5 @@
 """Miscellaneous helpers and utilities."""
+
 from io import DEFAULT_BUFFER_SIZE, BytesIO
 from pathlib import Path
 

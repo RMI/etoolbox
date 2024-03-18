@@ -1,4 +1,5 @@
 """Code for :class:`.DataZip`."""
+
 from __future__ import annotations
 
 import logging
