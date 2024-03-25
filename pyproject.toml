@@ -50,7 +50,7 @@ tests = [
     "pre-commit>=2.9,<3.7",  # Allow us to run pre-commit hooks in testing
     "pytest>=6.2,<8.2",  # test framework
     "pytest-console-scripts>=1.1,<1.5",  # Allow automatic testing of scripts
-    "pytest-cov>=2.10,<4.2",  # Pytest plugin for working with coverage
+    "pytest-cov>=2.10,<5.1",  # Pytest plugin for working with coverage
     "ruff>0.0.215,<0.3.5",
     "tox>=3.20,<4.15",  # Python test environment manager
     "tqdm >= 4.63,< 4.67",
