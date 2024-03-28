@@ -1,0 +1,86 @@
+:orphan:
+
+:py:mod:`etoolbox._optional`
+============================
+
+.. py:module:: etoolbox._optional
+
+.. autoapi-nested-parse::
+
+   Dummy modules and classes when optional packages are not installed.
+
+   Could do something more like this:
+   https://github.com/pola-rs/polars/blob/master/py-polars/polars/dependencies.py
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   etoolbox._optional.sqlalchemy
+   etoolbox._optional.plotly
+   etoolbox._optional.tqdm
+
+
+
+
+.. py:class:: sqlalchemy
+
+
+   Dummy for :mod:`sqlalchemy` when not installed.
+
+   .. py:class:: engine
+
+
+      Dummy for :mod:`sqlalchemy.engine` when not installed.
+
+      .. py:class:: Engine
+
+
+         Dummy for :mod:`sqlalchemy.engine.Engine` when not installed.
+
+
+
+   .. py:method:: create_engine(*args, **kwargs)
+      :staticmethod:
+
+      Dummy for :func:`sqlalchemy.create_engine` when not installed.
+
+
+
+.. py:class:: plotly
+
+
+   Dummy for :mod:`plotly` when not installed.
+
+   .. py:class:: graph_objects
+
+
+      Dummy for :mod:`plotly.graph_objects` when not installed.
+
+      .. py:class:: Figure
+
+
+         Dummy for :mod:`plotly.graph_objects.Figure` when not installed.
+
+
+
+
+.. py:class:: tqdm(*args, **kwargs)
+
+
+   Dummy for :class:`tqdm` when not installed.
+
+   Dummy init for :class:`.tqdm` when not installed.
+
+   .. py:method:: update(*args, **kwargs)
+
+      Dummy update for :class:`.tqdm` when not installed.
+
+
+

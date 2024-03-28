@@ -1,0 +1,128 @@
+:py:mod:`etoolbox.utils.pudl`
+=============================
+
+.. py:module:: etoolbox.utils.pudl
+
+.. autoapi-nested-parse::
+
+   Functions and objects for creating and ~mocking PudlTabl.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   etoolbox.utils.pudl.PretendPudlTablCore
+
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   etoolbox.utils.pudl.rmi_pudl_init
+   etoolbox.utils.pudl.pd_read_pudl
+   etoolbox.utils.pudl.pl_read_pudl
+   etoolbox.utils.pudl.pl_scan_pudl
+   etoolbox.utils.pudl.setup_access_key_for_ci
+   etoolbox.utils.pudl.conform_pudl_dtypes
+   etoolbox.utils.pudl.get_pudl_sql_url
+
+
+
+.. py:function:: rmi_pudl_init()
+
+   Setup rmi.pudl to provide access to PUDL tables from GCS with local caching.
+
+
+.. py:function:: pd_read_pudl(table_name, release = 'nightly', token = None)
+
+   Read PUDL table from GCS as :class:`pandas.DataFrame`.
+
+   :param table_name: name of table in PUDL sqlite database
+   :param release: ``nightly`` or ``stable``
+   :param token: token or path to token for PUDL GCS access
+
+
+.. py:function:: pl_read_pudl(table_name, release = 'nightly', token = None)
+
+   Read PUDL table from GCS as :class:`polars.DataFrame`.
+
+   .. note::
+
+      Accessing PUDL tables directly from GCS using polars requires version 0.20
+      or higher.
+
+   :param table_name: name of table in PUDL sqlite database
+   :param release: ``nightly`` or ``stable``
+   :param token: path to token for PUDL GCS access
+
+
+.. py:function:: pl_scan_pudl(table_name, release = 'nightly', token = None)
+
+   Read PUDL table from GCS as :class:`polars.LazyFrame`.
+
+   .. note::
+
+      Accessing PUDL tables directly from GCS using polars requires version 0.20
+      or higher.
+
+   :param table_name: name of table in PUDL sqlite database
+   :param release: ``nightly`` or ``stable``
+   :param token: path to token for PUDL GCS access
+
+
+.. py:function:: setup_access_key_for_ci()
+
+   Create a json file for PUDL GCS access from environment variable.
+
+   This function must run in a GHA action with a PUDL_ACCESS_KEY secret
+   to enable PUDL GCS access.
+
+
+.. py:function:: conform_pudl_dtypes(df)
+
+   Conform types of PUDL columns to those in PudlTabl.
+
+   :param df: a dataframe with columns from PUDL
+
+   Returns: the pudl table with standardized dtypes
+
+   .. rubric:: Examples
+
+   .. code-block:: python
+
+       import pandas as pd
+       import sqlalchemy as sa
+
+       from etoolbox.utils.pudl import get_pudl_sql_url, conform_pudl_dtypes
+
+       pd.read_sql_table(table_name, sa.create_engine(get_pudl_sql_url())).pipe(
+           conform_pudl_dtypes
+       )
+
+
+.. py:function:: get_pudl_sql_url(file=PUDL_CONFIG)
+
+   Get the URL for the pudl.sqlite DB.
+
+
+.. py:class:: PretendPudlTablCore
+
+
+   A DataZip of a PudlTabl can be recreated with this to avoid importing PUDL.
+
+   .. admonition:: DeprecationWarning
+      :class: warning
+
+      ``PretendPudlTablCore`` will be removed in a future version, read tables directly
+      from the sqlite.
+
+
+

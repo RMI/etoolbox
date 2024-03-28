@@ -1,0 +1,48 @@
+:py:mod:`etoolbox.utils.misc`
+=============================
+
+.. py:module:: etoolbox.utils.misc
+
+.. autoapi-nested-parse::
+
+   Miscellaneous helpers and utilities.
+
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   etoolbox.utils.misc.download
+   etoolbox.utils.misc.ungzip
+
+
+
+.. py:function:: download(url, fname)
+
+   Download a file with a progress bar.
+
+   :param url: location of file to download.
+   :param fname: a file or buffer to download the file to.
+
+   Returns: None
+
+
+
+.. py:function:: ungzip(zip_path, out_path=None)
+
+   Un gzip a file with a progress bar.
+
+   :param zip_path: path of gzip archive.
+   :param out_path: path of resulting output file, if not provided will be the same as
+                    zip_path without ``.gz`` suffix.
+
+   Returns: None
+
+
+

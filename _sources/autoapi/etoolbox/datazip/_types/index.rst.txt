@@ -1,0 +1,29 @@
+:orphan:
+
+:py:mod:`etoolbox.datazip._types`
+=================================
+
+.. py:module:: etoolbox.datazip._types
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   etoolbox.datazip._types.DZableObj
+
+
+
+
+.. py:class:: DZableObj
+
+
+   Bases: :py:obj:`Protocol`
+
+   Protocol for an object that can be serialized with :class:`DataZip`.
+
+

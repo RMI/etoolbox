@@ -1,0 +1,32 @@
+:orphan:
+
+:py:mod:`etoolbox.datazip._utils`
+=================================
+
+.. py:module:: etoolbox.datazip._utils
+
+
+Module Contents
+---------------
+
+
+Functions
+~~~~~~~~~
+
+.. autoapisummary::
+
+   etoolbox.datazip._utils.default_setstate
+   etoolbox.datazip._utils.default_getstate
+
+
+
+.. py:function:: default_setstate(obj, state)
+
+   Called if no ``__setstate__`` implementation.
+
+
+.. py:function:: default_getstate(obj)
+
+   Called if no ``__getstate__`` implementation.
+
+

@@ -1,0 +1,8 @@
+:orphan:
+
+:py:mod:`etoolbox._version`
+===========================
+
+.. py:module:: etoolbox._version
+
+

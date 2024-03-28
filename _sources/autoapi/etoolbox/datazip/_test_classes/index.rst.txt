@@ -1,0 +1,34 @@
+:orphan:
+
+:py:mod:`etoolbox.datazip._test_classes`
+========================================
+
+.. py:module:: etoolbox.datazip._test_classes
+
+.. autoapi-nested-parse::
+
+   Mocks and other objects for testing :class:`.DataZip`.
+
+
+
+Module Contents
+---------------
+
+Classes
+~~~~~~~
+
+.. autoapisummary::
+
+   etoolbox.datazip._test_classes.ObjMeta
+
+
+
+
+.. py:class:: ObjMeta
+
+
+   Bases: :py:obj:`NamedTuple`
+
+   NamedTuple for testing.
+
+
