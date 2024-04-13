@@ -54,7 +54,8 @@ tests = [
     "ruff>0.0.215,<0.3.8",
     "tox>=3.20,<4.15",  # Python test environment manager
     "tqdm >= 4.63,< 4.67",
-    "requests_mock",
+    "requests_mock",  # used by remote_zip tests
+    "pytest-socket",  #
 ]
 optional = [
     "plotly>5.10,<5.21",

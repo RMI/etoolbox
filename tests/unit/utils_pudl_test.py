@@ -16,6 +16,7 @@ from etoolbox.utils.pudl import (
     pl_read_pudl,
     pl_scan_pudl,
 )
+from etoolbox.utils.testing import idfn
 
 
 def test_fix_types():
@@ -96,18 +97,76 @@ class TestPretendPudlTabl:
 
 
 @pytest.mark.usefixtures("pudl_access_key_setup")
+@pytest.mark.usefixtures("pudl_test_cache")
 class TestGCSPudl:
-    def test_pl_read_pudl_table(self):
-        """Test reading table from GCS as :func:`polars.DataFrame."""
-        df = pl_read_pudl("core_eia__codes_balancing_authorities")
+    @pytest.mark.parametrize("use_polars", [False, True], ids=idfn)
+    def test_pl_read_pudl_table(self, use_polars):
+        """Test reading table from GCS as :class:`polars.DataFrame`."""
+        df = pl_read_pudl(
+            "core_eia__codes_balancing_authorities", use_polars=use_polars
+        )
         assert not df.is_empty()
 
-    def test_pl_scan_pudl_table(self):
-        """Test reading table from GCS as :func:`polars.LazyFrame."""
-        df = pl_scan_pudl("core_eia__codes_balancing_authorities")
+    @pytest.mark.parametrize("use_polars", [False, True], ids=idfn)
+    def test_pl_scan_pudl_table(self, use_polars):
+        """Test reading table from GCS as :class:`polars.LazyFrame`."""
+        df = pl_scan_pudl(
+            "core_eia__codes_balancing_authorities", use_polars=use_polars
+        )
         assert not df.collect().is_empty()
 
     def test_pd_read_pudl_table(self):
-        """Test reading table from GCS as :func:`pandas.DataFrame."""
+        """Test reading table from GCS as :class:`pandas.DataFrame`."""
+        df = pd_read_pudl("core_eia__codes_balancing_authorities")
+        assert not df.empty
+
+    # @pytest.mark.disable_socket()
+    # def test_pd_read_pudl_table_no_internet(self):
+    #     """Test reading table from local cache of GCS without internet."""
+    #     df = pd_read_pudl("core_eia__codes_balancing_authorities")
+    #     assert not df.empty
+    #
+    # @pytest.mark.disable_socket()
+    # @pytest.mark.xfail
+    # def test_pd_read_pudl_table_no_internet2(self):
+    #     """Test reading table from GCS as :func:`pandas.DataFrame."""
+    #     df = pd_read_pudl("core_eia860m__changelog_generators")
+    #     assert not df.empty
+
+
+@pytest.mark.disable_socket()
+@pytest.mark.usefixtures("pudl_access_key_setup")
+@pytest.mark.usefixtures("pudl_test_cache")
+class TestGCSPudlNoInternet:
+    @pytest.mark.parametrize("use_polars", [False, True], ids=idfn)
+    def test_pl_read_pudl_table(self, use_polars):
+        """Test reading table from GCS as :class:`polars.DataFrame`."""
+        if use_polars:
+            with pytest.raises(FileNotFoundError):
+                _ = pl_read_pudl(
+                    "core_eia__codes_balancing_authorities", use_polars=use_polars
+                )
+        else:
+            df = pl_read_pudl(
+                "core_eia__codes_balancing_authorities", use_polars=use_polars
+            )
+            assert not df.is_empty()
+
+    @pytest.mark.parametrize("use_polars", [False, True], ids=idfn)
+    def test_pl_scan_pudl_table(self, use_polars):
+        """Test reading table from GCS as :class:`polars.LazyFrame`."""
+        if use_polars:
+            with pytest.raises(FileNotFoundError):
+                _ = pl_scan_pudl(
+                    "core_eia__codes_balancing_authorities", use_polars=use_polars
+                )
+        else:
+            df = pl_scan_pudl(
+                "core_eia__codes_balancing_authorities", use_polars=use_polars
+            )
+            assert not df.collect().is_empty()
+
+    def test_pd_read_pudl_table(self):
+        """Test reading table from GCS as :class:`pandas.DataFrame`."""
         df = pd_read_pudl("core_eia__codes_balancing_authorities")
         assert not df.empty

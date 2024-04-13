@@ -140,6 +140,15 @@ def pudl_access_key_setup():  # noqa: PT004
 
 
 @pytest.fixture(scope="session")
+def pudl_test_cache(temp_dir):  # noqa: PT004
+    """Change PUDL cache path for testing."""
+    import etoolbox.utils.pudl as pudl
+
+    pudl.CACHE_PATH = temp_dir / "pudl_cache"
+    pudl.CACHE_PATH.mkdir(exist_ok=True)
+
+
+@pytest.fixture(scope="session")
 def gzip_test_data(temp_dir):
     """Download pudl sqlite for testing if we don't have a local one."""
     gzip_path = temp_dir / "test_file.txt.gz"
