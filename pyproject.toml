@@ -41,7 +41,7 @@ doc = [
     "rstcheck[sphinx,toml]>=5.0,<6.3",  # ReStructuredText linter
     "sphinx>=4,!=5.1.0,<7.2.7",
     "sphinx-autoapi>=1.8,<3.1",
-    "sphinx-issues>=1.2,<4.1",
+    "sphinx-issues>=1.2,<4.2",
     "sphinx-autodoc-typehints>1.19,<2.0.2",
     "sphinxcontrib-mermaid>0.7,<0.10.0",
 ]
