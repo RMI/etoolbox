@@ -6,7 +6,7 @@ from contextlib import suppress
 from importlib import import_module
 from typing import Any
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger("etoolbox")
 
 
 def _quote_strip(string: str) -> str:

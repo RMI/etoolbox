@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 
     from etoolbox.datazip._types import JSONABLE, DZable
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger("etoolbox")
 
 
 class DataZip(ZipFile):

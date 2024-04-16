@@ -31,7 +31,7 @@ import re
 import numpy as np
 import pandas as pd
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("etoolbox")
 
 
 def fix_int_na(df, columns, float_na=np.nan, int_na=-1, str_na=""):

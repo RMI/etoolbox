@@ -3,8 +3,7 @@
 import logging
 
 # Create a root logger for use anywhere within the package.
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+logger = logging.getLogger("etoolbox")
 
 __author__ = "RMI"
 __contact__ = "aengel@rmi.org"

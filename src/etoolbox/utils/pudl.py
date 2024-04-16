@@ -16,7 +16,7 @@ from platformdirs import user_cache_path, user_config_path
 
 from etoolbox.utils.misc import have_internet
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("etoolbox")
 TOKEN_PATH = user_config_path("rmi.pudl") / ".pudl-access-key.json"
 CACHE_PATH = user_cache_path("rmi.pudl")
 

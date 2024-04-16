@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger("etoolbox")
 
 
 class IOMixin:

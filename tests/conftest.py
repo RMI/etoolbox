@@ -13,6 +13,7 @@ import pandas as pd
 import pytest
 import yaml
 from etoolbox.datazip._test_classes import _KlassSlots, _TestKlass
+from etoolbox.utils.logging import setup_logging
 from etoolbox.utils.pudl import TOKEN_PATH, rmi_pudl_init
 
 logger = logging.getLogger(__name__)
@@ -132,3 +133,13 @@ def gzip_test_data(temp_dir):
     with gzip.open(gzip_path, "wb") as f:
         f.write(content)
     return gzip_path, content
+
+
+@pytest.fixture(scope="session")
+def test_logger(temp_dir):
+    """Set up logger for testing."""
+    log_file = temp_dir / "logs/log.jsonl"
+    setup_logging(filename=log_file)
+
+    logger = logging.getLogger("etb_test")
+    return logger, log_file

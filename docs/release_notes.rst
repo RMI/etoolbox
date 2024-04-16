@@ -28,6 +28,12 @@ What's New?
    *  :func:`make_pudl_tabl`
    *  :func:`lazy_import`
 
+*  Created :mod:`etoolbox.utils.logging` with helpers to setup and format loggers in a
+   more performant and structured way based on
+   `mCoding suggestion <https://www.youtube.com/watch?v=9L77QExPmI0>`_. Also replaced
+   module-level loggers with library-wide logger and removed logger configuration from
+   ``etoolbox`` because it is a library.
+
 Bug Fixes
 ^^^^^^^^^
 *  Fixed a bug where ``etoolbox`` could not be used if ``tqdm`` was not installed. As

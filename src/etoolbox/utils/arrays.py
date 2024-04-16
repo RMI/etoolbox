@@ -8,7 +8,7 @@ from collections import Counter
 import numpy as np
 import pandas as pd
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("etoolbox")
 
 
 def compare_dfs(
