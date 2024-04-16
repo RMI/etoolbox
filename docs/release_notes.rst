@@ -28,6 +28,11 @@ What's New?
    *  :func:`make_pudl_tabl`
    *  :func:`lazy_import`
 
+Bug Fixes
+^^^^^^^^^
+*  Fixed a bug where ``etoolbox`` could not be used if ``tqdm`` was not installed. As
+   it is an optional dependency, :mod:`._optional` should be able to fully address that
+   issue.
 
 .. _release-v0-2-0:
 

@@ -45,10 +45,13 @@ except (ModuleNotFoundError, ImportError):
 
 try:
     from tqdm.auto import tqdm
-    from tqdm.contrib.logging import logging_redirect_tqdm  # noqa: F401
+    from tqdm.contrib.logging import logging_redirect_tqdm
 except (ImportError, ModuleNotFoundError):
+    from contextlib import nullcontext
 
-    class tqdm:  # noqa: N801
+    logging_redirect_tqdm = nullcontext
+
+    class tqdm(nullcontext):  # noqa: N801
         """Dummy for :class:`tqdm` when not installed."""
 
         def __init__(self, *args, **kwargs):
@@ -58,6 +61,7 @@ except (ImportError, ModuleNotFoundError):
                 UserWarning,
                 stacklevel=2,
             )
+            super().__init__()
 
         def update(self, *args, **kwargs):
             """Dummy update for :class:`.tqdm` when not installed."""
