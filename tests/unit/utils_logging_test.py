@@ -1,8 +1,10 @@
 import datetime as dt
 import json
 import logging
+import sys
 import time
 
+import pytest
 from etoolbox.utils.logging import JSONFormatter
 
 
@@ -21,6 +23,7 @@ def test_json_formatter():
     )
 
 
+@pytest.mark.skipif(sys.version_info < (3, 12), reason="requires python3.12 or higher")
 class TestSetupLogging:
     """Test setup_logging."""
 
