@@ -120,19 +120,6 @@ class TestGCSPudl:
         df = pd_read_pudl("core_eia__codes_balancing_authorities")
         assert not df.empty
 
-    # @pytest.mark.disable_socket()
-    # def test_pd_read_pudl_table_no_internet(self):
-    #     """Test reading table from local cache of GCS without internet."""
-    #     df = pd_read_pudl("core_eia__codes_balancing_authorities")
-    #     assert not df.empty
-    #
-    # @pytest.mark.disable_socket()
-    # @pytest.mark.xfail
-    # def test_pd_read_pudl_table_no_internet2(self):
-    #     """Test reading table from GCS as :func:`pandas.DataFrame."""
-    #     df = pd_read_pudl("core_eia860m__changelog_generators")
-    #     assert not df.empty
-
 
 @pytest.mark.disable_socket()
 @pytest.mark.usefixtures("pudl_access_key_setup")
@@ -170,3 +157,13 @@ class TestGCSPudlNoInternet:
         """Test reading table from GCS as :class:`pandas.DataFrame`."""
         df = pd_read_pudl("core_eia__codes_balancing_authorities")
         assert not df.empty
+
+
+@pytest.mark.script_launch_mode("inprocess")
+def test_rmi_pudl_init_entry_point(script_runner):
+    """Test the rmi-pudl-init entry point."""
+    script_runner.run(
+        ["rmi-pudl-init", os.environ.get("PUDL_ACCESS_KEY")], print_result=True
+    )
+    df = pl_scan_pudl("core_eia__codes_balancing_authorities")
+    assert not df.collect().is_empty()

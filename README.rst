@@ -105,8 +105,9 @@ environment where ``etoolbox`` is installed.
 
    rmi-pudl-init <access_key>
 
-Where ``<access_key>`` is the absolute path of the service account access key as a JSON
-file obtained from Catalyst.
+Where ``<access_key>`` is the base64 encoding of of the service account access key as
+a JSON obtained from Catalyst. This is stored in LastPass as ``PUDL Key (base64)`` in
+the ``Shared-UTF`` folder.
 
 Usage
 ---------------------------------------------------------------------------------------
@@ -157,13 +158,12 @@ required. Note: these instructions assume that you use ``pytest`` and ``tox``.
 
    .. code-block:: python
 
-      from etoolbox.utils.pudl import setup_access_key_for_ci
+      from etoolbox.utils.pudl import rmi_pudl_init
 
 
-      @pytest.fixture(scope="session")
-      def pudl_access_key_setup():
-         """Set up PUDL access key for testing."""
-         setup_access_key_for_ci()
+      def pudl_access_key_setup(script_runner):  # noqa: PT004
+          """Set up PUDL access key for testing."""
+          rmi_pudl_init(os.environ.get("PUDL_ACCESS_KEY"))
 
 
    pudl_access_test.py

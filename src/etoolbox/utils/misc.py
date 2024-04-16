@@ -1,5 +1,6 @@
 """Miscellaneous helpers and utilities."""
 
+import http.client as httplib
 from io import DEFAULT_BUFFER_SIZE, BytesIO
 from pathlib import Path
 
@@ -70,3 +71,20 @@ def ungzip(zip_path: Path, out_path=None):
                 break
             size = out.write(chunk)
             bar.update(size)
+
+
+def have_internet(host: str = "8.8.8.8") -> bool:
+    """Check if internet is available.
+
+    Args:
+        host: address to use in check, default 8.8.8.8 (Google DNS)
+
+    """
+    conn = httplib.HTTPSConnection(host, timeout=1)
+    try:
+        conn.request("HEAD", "/")
+        return True
+    except Exception:
+        return False
+    finally:
+        conn.close()

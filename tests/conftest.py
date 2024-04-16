@@ -5,6 +5,7 @@ Defines useful fixtures, command line args.
 
 import gzip
 import logging
+import os
 import shutil
 from pathlib import Path
 
@@ -12,7 +13,7 @@ import pandas as pd
 import pytest
 import yaml
 from etoolbox.datazip._test_classes import _KlassSlots, _TestKlass
-from etoolbox.utils.pudl import setup_access_key_for_ci
+from etoolbox.utils.pudl import TOKEN_PATH, rmi_pudl_init
 
 logger = logging.getLogger(__name__)
 
@@ -105,38 +106,13 @@ def pudl_config(temp_dir) -> str:
     assert not file.exists()
 
 
-# @pytest.fixture(scope="session")
-# def pudl_zip_path(temp_dir):
-#     """Path to save pudl.zip."""
-#     pudl = pytest.importorskip("pudl")
-#
-#     return temp_dir / "pudl.zip"
-
-
-# def get_pudl_loc(temp_dir):
-#     """Download pudl sqlite for testing if we don't have a local one."""
-#     try:
-#         pudl_sql_path = Path(get_pudl_sql_url().replace("sqlite:///", ""))
-#         if not pudl_sql_path.exists():
-#             raise FileNotFoundError
-#     except FileNotFoundError:
-#         pudl_temp_sqlite_path = temp_dir / "pudl.sqlite"
-#         if not pudl_temp_sqlite_path.exists():
-#             zip_path = pudl_temp_sqlite_path.with_suffix(".sqlite.gz")
-#             download(
-#                 "https://s3.us-west-2.amazonaws.com/pudl.catalyst.coop/nightly/pudl.sqlite.gz",
-#                 zip_path,
-#             )
-#             ungzip(zip_path, pudl_temp_sqlite_path)
-#         return str(pudl_temp_sqlite_path.parent)
-#     else:
-#         return str(pudl_sql_path.parent)
-
-
-@pytest.fixture(scope="session")
-def pudl_access_key_setup():  # noqa: PT004
+@pytest.fixture(scope="class")
+def pudl_access_key_setup():
     """Set up PUDL access key for testing."""
-    setup_access_key_for_ci()
+    written = rmi_pudl_init(os.environ.get("PUDL_ACCESS_KEY"))
+    yield None
+    if written:
+        TOKEN_PATH.unlink()
 
 
 @pytest.fixture(scope="session")

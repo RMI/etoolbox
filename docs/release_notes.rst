@@ -13,8 +13,11 @@ What's New?
 *  New functions to read pudl tables from parquets in google cloud using
    :func:`.pd_read_pudl` which handles authentication and caching. :func:`.pl_read_pudl`
    and :func:`.pl_scan_pudl` support authentication and when ``use_polars`` is False,
-   caching as well. To set up authentication you will need an access key json and to run
+   caching as well. To set up authentication you will need an access key and to run
    ``rmi-pudl-init``.
+*  Initialization process is now shared between CLI interface and the function that can
+   be used in testing / CI, :func:`.rmi_pudl_init`. To avoid the need for sharing json
+   files, we share the config file encoded in base64 just like in GHA.
 *  Restricting ``platformdirs`` version to >= 3.0 when config location changed.
 *  :func:`.pl_read_pudl` and :func:`.pl_scan_pudl` appear to only work with
    polars > 0.20, added this info to the error messages when they fail.
