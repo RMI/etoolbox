@@ -39,6 +39,8 @@ Bug Fixes
 *  Fixed a bug where ``etoolbox`` could not be used if ``tqdm`` was not installed. As
    it is an optional dependency, :mod:`._optional` should be able to fully address that
    issue.
+*  Fixed a bug where import of :func:`typing.override` in :mod:`etoolbox.utils.logging`
+   broke compatibility with Python 3.11 since the function was added in 3.12.
 
 .. _release-v0-2-0:
 
