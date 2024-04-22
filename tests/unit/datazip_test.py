@@ -86,9 +86,11 @@ def test_get():
 
 def test_keys():
     """Test key method."""
+    from collections.abc import KeysView
+
     with DataZip(BytesIO(), "w") as z:
         z["a"] = "a"
-        assert z.keys() == {"a": None}.keys()
+        assert z.keys() == KeysView({"a"})
 
 
 def test_no_decode():

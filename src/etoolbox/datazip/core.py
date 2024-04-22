@@ -6,6 +6,7 @@ import logging
 import pickle
 import warnings
 from collections import Counter, OrderedDict, defaultdict, deque
+from collections.abc import KeysView
 from datetime import datetime
 from functools import partial
 from io import BytesIO
@@ -75,8 +76,10 @@ class DataZip(ZipFile):
                 ignored. This may be useful when using global settings for
                 ``mode.dtype_backend`` or ``mode.use_nullable_dtypes`` to force the use
                 of ``pyarrow`` types.
-            args: additional positional will be passed to :meth:`ZipFile.__init__`.
-            kwargs: keyword arguments will be passed to :meth:`ZipFile.__init__`.
+            args: additional positional will be passed to
+                :meth:`zipfile.ZipFile.__init__`.
+            kwargs: keyword arguments will be passed to
+                :meth:`zipfile.ZipFile.__init__`.
 
         Examples
         --------
@@ -224,7 +227,7 @@ class DataZip(ZipFile):
             self["state"] = obj
 
     @staticmethod
-    def load(file: Path | str | BytesIO, klass: type | None = None):
+    def load(file: Path | str | BytesIO, klass: type | None = None) -> Any:
         """Return the reconstituted object specified in the file.
 
         Args:
@@ -397,7 +400,7 @@ class DataZip(ZipFile):
 
     def __len__(self) -> int:
         """Provide for use of ``len`` builtin."""
-        return len([k for k in self._attributes if k != "__state__"])
+        return len(self._attributes) - (1 if "__state__" in self._attributes else 0)
 
     def __getitem__(self, key: str | tuple) -> DZable:
         """Retrieve an item from a :class:`.DataZip`.
@@ -441,11 +444,11 @@ class DataZip(ZipFile):
         if (for_attributes := self._encode(key, value)) != "__IGNORE__":
             self._attributes.update({key: for_attributes})
 
-    def get(self, key: str, default=None):
+    def get(self, key: str, default=None) -> DZable:
         """Retrieve an item if it is there otherwise return default."""
         return self[key] if key in self else default  # noqa: SIM401
 
-    def reset_ids(self):
+    def reset_ids(self) -> None:
         """Reset the internal record of stored ids.
 
         Because 'two objects with non-overlapping lifetimes may have the same
@@ -456,16 +459,16 @@ class DataZip(ZipFile):
         """
         self._ids = {}
 
-    def items(self):
-        """Lazily read name/key valye pairs from a :class:`.DataZip`.."""
+    def items(self) -> Generator[str, DZable]:
+        """Lazily read name/key valye pairs from a :class:`.DataZip`."""
         for k in self._attributes.keys():  # noqa: SIM118
             if k == "__state__":
                 continue
             yield k, self[k]
 
-    def keys(self):
-        """Set of names in :class:`.DataZip` as if it was a dict."""
-        return {k: None for k in self._attributes if k != "__state__"}.keys()
+    def keys(self) -> KeysView:
+        """Set of names in :class:`.DataZip` as if it was a MutableMapping."""
+        return KeysView(set(self._attributes) - {"__state__"})
 
     def _decode(self, obj: Any) -> Any:
         """Entry point for decoding anything stored :class:`DataZip`."""

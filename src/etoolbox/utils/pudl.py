@@ -106,8 +106,8 @@ def _gcs_filecache_filesystem(token):
         target_protocol="gcs",
         target_options={"token": _gcs_token_dict(token)},
         cache_storage=str(CACHE_PATH),
-        consistency="md5",
-        cache_timeout=86500,
+        cache_timeout=None,
+        check_files=True,
     )
 
 
@@ -143,6 +143,28 @@ def _cache_path(table_name: str, release: str = "nightly") -> Path | None:
             )
             return CACHE_PATH / table_cache_data["fn"]
     return None
+
+
+def pudl_list(
+    release: str = "nightly", token: str | None = None, *, detail: bool = False
+) -> list[str | dict[str, str | int]]:
+    """List PUDL tables in GCS using ``ls`` command.
+
+    Args:
+        release: ``nightly``, ``stable`` or versioned, pass ``None`` to list all
+        token: token or path to token for PUDL GCS access
+        detail: if True, return details of each table, otherwise just names
+
+    """
+    fs = _gcs_filecache_filesystem(token)
+    ls = (
+        fs.ls(f"parquet.catalyst.coop/{release}")
+        if release
+        else fs.ls("parquet.catalyst.coop")
+    )
+    if detail:
+        return ls
+    return [i["name"] for i in fs.ls(f"parquet.catalyst.coop/{release}")]
 
 
 def pd_read_pudl(
@@ -187,8 +209,10 @@ def pl_scan_pudl(
         table_name: name of table in PUDL sqlite database
         release: ``nightly`` or ``stable``
         token: path to token for PUDL GCS access
-        use_polars: use polars GCP client rather than GCSFs, this does not
-            work with local caching
+        use_polars: If ``True``, use polars GCP client, this does not
+            work with local caching. If ``False``, use
+            :class:`fsspec.implementations.cached.WholeFileCacheFileSystem`
+            for file access and caching.
         kwargs: passed to :func:`polars.scan_parquet`
     """
     if use_polars:

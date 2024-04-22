@@ -85,10 +85,12 @@ intersphinx_mapping = {
     "setuptools": ("https://setuptools.pypa.io/en/latest/", None),
     "tox": ("https://tox.wiki/en/latest/", None),
     "pyarrow": ("https://arrow.apache.org/docs/", None),
-    "ujson": ("https://github.com/ultrajson/ultrajson", None),
-    "polars": ("https://pola-rs.github.io/polars/py-polars/html/reference", None),
-    "plotly": ("https://plotly.com/python/", None),
+    "polars": ("https://docs.pola.rs/py-polars/html", None),
+    "plotly": ("https://plotly.com/python-api-reference/", None),
     "sqlalchemy": ("https://docs.sqlalchemy.org/en/latest/", None),
+    "platformdirs": ("https://platformdirs.readthedocs.io/en/latest/", None),
+    "fsspec": ("https://filesystem-spec.readthedocs.io/en/latest/", None),
+    "pudl": ("https://catalystcoop-pudl.readthedocs.io/en/latest/", None),
 }
 
 # Add any paths that contain templates here, relative to this directory.

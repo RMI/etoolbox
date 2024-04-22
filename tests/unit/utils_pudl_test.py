@@ -15,6 +15,7 @@ from etoolbox.utils.pudl import (
     pd_read_pudl,
     pl_read_pudl,
     pl_scan_pudl,
+    pudl_list,
 )
 from etoolbox.utils.testing import idfn
 
@@ -119,6 +120,21 @@ class TestGCSPudl:
         """Test reading table from GCS as :class:`pandas.DataFrame`."""
         df = pd_read_pudl("core_eia__codes_balancing_authorities")
         assert not df.empty
+
+    @pytest.mark.parametrize(
+        "release, detail, expected_min_len, expected_type",
+        [
+            ("nightly", True, 200, dict),
+            ("nightly", False, 200, str),
+            (None, True, 3, dict),
+        ],
+        ids=idfn,
+    )
+    def test_pudl_list(self, release, detail, expected_min_len, expected_type):
+        """Test :func:`.pudl_list`."""
+        result = pudl_list(release=release, detail=detail)
+        assert len(result) >= expected_min_len
+        assert isinstance(result[0], expected_type)
 
 
 @pytest.mark.disable_socket()

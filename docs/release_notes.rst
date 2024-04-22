@@ -10,11 +10,15 @@ eToolBox Release Notes
 
 What's New?
 ^^^^^^^^^^^
-*  New functions to read pudl tables from parquets in google cloud using
+*  New functions to read :mod:`pudl` tables from parquets in google cloud using
    :func:`.pd_read_pudl` which handles authentication and caching. :func:`.pl_read_pudl`
    and :func:`.pl_scan_pudl` support authentication and when ``use_polars`` is False,
    caching as well. To set up authentication you will need an access key and to run
    ``rmi-pudl-init``.
+*  :mod:`pudl` table caching now should validate against a hash of all metadata rather
+   than a simple timeout expiration. NOTE: this still likely means that a re-upload of
+   exactly the same data will invalidate the cache because the date changes.
+*  New :func:`.pudl_list` to show a list of releases or tables within a release.
 *  Initialization process is now shared between CLI interface and the function that can
    be used in testing / CI, :func:`.rmi_pudl_init`. To avoid the need for sharing json
    files, we share the config file encoded in base64 just like in GHA.
@@ -33,6 +37,9 @@ What's New?
    `mCoding suggestion <https://www.youtube.com/watch?v=9L77QExPmI0>`_. Also replaced
    module-level loggers with library-wide logger and removed logger configuration from
    ``etoolbox`` because it is a library.
+*  Minor performance improvements to :meth:`.DataZip.keys` and :meth:`.DataZip.__len__`.
+*  Fixed links to docs for :mod:`polars`, :mod:`plotly`, :mod:`platformdirs`,
+   :mod:`fsspec`, and :mod:`pudl`. At least in theory.
 
 Bug Fixes
 ^^^^^^^^^
