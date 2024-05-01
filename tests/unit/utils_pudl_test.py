@@ -16,6 +16,7 @@ from etoolbox.utils.pudl import (
     pl_read_pudl,
     pl_scan_pudl,
     pudl_list,
+    rmi_pudl_clean,
 )
 from etoolbox.utils.testing import idfn
 
@@ -183,3 +184,13 @@ def test_rmi_pudl_init_entry_point(script_runner):
     )
     df = pl_scan_pudl("core_eia__codes_balancing_authorities")
     assert not df.collect().is_empty()
+
+
+@pytest.mark.usefixtures("pudl_test_cache")
+def test_rmi_pudl_clean(pudl_test_cache):
+    """Test :func:`.pudl_clean`."""
+    from etoolbox.utils.pudl import CACHE_PATH
+
+    assert CACHE_PATH.exists()
+    rmi_pudl_clean()
+    assert not CACHE_PATH.exists()

@@ -15,9 +15,8 @@ What's New?
    and :func:`.pl_scan_pudl` support authentication and when ``use_polars`` is False,
    caching as well. To set up authentication you will need an access key and to run
    ``rmi-pudl-init``.
-*  :mod:`pudl` table caching now should validate against a hash of all metadata rather
-   than a simple timeout expiration. NOTE: this still likely means that a re-upload of
-   exactly the same data will invalidate the cache because the date changes.
+*  :mod:`pudl` table caching now should validate against a hash of the file contents
+   rather than a hash of all metadata or a simple timeout expiration.
 *  New :func:`.pudl_list` to show a list of releases or tables within a release.
 *  Initialization process is now shared between CLI interface and the function that can
    be used in testing / CI, :func:`.rmi_pudl_init`. To avoid the need for sharing json

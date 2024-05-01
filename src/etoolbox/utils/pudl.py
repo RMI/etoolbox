@@ -2,7 +2,9 @@
 
 import logging
 import os
+import shutil
 import warnings
+from argparse import ArgumentParser
 from base64 import b64decode
 from datetime import datetime
 from functools import lru_cache
@@ -12,7 +14,8 @@ from typing import ClassVar
 import orjson as json
 import pandas as pd
 import polars as pl
-from fsspec import filesystem
+from fsspec.implementations.cached import WholeFileCacheFileSystem
+from gcsfs import GCSFileSystem
 from platformdirs import __version__ as platformdirs_version
 from platformdirs import user_cache_path, user_config_path
 
@@ -32,6 +35,17 @@ def rmi_pudl_init(b64_encoded: str | None = None) -> bool:
     Returns: a boolean indicating if the token was written to disk.
 
     """
+    parser = ArgumentParser(
+        description="Setup rmi.pudl to provide access to PUDL tables from GCS with "
+        "local caching. You must provide a base64 encoding (as a string) of a "
+        "service_account json."
+    )
+    parser.add_argument(
+        "b64_encoded",
+        help="base64 encoding of the service_account json for PUDL GCS access. "
+        "This can be pasted directly into the terminal.",
+    )
+
     if not CACHE_PATH.exists():
         CACHE_PATH.mkdir(parents=True)
 
@@ -41,25 +55,17 @@ def rmi_pudl_init(b64_encoded: str | None = None) -> bool:
     elif not TOKEN_PATH.parent.exists():
         TOKEN_PATH.parent.mkdir(parents=True)
 
-    if b64_encoded is None:
-        from argparse import ArgumentParser
-
-        parser = ArgumentParser(
-            description="Setup rmi.pudl to provide access to PUDL tables from GCS with "
-            "local caching. You must provide a base64 encoding (as a string) of a "
-            "service_account json."
-        )
-        parser.add_argument(
-            "b64_encoded",
-            help="base64 encoding of the service_account json for PUDL GCS access. "
-            "This can be pasted directly into the terminal.",
-        )
+    msg = (
+        "b64_encoded must be provided if TOKEN_PATH does not exist. This can happen if "
+    )
+    if parser.prog == "rmi-pudl-init":
         b64_encoded = parser.parse_args().b64_encoded
         if b64_encoded in (None, "None"):
-            raise RuntimeError(
-                "b64_encoded must be provided if TOKEN_PATH does not exist. This can "
-                "happen if you have not run `rmi-pudl-init` yet."
-            )
+            raise RuntimeError(msg + " you have not run `rmi-pudl-init`.")
+    elif b64_encoded is None:
+        raise RuntimeError(
+            msg + " you did not pass anything for `b64_encoded` to `rmi_pudl_init`."
+        )
 
     try:
         as_json = json.loads(b64decode(b64_encoded))
@@ -70,6 +76,28 @@ def rmi_pudl_init(b64_encoded: str | None = None) -> bool:
             f.write(json.dumps(as_json, option=json.OPT_INDENT_2))
         print(f"Wrote decoded json to {TOKEN_PATH}")
     return True
+
+
+def rmi_pudl_clean(*, delete_config: bool = False) -> None:
+    """Remove rmi.pudl local cache."""
+    parser = ArgumentParser(description=f"Remove rmi.pudl local cache at {CACHE_PATH}.")
+    parser.add_argument(
+        "-c, --config",
+        action="store_true",
+        help=f"Remove config at {TOKEN_PATH.parent} with authentication token too.",
+        default=False,
+        dest="del_config",
+    )
+    if parser.prog == "rmi-pudl-clean":
+        delete_config = parser.parse_args().del_config
+
+    if CACHE_PATH.exists():
+        print("deleting local cache at " + str(CACHE_PATH))
+        shutil.rmtree(CACHE_PATH)
+
+    if delete_config and TOKEN_PATH.exists():
+        print("deleting local config at " + str(TOKEN_PATH.parent))
+        shutil.rmtree(TOKEN_PATH.parent)
 
 
 def _gcs_token_path(token: str | Path | None) -> Path:
@@ -94,19 +122,27 @@ def _gcs_token_dict(token: str | Path | None) -> dict[str, str]:
         raise RuntimeError("Failed to load token from file") from exc
 
 
-def _gcs_filecache_filesystem(token: dict | str | Path | None) -> filesystem:
+class ContentHashFileSystem(GCSFileSystem):
+    """GCS filesystem where cache validity is based on content hash only."""
+
+    def ukey(self, path) -> str:
+        """Hash of file content, to tell if it has changed."""
+        return self.info(path)["md5Hash"]
+
+
+def _gcs_filecache_filesystem(
+    token: dict | str | Path | None,
+) -> WholeFileCacheFileSystem:
     """Create a fsspec/GCS filesystem with a filecache.
 
     Args:
         token: token or path to token for PUDL GCS access
 
     """
-    return filesystem(
-        "filecache",
-        target_protocol="gcs",
-        target_options={
-            "token": token if isinstance(token, dict) else _gcs_token_dict(token)
-        },
+    return WholeFileCacheFileSystem(
+        fs=ContentHashFileSystem(
+            token=token if isinstance(token, dict) else _gcs_token_dict(token)
+        ),
         cache_storage=str(CACHE_PATH),
         cache_timeout=None,
         check_files=True,
@@ -185,9 +221,10 @@ def pd_read_pudl(
 
     """
     if have_internet():
+        fs = _gcs_filecache_filesystem(token)
         return pd.read_parquet(
             f"gs://parquet.catalyst.coop/{release}/{table_name}.parquet",
-            filesystem=_gcs_filecache_filesystem(token),
+            filesystem=fs,
             **kwargs,
         )
     return pd.read_parquet(
