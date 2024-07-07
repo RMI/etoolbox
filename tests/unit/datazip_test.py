@@ -181,7 +181,7 @@ def test_sqlalchemy(temp_dir):
         ("_TestKlass", _TestKlass(a=5, b={"c": (2, 3.5)}, c=5.5)),
         ("path", Path.home()),
         ("type", [list, tuple, DataZip]),
-        ("defaultdict", defaultdict(default_factory=list, a=(1, 2, 3))),
+        ("defaultdict", defaultdict(list, a=[1, 2, 3])),
         ("Counter", Counter({"a": 2, (1, 2, 3): 2})),
         ("deque", deque([1, 2, 3])),
         ("OrderedDict", OrderedDict({"a": 2, "b": 2})),
