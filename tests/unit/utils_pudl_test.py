@@ -2,6 +2,7 @@
 
 import os
 import shutil
+import sys
 from unittest import mock
 
 import numpy as np
@@ -187,6 +188,7 @@ def test_rmi_pudl_init_entry_point(script_runner):
     assert not df.collect().is_empty()
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="does not run on windows")
 @pytest.mark.script_launch_mode("inprocess")
 def test_pudl_table_rename_entry_point(script_runner, test_dir, temp_dir):
     """Test the pudl-table-rename entry point."""
