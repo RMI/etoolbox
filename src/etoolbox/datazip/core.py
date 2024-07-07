@@ -425,10 +425,9 @@ class DataZip(ZipFile):
         out = self._attributes
         for k in key:
             out = out[k]
-            try:  # noqa: SIM105
-                out = self._attributes["__state__"][out["__loc__"]]
-            except (KeyError, TypeError):
-                pass
+            if isinstance(out, dict):
+                # all the real keys of __state__ are strings
+                out = self._attributes["__state__"].get(out.get("__loc__", -9999), out)
         return self._decode(out)
 
     def __setitem__(self, key: str, value: DZable) -> None:

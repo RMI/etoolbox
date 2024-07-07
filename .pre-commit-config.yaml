@@ -25,6 +25,7 @@ repos:
       - id: mixed-line-ending # Only newlines, no line-feeds.
       - id: trailing-whitespace # Remove trailing whitespace.
       - id: name-tests-test # Follow PyTest naming convention.
+        exclude: ^tests/test_data/
 
   ########################################################################################
   # Formatters: hooks that re-write Python and RST files

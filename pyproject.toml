@@ -72,6 +72,7 @@ write_to = "src/etoolbox/_version.py"
 [project.scripts]  # entry points
 rmi-pudl-init = "etoolbox.utils.pudl:rmi_pudl_init"
 rmi-pudl-clean = "etoolbox.utils.pudl:rmi_pudl_clean"
+pudl-table-rename = "etoolbox.utils.table_map:main"
 
 #######################################################################################
 # Configurations for linters and other tools
@@ -164,6 +165,7 @@ pydocstyle.convention = "google"
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
 "docs/conf.py" = ["E501"]
+"docs/benchmarks.py" = ["D103", "S301", "S311"]
 "tests/*.py" = [
     "D100",  # Missing docstring in public module
     "D101",  # Missing docstring in public class
@@ -178,4 +180,5 @@ pydocstyle.convention = "google"
 ]
 "tests/unit/utils_remote_zip_test.py" = ["D102", "D103", "D107", "FBT002"]
 "_test_classes.py" = ["FBT003"]
+"table_map.py" = ["D103", "E501"]
 "pudl_helpers.py" = ["PD901"]

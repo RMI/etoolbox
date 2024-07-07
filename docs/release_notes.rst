@@ -39,6 +39,13 @@ What's New?
 *  Minor performance improvements to :meth:`.DataZip.keys` and :meth:`.DataZip.__len__`.
 *  Fixed links to docs for :mod:`polars`, :mod:`plotly`, :mod:`platformdirs`,
    :mod:`fsspec`, and :mod:`pudl`. At least in theory.
+*  Work toward benchmarks for :class:`.DataZip` vs :mod:`pickle`.
+*  Optimization in :meth:`.DataZip.__getitem__` for reading a single value from a nested
+   structure without decoding all enclosing objects, we use :func:`isinstance` and
+   :meth:`dict.get` rather than try/except to handle non-dict objects and missing keys.
+*  New CLI utility ``pudl-table-rename`` that renames PUDL tables in a set of files to
+   the new names used by PUDL.
+
 
 Bug Fixes
 ^^^^^^^^^

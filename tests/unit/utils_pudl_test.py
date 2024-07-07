@@ -1,6 +1,7 @@
 """Test pretend PudlTabl."""
 
 import os
+import shutil
 from unittest import mock
 
 import numpy as np
@@ -81,19 +82,19 @@ class TestPretendPudlTabl:
 
     def test_type(self, test_dir, temp_dir):
         """Test with a sample PudlTabl."""
-        pt = DataZip.load(test_dir / "pudltabl.zip", PretendPudlTabl)
+        pt = DataZip.load(test_dir / "test_data/pudltabl.zip", PretendPudlTabl)
         assert type(pt) is PretendPudlTabl
 
     def test_load(self, test_dir, temp_dir):
         """Test with a sample PudlTabl."""
-        pt = DataZip.load(test_dir / "pudltabl.zip", PretendPudlTabl)
+        pt = DataZip.load(test_dir / "test_data/pudltabl.zip", PretendPudlTabl)
         df = pt.epacamd_eia()
         assert isinstance(df, pd.DataFrame)
         assert not df.empty
 
     def test_load_error(self, test_dir, temp_dir):
         """Test with a sample PudlTabl."""
-        pt = DataZip.load(test_dir / "pudltabl.zip", PretendPudlTabl)
+        pt = DataZip.load(test_dir / "test_data/pudltabl.zip", PretendPudlTabl)
         with pytest.raises(KeyError):
             _ = pt.foo()
 
@@ -184,6 +185,24 @@ def test_rmi_pudl_init_entry_point(script_runner):
     )
     df = pl_scan_pudl("core_eia__codes_balancing_authorities")
     assert not df.collect().is_empty()
+
+
+@pytest.mark.script_launch_mode("inprocess")
+def test_pudl_table_rename_entry_point(script_runner, test_dir, temp_dir):
+    """Test the pudl-table-rename entry point."""
+    from etoolbox.utils.table_map import PUDL_TABLE_MAP
+
+    updated = temp_dir / "_read_tables_sample.py"
+    shutil.copy(test_dir / "test_data/_read_tables_sample.py", updated)
+
+    script_runner.run(
+        ["pudl-table-rename", "*.py", "-y"], print_result=True, cwd=temp_dir
+    )
+
+    with open(updated) as file:
+        updated_content = file.read()
+    for old in PUDL_TABLE_MAP:
+        assert old not in updated_content
 
 
 @pytest.mark.usefixtures("pudl_test_cache")

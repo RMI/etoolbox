@@ -57,7 +57,7 @@ coverage.info
 .hypothesis/
 .pytest_cache/
 tests/*.zip
-!tests/pudltabl.zip
+!tests/test_data/pudltabl.zip
 
 # Translations
 *.mo
