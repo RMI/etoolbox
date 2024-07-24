@@ -58,7 +58,7 @@ tests = [
     "pytest-socket",  #
 ]
 optional = [
-    "plotly>5.10,<5.23",
+    "plotly>5.10,<5.24",
     "sqlalchemy>1.4,<2.1",
 ]
 pudl-test = []
