@@ -9,6 +9,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+
 from etoolbox.datazip import DataZip
 from etoolbox.datazip._test_classes import _TestKlass
 

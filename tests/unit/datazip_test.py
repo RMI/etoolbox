@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 import polars as pl
 import pytest
+
 from etoolbox.datazip import DataZip
 from etoolbox.datazip._test_classes import (
     ObjMeta,
@@ -655,7 +656,7 @@ def test_plotly(temp_dir):
     assert fig == f2
 
 
-@pytest.mark.skip()
+@pytest.mark.skip
 def test_d_legacy():
     """Place to test random existing DataZips."""
     with DataZip(Path.home() / "PycharmProjects/patio-model/re_data_2.zip", "r") as dz:

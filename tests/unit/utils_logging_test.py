@@ -5,6 +5,7 @@ import sys
 import time
 
 import pytest
+
 from etoolbox.utils.logging import JSONFormatter
 
 

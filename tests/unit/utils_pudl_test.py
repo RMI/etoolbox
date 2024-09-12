@@ -8,6 +8,7 @@ from unittest import mock
 import numpy as np
 import pandas as pd
 import pytest
+
 from etoolbox.datazip import DataZip
 from etoolbox.utils.pudl import (
     PUDL_DTYPES,
@@ -140,7 +141,7 @@ class TestGCSPudl:
         assert isinstance(result[0], expected_type)
 
 
-@pytest.mark.disable_socket()
+@pytest.mark.disable_socket
 @pytest.mark.usefixtures("pudl_access_key_setup")
 @pytest.mark.usefixtures("pudl_test_cache")
 class TestGCSPudlNoInternet:

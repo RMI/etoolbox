@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import polars as pl
 import pytest
+
 from etoolbox.utils.testing import assert_equal, capture, idfn
 
 

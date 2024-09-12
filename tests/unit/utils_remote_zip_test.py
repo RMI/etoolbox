@@ -1,10 +1,11 @@
 import io
 from zipfile import ZIP_DEFLATED, ZipFile
 
-import etoolbox.utils.remote_zip as rz
 import pytest
 import requests_mock
 from requests import session
+
+import etoolbox.utils.remote_zip as rz
 
 
 class ServerSimulator:
