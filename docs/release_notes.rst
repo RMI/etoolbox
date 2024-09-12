@@ -45,6 +45,8 @@ What's New?
    :meth:`dict.get` rather than try/except to handle non-dict objects and missing keys.
 *  New CLI utility ``pudl-table-rename`` that renames PUDL tables in a set of files to
    the new names used by PUDL.
+*  Allow older versions of :mod:`polars`, this is a convenience for some other projects
+   that have not adapted to >=1.0 changes but we do not test against older versions.
 
 
 Bug Fixes
