@@ -23,7 +23,7 @@ dependencies = [
     "orjson >= 3.8, < 3.11",
     "pandas[gcp] >= 1.4,< 2.3",
     "platformdirs >3.0,<4.4",
-    "polars[fsspec]>=0.20,<1.8",
+    "polars[fsspec]>=0.20,<1.9",
     "pyarrow>=9, <18",
     "tzdata>=2022.7; platform_system=='Windows'",
 ]
