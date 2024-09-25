@@ -5,9 +5,7 @@ import os
 import shutil
 import warnings
 from argparse import ArgumentParser
-from base64 import b64decode
 from datetime import datetime
-from functools import lru_cache
 from pathlib import Path
 from typing import ClassVar
 
@@ -15,67 +13,26 @@ import orjson as json
 import pandas as pd
 import polars as pl
 from fsspec.implementations.cached import WholeFileCacheFileSystem
-from gcsfs import GCSFileSystem
-from platformdirs import __version__ as platformdirs_version
 from platformdirs import user_cache_path, user_config_path
+from s3fs import S3FileSystem
 
 from etoolbox.utils.misc import have_internet
 
 logger = logging.getLogger("etoolbox")
 TOKEN_PATH = user_config_path("rmi.pudl") / ".pudl-access-key.json"
 CACHE_PATH = user_cache_path("rmi.pudl")
+BASE = "s3://pudl.catalyst.coop"
 
 
-def rmi_pudl_init(b64_encoded: str | None = None) -> bool:
-    """Setup rmi.pudl to provide access to PUDL tables from GCS with local caching.
-
-    Args:
-        b64_encoded: base64 encoding of the service_account json for PUDL GCS access.
-
-    Returns: a boolean indicating if the token was written to disk.
-
-    """
-    parser = ArgumentParser(
-        description="Setup rmi.pudl to provide access to PUDL tables from GCS with "
-        "local caching. You must provide a base64 encoding (as a string) of a "
-        "service_account json."
-    )
-    parser.add_argument(
-        "b64_encoded",
-        help="base64 encoding of the service_account json for PUDL GCS access. "
-        "This can be pasted directly into the terminal.",
+def rmi_pudl_init() -> None:
+    """Setup rmi.pudl to provide access to PUDL tables from AWS with local caching."""
+    parser = ArgumentParser(  # noqa: F841
+        description="Setup rmi.pudl to provide access to PUDL tables from AWS with "
+        "local caching."
     )
 
     if not CACHE_PATH.exists():
         CACHE_PATH.mkdir(parents=True)
-
-    if TOKEN_PATH.exists():
-        print(f"Using existing token at {TOKEN_PATH}")
-        return False
-    elif not TOKEN_PATH.parent.exists():
-        TOKEN_PATH.parent.mkdir(parents=True)
-
-    msg = (
-        "b64_encoded must be provided if TOKEN_PATH does not exist. This can happen if "
-    )
-    if parser.prog == "rmi-pudl-init":
-        b64_encoded = parser.parse_args().b64_encoded
-        if b64_encoded in (None, "None"):
-            raise RuntimeError(msg + " you have not run `rmi-pudl-init`.")
-    elif b64_encoded is None:
-        raise RuntimeError(
-            msg + " you did not pass anything for `b64_encoded` to `rmi_pudl_init`."
-        )
-
-    try:
-        as_json = json.loads(b64decode(b64_encoded))
-    except Exception as exc:
-        raise RuntimeError("Failed to decode json from base64") from exc
-    else:
-        with open(TOKEN_PATH, "wb") as f:
-            f.write(json.dumps(as_json, option=json.OPT_INDENT_2))
-        print(f"Wrote decoded json to {TOKEN_PATH}")
-    return True
 
 
 def rmi_pudl_clean(*, delete_config: bool = False) -> None:
@@ -100,73 +57,38 @@ def rmi_pudl_clean(*, delete_config: bool = False) -> None:
         shutil.rmtree(TOKEN_PATH.parent)
 
 
-def _gcs_token_path(token: str | Path | None) -> Path:
-    token = TOKEN_PATH if token is None else Path(token)
-    if token.exists():
-        return token
-    if token == TOKEN_PATH and platformdirs_version < "3.0.0":
-        raise RuntimeError(
-            f"{platformdirs_version=} < 3.0.0 required for PUDL GCS access."
-        )
-    raise RuntimeError(
-        "Provide a Path to a PUDL GCS token or run 'rmi-pudl-init' first"
-    )
-
-
-@lru_cache
-def _gcs_token_dict(token: str | Path | None) -> dict[str, str]:
-    """Token for PUDL GCS access as a dict."""
-    try:
-        return json.loads(_gcs_token_path(token).read_text())
-    except Exception as exc:
-        raise RuntimeError("Failed to load token from file") from exc
-
-
-class ContentHashFileSystem(GCSFileSystem):
-    """GCS filesystem where cache validity is based on content hash only."""
+class ContentHashFileSystem(S3FileSystem):
+    """AWS filesystem where cache validity is based on content hash only."""
 
     def ukey(self, path) -> str:
         """Hash of file content, to tell if it has changed."""
-        return self.info(path)["md5Hash"]
+        # return self.info(path)["md5Hash"]
+        return self.info(path)["ETag"]
 
 
-def _gcs_filecache_filesystem(
-    token: dict | str | Path | None,
-) -> WholeFileCacheFileSystem:
-    """Create a fsspec/GCS filesystem with a filecache.
-
-    Args:
-        token: token or path to token for PUDL GCS access
-
-    """
+def _filecache_filesystem() -> WholeFileCacheFileSystem:
+    """Create a fsspec/AWS filesystem with a filecache."""
     return WholeFileCacheFileSystem(
-        fs=ContentHashFileSystem(
-            token=token if isinstance(token, dict) else _gcs_token_dict(token)
-        ),
+        fs=ContentHashFileSystem(anon=True),
         cache_storage=str(CACHE_PATH),
         cache_timeout=None,
         check_files=True,
     )
 
 
-def _cache_path(
-    table_name: str, release: str = "nightly", token: dict | str | Path | None = None
-) -> Path | None:
+def _cache_path(table_name: str, release: str = "nightly") -> Path | None:
     """Determine the local path for a cached PUDL table if it exists.
 
     Args:
         table_name: name of pudl table
         release: version of pudl table, i.e. 'nightly'
-        token: token or path to token for PUDL GCS access
 
     Returns: Path of cached PUDL table
 
     """
     if have_internet():
-        fs = _gcs_filecache_filesystem(token=token)
-        if table_cache_data := fs._check_file(
-            f"parquet.catalyst.coop/{release}/{table_name}.parquet"
-        ):
+        fs = _filecache_filesystem()
+        if table_cache_data := fs._check_file(f"{BASE}/{release}/{table_name}.parquet"):
             return Path(table_cache_data[1])
         return None
     cache_info_path = CACHE_PATH / "cache"
@@ -174,7 +96,7 @@ def _cache_path(
         with open(cache_info_path) as f:
             cache_data = json.loads(f.read())
         if table_cache_data := cache_data.get(
-            f"parquet.catalyst.coop/{release}/{table_name}.parquet"
+            f"pudl.catalyst.coop/{release}/{table_name}.parquet"
         ):
             warnings.warn(
                 f"Unable to validate cache for Table {release}/{table_name} using "
@@ -189,20 +111,16 @@ def _cache_path(
 def pudl_list(
     release: str = "nightly", token: dict | str | None = None, *, detail: bool = False
 ) -> list[str | dict[str, str | int]]:
-    """List PUDL tables in GCS using ``ls`` command.
+    """List PUDL tables in AWS using ``ls`` command.
 
     Args:
         release: ``nightly``, ``stable`` or versioned, pass ``None`` to list all
-        token: token or path to token for PUDL GCS access
+        token: ignored
         detail: if True, return details of each table, otherwise just names
 
     """
-    fs = _gcs_filecache_filesystem(token)
-    ls = (
-        fs.ls(f"parquet.catalyst.coop/{release}")
-        if release
-        else fs.ls("parquet.catalyst.coop")
-    )
+    fs = _filecache_filesystem()
+    ls = fs.ls(f"{BASE}/{release}") if release else fs.ls(BASE)
     if detail:
         return ls
     return [i["name"] for i in ls]
@@ -211,24 +129,24 @@ def pudl_list(
 def pd_read_pudl(
     table_name: str, release: str = "nightly", token: dict | str | None = None, **kwargs
 ) -> pd.DataFrame:
-    """Read PUDL table from GCS as :class:`pandas.DataFrame`.
+    """Read PUDL table from AWS as :class:`pandas.DataFrame`.
 
     Args:
         table_name: name of table in PUDL sqlite database
         release: ``nightly`` or ``stable``
-        token: token or path to token for PUDL GCS access
+        token: ignored
         kwargs: passed to :func:`pandas.read_parquet`
 
     """
     if have_internet():
-        fs = _gcs_filecache_filesystem(token)
+        fs = _filecache_filesystem()
         return pd.read_parquet(
-            f"gs://parquet.catalyst.coop/{release}/{table_name}.parquet",
+            f"{BASE}/{release}/{table_name}.parquet",
             filesystem=fs,
             **kwargs,
         )
     return pd.read_parquet(
-        _cache_path(table_name=table_name, release=release, token=token), **kwargs
+        _cache_path(table_name=table_name, release=release), **kwargs
     )
 
 
@@ -240,47 +158,34 @@ def pl_scan_pudl(
     use_polars=False,
     **kwargs,
 ) -> pl.LazyFrame:
-    """Read PUDL table from GCS as :class:`polars.LazyFrame`.
+    """Read PUDL table from AWS as :class:`polars.LazyFrame`.
 
     .. note::
 
-       Accessing PUDL tables directly from GCS using polars requires version 0.20
+       Accessing PUDL tables directly from AWS using polars requires version 0.20
        or higher.
 
     Args:
         table_name: name of table in PUDL sqlite database
         release: ``nightly`` or ``stable``
-        token: path to token for PUDL GCS access (can be a dict if use_polars=False)
-        use_polars: If ``True``, use polars GCP client, this does not
-            work with local caching. If ``False``, use
+        token: ignored
+        use_polars: If ``True``, use polars AWS client (currently nonfunctional), this
+            does not work with local caching. If ``False``, use
             :class:`fsspec.implementations.cached.WholeFileCacheFileSystem`
             for file access and caching.
         kwargs: passed to :func:`polars.scan_parquet`
     """
     if use_polars:
-        if pl.__version__ < "0.20.0":
-            raise RuntimeError(
-                f"Accessing PUDL tables directly from GCS using polars requires "
-                f"version 0.20 or higher, current version: {pl.__version__}"
-            )
-        if have_internet():
-            return pl.scan_parquet(
-                f"gs://parquet.catalyst.coop/{release}/{table_name}.parquet",
-                storage_options={
-                    "google_service_account_path": str(_gcs_token_path(token))
-                },
-                **kwargs,
-            )
-        raise FileNotFoundError(f"Unable to load {release}/{table_name} from GCS.")
-    if cached_path := _cache_path(table_name=table_name, release=release, token=token):
+        raise RuntimeError(
+            "Unable to access PUDL tables with use_polars==True, please set to False."
+        )
+    if cached_path := _cache_path(table_name=table_name, release=release):
         return pl.scan_parquet(cached_path)
     if have_internet():
-        fs = _gcs_filecache_filesystem(token)
-        return pl.scan_parquet(
-            fs.open(f"gs://parquet.catalyst.coop/{release}/{table_name}.parquet").name
-        )
+        fs = _filecache_filesystem()
+        return pl.scan_parquet(fs.open(f"{BASE}/{release}/{table_name}.parquet").name)
     raise FileNotFoundError(
-        f"Unable to load {release}/{table_name} from GCS or local cache."
+        f"Unable to load {release}/{table_name} from AWS or local cache."
     )
 
 
@@ -292,26 +197,25 @@ def pl_read_pudl(
     use_polars=False,
     **kwargs,
 ) -> pl.DataFrame:
-    """Read PUDL table from GCS as :class:`polars.DataFrame`.
+    """Read PUDL table from AWS as :class:`polars.DataFrame`.
 
     .. note::
 
-       Accessing PUDL tables directly from GCS using polars requires version 0.20
+       Accessing PUDL tables directly from AWS using polars requires version 0.20
        or higher.
 
     Args:
         table_name: name of table in PUDL sqlite database
         release: ``nightly`` or ``stable``
-        token: path to token for PUDL GCS access
-        use_polars: use polars GCP client rather than GCSFs, this does not
-            work with local caching
+        token: ignored
+        use_polars: use polars AWS client rather than s3fs, this does not
+            work with local caching (must be false until we fix)
         kwargs: passed to :func:`polars.scan_parquet`
 
     """
     return pl_scan_pudl(
         table_name=table_name,
         release=release,
-        token=token,
         use_polars=use_polars,
         **kwargs,
     ).collect()
