@@ -101,10 +101,11 @@ class TestPretendPudlTabl:
             _ = pt.foo()
 
 
-@pytest.mark.usefixtures("pudl_access_key_setup")
 @pytest.mark.usefixtures("pudl_test_cache")
-class TestGCSPudl:
-    @pytest.mark.parametrize("use_polars", [False, True], ids=idfn)
+class TestAWSPudl:
+    @pytest.mark.parametrize(
+        "use_polars", [False, pytest.param(True, marks=pytest.mark.xfail)], ids=idfn
+    )
     def test_pl_read_pudl_table(self, use_polars):
         """Test reading table from GCS as :class:`polars.DataFrame`."""
         df = pl_read_pudl(
@@ -112,7 +113,9 @@ class TestGCSPudl:
         )
         assert not df.is_empty()
 
-    @pytest.mark.parametrize("use_polars", [False, True], ids=idfn)
+    @pytest.mark.parametrize(
+        "use_polars", [False, pytest.param(True, marks=pytest.mark.xfail)], ids=idfn
+    )
     def test_pl_scan_pudl_table(self, use_polars):
         """Test reading table from GCS as :class:`polars.LazyFrame`."""
         df = pl_scan_pudl(
@@ -137,15 +140,17 @@ class TestGCSPudl:
     def test_pudl_list(self, release, detail, expected_min_len, expected_type):
         """Test :func:`.pudl_list`."""
         result = pudl_list(release=release, detail=detail)
+        print(result)
         assert len(result) >= expected_min_len
         assert isinstance(result[0], expected_type)
 
 
 @pytest.mark.disable_socket
-@pytest.mark.usefixtures("pudl_access_key_setup")
 @pytest.mark.usefixtures("pudl_test_cache")
-class TestGCSPudlNoInternet:
-    @pytest.mark.parametrize("use_polars", [False, True], ids=idfn)
+class TestAWSPudlNoInternet:
+    @pytest.mark.parametrize(
+        "use_polars", [False, pytest.param(True, marks=pytest.mark.xfail)], ids=idfn
+    )
     def test_pl_read_pudl_table(self, use_polars):
         """Test reading table from GCS as :class:`polars.DataFrame`."""
         if use_polars:
@@ -159,7 +164,9 @@ class TestGCSPudlNoInternet:
             )
             assert not df.is_empty()
 
-    @pytest.mark.parametrize("use_polars", [False, True], ids=idfn)
+    @pytest.mark.parametrize(
+        "use_polars", [False, pytest.param(True, marks=pytest.mark.xfail)], ids=idfn
+    )
     def test_pl_scan_pudl_table(self, use_polars):
         """Test reading table from GCS as :class:`polars.LazyFrame`."""
         if use_polars:

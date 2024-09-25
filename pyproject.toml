@@ -21,7 +21,7 @@ classifiers = [
 requires-python = ">=3.10,<3.13"
 dependencies = [
     "orjson >= 3.8, < 3.11",
-    "pandas[gcp] >= 1.4,< 2.3",
+    "pandas[aws] >= 1.4,< 2.3",
     "platformdirs >3.0,<4.4",
     "polars[fsspec]>=0.20,<1.10",
     "pyarrow>=9, <18",

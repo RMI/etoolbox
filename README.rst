@@ -97,17 +97,12 @@ Setup
 To use the new process for accessing PUDL data you will need to have the ``etoolbox``
 library installed. This setup procedure only needs to be done once per user per machine.
 
-Authentication to Google Cloud uses a service account access key which you will need to
-get from Alex or Catalyst. Once you have that, run the following command in an
-environment where ``etoolbox`` is installed.
+Authentication to AWS does not require a key. However you must run the following command
+where ``etoolbox`` is installed to set up the cache folders.
 
 .. code-block:: bash
 
-   rmi-pudl-init <access_key>
-
-Where ``<access_key>`` is the base64 encoding of of the service account access key as
-a JSON obtained from Catalyst. This is stored in LastPass as ``PUDL Key (base64)`` in
-the ``Shared-UTF`` folder.
+   rmi-pudl-init
 
 Usage
 ---------------------------------------------------------------------------------------
@@ -132,25 +127,7 @@ GitHub Actions
 To enable accessing PUDL data from tests run in GitHub Actions, additional steps are
 required. Note: these instructions assume that you use ``pytest`` and ``tox``.
 
-1. Make sure that the ``PUDL_ACCESS_KEY`` secret is available to your repository,
-   this should be the case for all rmi-electricity repositories. Note: it will not
-   automatically be available to forks of those repositories.
-2. Add the following to the Action configuration file above where ``tox`` is run, you
-   can see an example in ``.github/workflows/tox-pytest.yml``.
-
-   .. code-block:: yaml
-
-      env:
-        PUDL_ACCESS_KEY: ${{ secrets.PUDL_ACCESS_KEY }}
-
-3. Add the following to ``tox.ini`` in the global [testenv] section or at least the one
-   where ``pytest`` runs, you can see an example in this repository.
-
-   .. code-block::
-
-      passenv = PUDL_ACCESS_KEY
-
-4. Before any test that uses a PUDL access function runs, a special CI setup function
+1. Before any test that uses a PUDL access function runs, a special CI setup function
    must run. There are different ways to do this but this is one example that we use
    here.
 
@@ -160,10 +137,24 @@ required. Note: these instructions assume that you use ``pytest`` and ``tox``.
 
       from etoolbox.utils.pudl import rmi_pudl_init
 
+      @pytest.fixture(scope="session")
+      def temp_dir() -> Path:
+          """Return the path to a temp directory that gets deleted on teardown."""
+          out = Path(__file__).parent / "temp"
+          if out.exists():
+              shutil.rmtree(out)
+          out.mkdir(exist_ok=True)
+          yield out
+          shutil.rmtree(out)
 
-      def pudl_access_key_setup(script_runner):  # noqa: PT004
-          """Set up PUDL access key for testing."""
-          rmi_pudl_init(os.environ.get("PUDL_ACCESS_KEY"))
+
+      @pytest.fixture(scope="session")
+      def pudl_test_cache(temp_dir):  # noqa: PT004
+          """Change PUDL cache path for testing."""
+          import etoolbox.utils.pudl as pudl
+
+          pudl.CACHE_PATH = temp_dir / "pudl_cache"
+          rmi_pudl_init()
 
 
    pudl_access_test.py
@@ -173,7 +164,7 @@ required. Note: these instructions assume that you use ``pytest`` and ``tox``.
       from etoolbox.utils.pudl import pd_read_pudl
 
 
-      @pytest.mark.usefixtures("pudl_access_key_setup")
+      @pytest.mark.usefixtures("pudl_test_cache")
       def test_pd_read_pudl_table():
          """Test reading table from GCS as :func:`pandas.DataFrame."""
          df = pd_read_pudl("core_eia__codes_balancing_authorities")

@@ -123,7 +123,7 @@ def pudl_test_cache(temp_dir):  # noqa: PT004
     import etoolbox.utils.pudl as pudl
 
     pudl.CACHE_PATH = temp_dir / "pudl_cache"
-    pudl.CACHE_PATH.mkdir(exist_ok=True)
+    rmi_pudl_init()
 
 
 @pytest.fixture(scope="session")

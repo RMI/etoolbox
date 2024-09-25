@@ -47,6 +47,9 @@ What's New?
    the new names used by PUDL.
 *  Allow older versions of :mod:`polars`, this is a convenience for some other projects
    that have not adapted to >=1.0 changes but we do not test against older versions.
+*  Switching PUDL data access functions in :mod:`etoolbox.utils.pudl` to use open-access
+   AWS bucket. Not clear yet if cache invalidation works as desired and using
+   :mod:`polars` AWS client does not work so ``use_polars`` must be set to ``False``.
 
 
 Bug Fixes
