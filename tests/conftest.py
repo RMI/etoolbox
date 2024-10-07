@@ -5,7 +5,6 @@ Defines useful fixtures, command line args.
 
 import gzip
 import logging
-import os
 import shutil
 from pathlib import Path
 
@@ -14,8 +13,7 @@ import pytest
 import yaml
 
 from etoolbox.datazip._test_classes import _KlassSlots, _TestKlass
-from etoolbox.utils.logging import setup_logging
-from etoolbox.utils.pudl import TOKEN_PATH, rmi_pudl_init
+from etoolbox.utils.logging_utils import setup_logging
 
 logger = logging.getLogger(__name__)
 
@@ -108,22 +106,12 @@ def pudl_config(temp_dir) -> str:
     assert not file.exists()
 
 
-@pytest.fixture(scope="class")
-def pudl_access_key_setup():
-    """Set up PUDL access key for testing."""
-    written = rmi_pudl_init(os.environ.get("PUDL_ACCESS_KEY"))
-    yield None
-    if written:
-        TOKEN_PATH.unlink()
-
-
 @pytest.fixture(scope="session")
 def pudl_test_cache(temp_dir):  # noqa: PT004
     """Change PUDL cache path for testing."""
     import etoolbox.utils.pudl as pudl
 
     pudl.CACHE_PATH = temp_dir / "pudl_cache"
-    rmi_pudl_init()
 
 
 @pytest.fixture(scope="session")

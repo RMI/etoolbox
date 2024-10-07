@@ -70,7 +70,6 @@ version = {attr = "etoolbox._version.__version__"}
 write_to = "src/etoolbox/_version.py"
 
 [project.scripts]  # entry points
-rmi-pudl-init = "etoolbox.utils.pudl:rmi_pudl_init"
 rmi-pudl-clean = "etoolbox.utils.pudl:rmi_pudl_clean"
 pudl-table-rename = "etoolbox.utils.table_map:main"
 

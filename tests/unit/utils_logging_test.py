@@ -6,7 +6,7 @@ import time
 
 import pytest
 
-from etoolbox.utils.logging import JSONFormatter
+from etoolbox.utils.logging_utils import JSONFormatter
 
 
 def test_json_formatter():

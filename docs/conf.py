@@ -10,9 +10,9 @@
 
 import shutil
 from datetime import datetime
+from importlib.metadata import version as importlib_version
 from pathlib import Path
 
-import pkg_resources
 from sphinx.application import Sphinx
 
 DOCS_DIR = Path(__file__).parent.resolve()
@@ -30,7 +30,7 @@ copyright = f"{datetime.today().year}, RMI, CC-BY-4.0"  # noqa: A001
 author = "RMI"
 
 # The full version, including alpha/beta/rc tags
-release = pkg_resources.get_distribution("rmi.etoolbox").version
+release = importlib_version("rmi.etoolbox")
 version = ".".join(release.split(".")[:2])
 html_title = f"{project} {version} documentation"
 
