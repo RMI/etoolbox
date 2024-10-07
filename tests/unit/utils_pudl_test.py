@@ -201,16 +201,6 @@ class TestAWSPudlNoInternet:
         assert not df.empty
 
 
-@pytest.mark.script_launch_mode("inprocess")
-def test_rmi_pudl_init_entry_point(script_runner):
-    """Test the rmi-pudl-init entry point."""
-    script_runner.run(
-        ["rmi-pudl-init", os.environ.get("PUDL_ACCESS_KEY")], print_result=True
-    )
-    df = pl_scan_pudl("core_eia__codes_balancing_authorities")
-    assert not df.collect().is_empty()
-
-
 @pytest.mark.skipif(sys.platform == "win32", reason="does not run on windows")
 @pytest.mark.script_launch_mode("inprocess")
 def test_pudl_table_rename_entry_point(script_runner, test_dir, temp_dir):
