@@ -94,7 +94,7 @@ PUDL Data Access
 =======================================================================================
 Setup
 ---------------------------------------------------------------------------------------
-No setup is necessary beyond having the mod:`etoolbox` library installed in your
+No setup is necessary beyond having the ``etoolbox`` library installed in your
 environment.
 
 Usage
@@ -111,10 +111,10 @@ needing to download the entire database.
 
 .. note::
 
-   :func:`.pd_read_pudl` and its polars siblings will use the ``nightly`` release by default.
+   ``pd_read_pudl`` and its polars siblings will use the ``nightly`` release by default.
    For any work where reproducibility is useful (i.e. almost everywhere), you are
    **highly** encouraged to use a versioned data release. You can find available releases
-   with :func:`.pudl_list`.
+   with the ``pudl_list`` function.
 
    .. code-block:: python
 

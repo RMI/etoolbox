@@ -5,25 +5,17 @@ eToolBox Release Notes
 .. _release-v0-3-0:
 
 ---------------------------------------------------------------------------------------
-0.3.0 (2024-XX-XX)
+0.3.0 (2024-10-07)
 ---------------------------------------------------------------------------------------
 
 What's New?
 ^^^^^^^^^^^
-*  New functions to read :mod:`pudl` tables from parquets in google cloud using
-   :func:`.pd_read_pudl` which handles authentication and caching. :func:`.pl_read_pudl`
-   and :func:`.pl_scan_pudl` support authentication and when ``use_polars`` is False,
-   caching as well. To set up authentication you will need an access key and to run
-   ``rmi-pudl-init``.
-*  :mod:`pudl` table caching now should validate against a hash of the file contents
-   rather than a hash of all metadata or a simple timeout expiration.
+*  New functions to read :mod:`pudl` tables from parquets in an open-access AWS bucket
+   using :func:`.pd_read_pudl`, :func:`.pl_read_pudl`, and :func:`.pl_scan_pudl` which
+   handle caching. :mod:`polars` AWS client does not currently work so ``use_polars``
+   must be set to ``False``.
 *  New :func:`.pudl_list` to show a list of releases or tables within a release.
-*  Initialization process is now shared between CLI interface and the function that can
-   be used in testing / CI, :func:`.rmi_pudl_init`. To avoid the need for sharing json
-   files, we share the config file encoded in base64 just like in GHA.
 *  Restricting ``platformdirs`` version to >= 3.0 when config location changed.
-*  :func:`.pl_read_pudl` and :func:`.pl_scan_pudl` appear to only work with
-   polars > 0.20, added this info to the error messages when they fail.
 *  **Removed**:
 
    *  :func:`read_pudl_table`
@@ -31,11 +23,11 @@ What's New?
    *  :func:`make_pudl_tabl`
    *  :func:`lazy_import`
 
-*  Created :mod:`etoolbox.utils.logging` with helpers to setup and format loggers in a
-   more performant and structured way based on
+*  Created :mod:`etoolbox.utils.logging_utils` with helpers to setup and format loggers
+   in a more performant and structured way based on
    `mCoding suggestion <https://www.youtube.com/watch?v=9L77QExPmI0>`_. Also replaced
    module-level loggers with library-wide logger and removed logger configuration from
-   ``etoolbox`` because it is a library.
+   ``etoolbox`` because it is a library. This requires Python>=3.12.
 *  Minor performance improvements to :meth:`.DataZip.keys` and :meth:`.DataZip.__len__`.
 *  Fixed links to docs for :mod:`polars`, :mod:`plotly`, :mod:`platformdirs`,
    :mod:`fsspec`, and :mod:`pudl`. At least in theory.
@@ -47,9 +39,6 @@ What's New?
    the new names used by PUDL.
 *  Allow older versions of :mod:`polars`, this is a convenience for some other projects
    that have not adapted to >=1.0 changes but we do not test against older versions.
-*  Switching PUDL data access functions in :mod:`etoolbox.utils.pudl` to use open-access
-   AWS bucket. Not clear yet if cache invalidation works as desired and using
-   :mod:`polars` AWS client does not work so ``use_polars`` must be set to ``False``.
 
 
 Bug Fixes
@@ -57,8 +46,9 @@ Bug Fixes
 *  Fixed a bug where ``etoolbox`` could not be used if ``tqdm`` was not installed. As
    it is an optional dependency, :mod:`._optional` should be able to fully address that
    issue.
-*  Fixed a bug where import of :func:`typing.override` in :mod:`etoolbox.utils.logging`
-   broke compatibility with Python 3.11 since the function was added in 3.12.
+*  Fixed a bug where import of :func:`typing.override` in
+   :mod:`etoolbox.utils.logging_utils` broke compatibility with Python 3.11 since the
+   function was added in 3.12.
 
 .. _release-v0-2-0:
 
