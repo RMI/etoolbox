@@ -165,24 +165,39 @@ class TestAWSPudlNoInternet:
             assert not df.is_empty()
 
     @pytest.mark.parametrize(
-        "use_polars", [False, pytest.param(True, marks=pytest.mark.xfail)], ids=idfn
+        "table, use_polars",
+        [
+            ("core_eia__codes_balancing_authorities", False),
+            pytest.param(
+                "core_eia__codes_balancing_authorities", True, marks=pytest.mark.xfail
+            ),
+            pytest.param(
+                "core_eia__codes_prime_movers", False, marks=pytest.mark.xfail
+            ),
+            pytest.param("core_eia__codes_prime_movers", True, marks=pytest.mark.xfail),
+        ],
+        ids=idfn,
     )
-    def test_pl_scan_pudl_table(self, use_polars):
+    def test_pl_scan_pudl_table(self, table, use_polars):
         """Test reading table from GCS as :class:`polars.LazyFrame`."""
         if use_polars:
             with pytest.raises(FileNotFoundError):
-                _ = pl_scan_pudl(
-                    "core_eia__codes_balancing_authorities", use_polars=use_polars
-                )
+                _ = pl_scan_pudl(table, use_polars=use_polars)
         else:
-            df = pl_scan_pudl(
-                "core_eia__codes_balancing_authorities", use_polars=use_polars
-            )
+            df = pl_scan_pudl(table, use_polars=use_polars)
             assert not df.collect().is_empty()
 
-    def test_pd_read_pudl_table(self):
+    @pytest.mark.parametrize(
+        "table",
+        [
+            "core_eia__codes_balancing_authorities",
+            pytest.param("core_eia__codes_prime_movers", marks=pytest.mark.xfail),
+        ],
+        ids=idfn,
+    )
+    def test_pd_read_pudl_table(self, table):
         """Test reading table from GCS as :class:`pandas.DataFrame`."""
-        df = pd_read_pudl("core_eia__codes_balancing_authorities")
+        df = pd_read_pudl(table)
         assert not df.empty
 
 

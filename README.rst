@@ -94,15 +94,8 @@ PUDL Data Access
 =======================================================================================
 Setup
 ---------------------------------------------------------------------------------------
-To use the new process for accessing PUDL data you will need to have the ``etoolbox``
-library installed. This setup procedure only needs to be done once per user per machine.
-
-Authentication to AWS does not require a key. However you must run the following command
-where ``etoolbox`` is installed to set up the cache folders.
-
-.. code-block:: bash
-
-   rmi-pudl-init
+No setup is necessary beyond having the mod:`etoolbox` library installed in your
+environment.
 
 Usage
 ---------------------------------------------------------------------------------------
@@ -116,20 +109,47 @@ needing to download the entire database.
    df = pd_read_pudl("core_eia__codes_balancing_authorities")
 
 
+.. note::
+
+   :func:`.pd_read_pudl` and its polars siblings will use the ``nightly`` release by default.
+   For any work where reproducibility is useful (i.e. almost everywhere), you are
+   **highly** encouraged to use a versioned data release. You can find available releases
+   with :func:`.pudl_list`.
+
+   .. code-block:: python
+
+      from etoolbox.utils.pudl import pudl_list
+
+      pudl_list(None)
+
+   And then define the release as below. It's useful to set it as a global variable that
+   can be used anytime PUDL data is loaded for consistency.
+
+   .. code-block:: python
+
+      PUDL_RELEASE = "vYYYY.MM.DD"
+
+      df = pd_read_pudl("core_eia__codes_balancing_authorities", release=PUDL_RELEASE)
+
+
 More information about the tables are available in
 `this data dictionary <https://catalystcoop-pudl.readthedocs.io/en/nightly/data_dictionaries/pudl_db.html#pudl-data-dictionary>`_.
 New and old names for the tables are available
 `here <https://docs.google.com/spreadsheets/d/1RBuKl_xKzRSLgRM7GIZbc5zUYieWFE20cXumWuv5njo/edit#gid=1126117325>`_.
 
+.. warning::
 
-GitHub Actions
+   If you use PyCharm and get a ``TypeError`` when using these functions in the
+   debugger, you may need to change PyCharm settings, see
+   `PY-71488 <https://youtrack.jetbrains.com/issue/PY-71488>`_ for more information.
+
+
+PUDL in tests
 ---------------------------------------------------------------------------------------
-To enable accessing PUDL data from tests run in GitHub Actions, additional steps are
-required. Note: these instructions assume that you use ``pytest`` and ``tox``.
-
-1. Before any test that uses a PUDL access function runs, a special CI setup function
-   must run. There are different ways to do this but this is one example that we use
-   here.
+By default, any tests that you run locally will use the same cached PUDL data that you
+use when you run your code normally. If you want tests to always run as if no cache
+existed, the following code examples create a temporary cache folder which is used by
+your tests and then deleted.
 
    conftest.py
 
@@ -154,7 +174,6 @@ required. Note: these instructions assume that you use ``pytest`` and ``tox``.
           import etoolbox.utils.pudl as pudl
 
           pudl.CACHE_PATH = temp_dir / "pudl_cache"
-          rmi_pudl_init()
 
 
    pudl_access_test.py

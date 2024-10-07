@@ -44,7 +44,7 @@ DEFAULT_LOGGING_CONFIG = {
             "datefmt": "%Y-%m-%dT%H:%M:%S%z",
         },
         "json": {
-            "()": "etoolbox.utils.logging.JSONFormatter",
+            "()": "etoolbox.utils.logging_utils.JSONFormatter",
             "fmt_keys": {
                 "level": "levelname",
                 "message": "message",

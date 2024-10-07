@@ -12,27 +12,16 @@ from typing import ClassVar
 import orjson as json
 import pandas as pd
 import polars as pl
+from fsspec import filesystem
 from fsspec.implementations.cached import WholeFileCacheFileSystem
 from platformdirs import user_cache_path, user_config_path
-from s3fs import S3FileSystem
 
 from etoolbox.utils.misc import have_internet
 
 logger = logging.getLogger("etoolbox")
 TOKEN_PATH = user_config_path("rmi.pudl") / ".pudl-access-key.json"
-CACHE_PATH = user_cache_path("rmi.pudl")
+CACHE_PATH = user_cache_path("rmi.pudl") / "aws"
 BASE = "s3://pudl.catalyst.coop"
-
-
-def rmi_pudl_init() -> None:
-    """Setup rmi.pudl to provide access to PUDL tables from AWS with local caching."""
-    parser = ArgumentParser(  # noqa: F841
-        description="Setup rmi.pudl to provide access to PUDL tables from AWS with "
-        "local caching."
-    )
-
-    if not CACHE_PATH.exists():
-        CACHE_PATH.mkdir(parents=True)
 
 
 def rmi_pudl_clean(*, delete_config: bool = False) -> None:
@@ -51,33 +40,28 @@ def rmi_pudl_clean(*, delete_config: bool = False) -> None:
     if CACHE_PATH.exists():
         print("deleting local cache at " + str(CACHE_PATH))
         shutil.rmtree(CACHE_PATH)
+    elif CACHE_PATH.parent.exists():
+        shutil.rmtree(CACHE_PATH.parent)
 
     if delete_config and TOKEN_PATH.exists():
         print("deleting local config at " + str(TOKEN_PATH.parent))
         shutil.rmtree(TOKEN_PATH.parent)
 
 
-class ContentHashFileSystem(S3FileSystem):
-    """AWS filesystem where cache validity is based on content hash only."""
-
-    def ukey(self, path) -> str:
-        """Hash of file content, to tell if it has changed."""
-        # return self.info(path)["md5Hash"]
-        return self.info(path)["ETag"]
-
-
 def _filecache_filesystem() -> WholeFileCacheFileSystem:
     """Create a fsspec/AWS filesystem with a filecache."""
-    return WholeFileCacheFileSystem(
-        fs=ContentHashFileSystem(anon=True),
+    return filesystem(
+        "filecache",
+        target_protocol="s3",
+        target_options={"anon": True},
         cache_storage=str(CACHE_PATH),
-        cache_timeout=None,
         check_files=True,
+        cache_timeout=None,
     )
 
 
 def _cache_path(table_name: str, release: str = "nightly") -> Path | None:
-    """Determine the local path for a cached PUDL table if it exists.
+    """Determine the local path a cached PUDL table and validate it if possible.
 
     Args:
         table_name: name of pudl table
@@ -91,6 +75,19 @@ def _cache_path(table_name: str, release: str = "nightly") -> Path | None:
         if table_cache_data := fs._check_file(f"{BASE}/{release}/{table_name}.parquet"):
             return Path(table_cache_data[1])
         return None
+    return _no_network_cache_path(release, table_name)
+
+
+def _no_network_cache_path(release, table_name):
+    """Determine the local path for a cached PUDL table if it exists.
+
+    Args:
+        table_name: name of pudl table
+        release: version of pudl table, i.e. 'nightly'
+
+    Returns: Path of cached PUDL table
+
+    """
     cache_info_path = CACHE_PATH / "cache"
     if cache_info_path.exists():
         with open(cache_info_path) as f:
@@ -117,6 +114,17 @@ def pudl_list(
         release: ``nightly``, ``stable`` or versioned, pass ``None`` to list all
         token: ignored
         detail: if True, return details of each table, otherwise just names
+
+    Examples
+    --------
+    >>> from etoolbox.utils.pudl import pudl_list
+
+    List PUDL releases, the actual release is the part after the ``/``.
+
+    >>> pudl_list(None)  # doctest: +ELLIPSIS
+    ['pudl.catalyst.coop/nightly', 'pudl.catalyst.coop/stable', ...]
+
+    For the most recent, you want the last on the list ie ``releases[-1]``
 
     """
     fs = _filecache_filesystem()
