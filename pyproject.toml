@@ -43,7 +43,7 @@ doc = [
     "sphinx-autoapi>=1.8,<3.4",
     "sphinx-issues>=1.2,<5.1",
     "sphinx-autodoc-typehints>1.19,<2.5.1",
-    "sphinxcontrib-mermaid>0.7,<0.10.0",
+    "sphinxcontrib-mermaid>0.7,<1.1.0",
 ]
 tests = [
     "coverage>=5.3,<7.7",  # Lets us track what code is being tested
