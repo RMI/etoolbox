@@ -1,0 +1,21 @@
+etoolbox
+========
+
+.. py:module:: etoolbox
+
+.. autoapi-nested-parse::
+
+   A range of tools and helpers for the RMI electricity team.
+
+
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/etoolbox/datazip/index
+   /autoapi/etoolbox/utils/index
+
+
