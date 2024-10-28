@@ -24,7 +24,7 @@ dependencies = [
     "pandas[aws] >= 1.4,< 2.3",
     "platformdirs >3.0,<4.4",
     "polars[fsspec]>=0.20,<1.13",
-    "pyarrow>=9, <18",
+    "pyarrow>=9, <19",
     "tzdata>=2022.7; platform_system=='Windows'",
 ]
 
