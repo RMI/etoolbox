@@ -24,7 +24,7 @@ def _get_version(obj: Any) -> str:
 def _get_username():
     try:
         return getpass.getuser()
-    except ModuleNotFoundError as exc0:
+    except (ModuleNotFoundError, OSError) as exc0:
         import os
 
         try:
