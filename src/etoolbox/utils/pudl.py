@@ -12,6 +12,7 @@ from typing import ClassVar
 import orjson as json
 import pandas as pd
 import polars as pl
+import pyarrow.parquet as pq
 from fsspec import filesystem
 from fsspec.implementations.cached import WholeFileCacheFileSystem
 from platformdirs import user_cache_path, user_config_path
@@ -135,7 +136,13 @@ def pudl_list(
 
 
 def pd_read_pudl(
-    table_name: str, release: str = "nightly", token: dict | str | None = None, **kwargs
+    table_name: str,
+    release: str = "nightly",
+    token: dict | str | None = None,
+    filters=None,
+    *,
+    date_as_object: bool = False,
+    **kwargs,
 ) -> pd.DataFrame:
     """Read PUDL table from AWS as :class:`pandas.DataFrame`.
 
@@ -143,19 +150,22 @@ def pd_read_pudl(
         table_name: name of table in PUDL sqlite database
         release: ``nightly`` or ``stable``
         token: ignored
-        kwargs: passed to :func:`pandas.read_parquet`
+        filters: passed to :func:`pyarrow.parquet.read_table`
+        date_as_object: Cast dates to objects. If False, convert to datetime64
+            dtype with the equivalent time unit (if supported), this is the default
+            here, differing from that in :func:`pyarrow.Table.to_pandas`.
+        kwargs: passed to :func:`pyarrow.Table.to_pandas`
 
     """
     if have_internet():
-        fs = _filecache_filesystem()
-        return pd.read_parquet(
+        return pq.read_table(
             f"{BASE}/{release}/{table_name}.parquet",
-            filesystem=fs,
-            **kwargs,
-        )
-    return pd.read_parquet(
-        _cache_path(table_name=table_name, release=release), **kwargs
-    )
+            filesystem=_filecache_filesystem(),
+            filters=filters,
+        ).to_pandas(date_as_object=date_as_object, **kwargs)
+    return pq.read_table(
+        _cache_path(table_name=table_name, release=release), filters=filters
+    ).to_pandas(date_as_object=date_as_object, **kwargs)
 
 
 def pl_scan_pudl(

@@ -128,6 +128,11 @@ class TestAWSPudl:
         df = pd_read_pudl("core_eia__codes_balancing_authorities")
         assert not df.empty
 
+    def test_pd_read_pudl_table_with_date(self):
+        """Test reading table from GCS as :class:`pandas.DataFrame`."""
+        df = pd_read_pudl("out_eia__yearly_utilities")
+        assert "datetime64" in str(df.report_date.dtype)
+
     @pytest.mark.parametrize(
         "release, detail, expected_min_len, expected_type",
         [
