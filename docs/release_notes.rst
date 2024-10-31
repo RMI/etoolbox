@@ -12,6 +12,8 @@ What's New?
 ^^^^^^^^^^^
 *  Use :mod:`pyarrow` directly in :func:`.pd_read_pudl` to avoid having dates cast to
    objects.
+*  Compatibility with Python 3.13 tested and included in CI.
+*  Declaring optional cloud dependencies of :mod:`pandas` and :mod:`polars` explicitly.
 
 
 .. _release-v0-3-0:
