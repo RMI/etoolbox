@@ -21,7 +21,7 @@ from etoolbox.utils.misc import have_internet
 
 logger = logging.getLogger("etoolbox")
 TOKEN_PATH = user_config_path("rmi.pudl") / ".pudl-access-key.json"
-CACHE_PATH = user_cache_path("rmi.pudl") / "aws"
+CACHE_PATH = user_cache_path("rmi.pudl", ensure_exists=True) / "aws"
 BASE = "s3://pudl.catalyst.coop"
 
 

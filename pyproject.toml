@@ -21,6 +21,7 @@ classifiers = [
 ]
 requires-python = ">=3.10,<3.14"
 dependencies = [
+    "adlfs>=2023.9.0, <2024.8.0",
     "fsspec>=2022.11.0, <2024.11.0",
     "orjson >= 3.8, < 3.11",
     "pandas >= 1.4,< 2.3",
@@ -74,6 +75,7 @@ write_to = "src/etoolbox/_version.py"
 
 [project.scripts]  # entry points
 rmi-pudl-clean = "etoolbox.utils.pudl:rmi_pudl_clean"
+rmi-cloud-init = "etoolbox.utils.cloud:rmi_cloud_init"
 pudl-table-rename = "etoolbox.utils.table_map:main"
 
 #######################################################################################
@@ -105,6 +107,35 @@ ignore_directives = ["bibliography", "todo", "include"]
 [tool.ruff]
 line-length = 88
 show-fixes = true
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    ".pixi",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+]
 
 [tool.ruff.format]
 # Enable reformatting of code snippets in docstrings.

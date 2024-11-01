@@ -14,6 +14,7 @@ What's New?
    objects.
 *  Compatibility with Python 3.13 tested and included in CI.
 *  Declaring optional cloud dependencies of :mod:`pandas` and :mod:`polars` explicitly.
+*  Tools for working with data stored on Azure.
 
 
 .. _release-v0-3-0:
