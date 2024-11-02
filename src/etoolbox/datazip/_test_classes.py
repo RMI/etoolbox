@@ -72,11 +72,13 @@ class _TestKlassSlotsCore:
 class _KlassSlots(_TestKlassSlotsCore):
     """Generic class with slots and get/set."""
 
-    __slots__ = ("foo", "_dfs", "tup", "lis")
+    __slots__ = ("foo", "_dfs", "tup", "lis", "exclude")
 
     def __init__(self, **kwargs):
         """Init."""
         super().__init__(**kwargs)
+        if "exclude" not in kwargs:
+            self.exclude = ()
 
     def __setstate__(self, state):
         _, state = state
@@ -86,6 +88,25 @@ class _KlassSlots(_TestKlassSlotsCore):
 
     def __getstate__(self):
         return None, {k: getattr(self, k) for k in self.__slots__}
+
+
+class _KlassSlotsDzstate(_KlassSlots):
+    """Generic class with slots and get/set."""
+
+    __slots__ = ("foo", "_dfs", "tup", "lis", "exclude")
+
+    def _dzsetstate_(self, state):
+        _, state = state
+        for k in state["exclude"]:
+            state[k] = 5
+        for k, v in state.items():
+            if k in self.__slots__:
+                setattr(self, k, v)
+
+    def _dzgetstate_(self):
+        return None, {
+            k: getattr(self, k) for k in self.__slots__ if k not in self.exclude
+        }
 
 
 class _TestKlassSlotsDict:
@@ -145,3 +166,21 @@ class _TestKlass(_TestKlassCore):
 
     def __getstate__(self):
         return self.__dict__
+
+
+class _TestKlassDzstate(_TestKlass):
+    """Generic class w/o slots with get/set."""
+
+    def __init__(self, **kwargs):
+        """Init."""
+        super().__init__(**kwargs)
+        if "exclude" not in kwargs:
+            self.exclude = ()
+
+    def _dzsetstate_(self, state):
+        for k in state["exclude"]:
+            state[k] = 5
+        self.__dict__ = state
+
+    def _dzgetstate_(self):
+        return {k: v for k, v in self.__dict__.items() if k not in self.exclude}

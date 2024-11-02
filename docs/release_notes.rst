@@ -15,6 +15,10 @@ What's New?
 *  Compatibility with Python 3.13 tested and included in CI.
 *  Declaring optional cloud dependencies of :mod:`pandas` and :mod:`polars` explicitly.
 *  Tools for working with data stored on Azure.
+*  :class:`.DataZip` now recognizes alternative methods for getting and setting object
+   state so that an object can specify a serialization for :class:`.DataZip` that is
+   different than that for :mod:`pickle`. These new methods are ``_dzgetstate_``
+   and ``_dzsetstate_``.
 
 
 .. _release-v0-3-0:

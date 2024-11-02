@@ -20,8 +20,10 @@ from etoolbox.datazip import DataZip
 from etoolbox.datazip._test_classes import (
     ObjMeta,
     _KlassSlots,
+    _KlassSlotsDzstate,
     _TestKlass,
     _TestKlassCore,
+    _TestKlassDzstate,
     _TestKlassSlotsCore,
     _TestKlassSlotsDict,
 )
@@ -277,6 +279,50 @@ def test_partial(temp_dir):
         z0["a"] = functools.partial(int, base=2)
     with DataZip(file, "r") as z1:
         assert "a" not in z1
+
+
+@pytest.mark.parametrize(
+    "klass",
+    [
+        pytest.param(_TestKlass, marks=pytest.mark.xfail),
+        pytest.param(_KlassSlots, marks=pytest.mark.xfail),
+        _TestKlassDzstate,
+        _KlassSlotsDzstate,
+    ],
+    ids=idfn,
+)
+def test_dzstate_encode(temp_dir, klass):
+    """Test priority of dzstate methods."""
+    obj0 = klass(foo=2, _dfs=[], tup=(1,), lis=[2], exclude=("foo",))
+    with DataZip(BytesIO(), "w") as z0:
+        z0["a"] = obj0
+        if hasattr(klass, "__slots__"):
+            with pytest.raises(KeyError):
+                _ = z0["a", "items", 1, "foo"]
+        else:
+            with pytest.raises(KeyError):
+                _ = z0["a", "foo"]
+
+
+@pytest.mark.parametrize(
+    "klass",
+    [
+        _TestKlassDzstate,
+        _KlassSlotsDzstate,
+        pytest.param(_TestKlass, marks=pytest.mark.xfail),
+        pytest.param(_KlassSlots, marks=pytest.mark.xfail),
+    ],
+    ids=idfn,
+)
+def test_dzstate_decode(temp_dir, klass):
+    """Test priority of dzstate methods."""
+    obj0 = klass(foo=2, _dfs=[], tup=(1,), lis=[2], exclude=("foo",))
+    file = temp_dir / f"test_dzstate_decode_{klass.__qualname__}.zip"
+    with DataZip(file, "w") as z0:
+        z0["a"] = obj0
+    with DataZip(file, "r") as z1:
+        obj1 = z1["a"]
+    assert obj0.foo == 2 and obj1.foo == 5  # noqa: PT018
 
 
 class TestWPDBackend:

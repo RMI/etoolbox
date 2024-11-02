@@ -561,7 +561,11 @@ class DataZip(ZipFile):
             klass = _get_klass(obj["__type__"].split("|"))
         out_obj = klass.__new__(klass)
         state = self._decode(self._attributes["__state__"][str(obj["__loc__"])])
-        if hasattr(out_obj, "__setstate__"):
+        # we cannot use hasattr here in case __getattr__ is defined and it throws
+        # non-AttributeErrors if the object is not yet fully initialized
+        if "_dzsetstate_" in dir(out_obj):
+            out_obj._dzsetstate_(state)
+        elif hasattr(out_obj, "__setstate__"):
             out_obj.__setstate__(state)
         else:
             default_setstate(out_obj, state)
@@ -772,7 +776,9 @@ class DataZip(ZipFile):
         }
 
     def _encode_obj(self, name: str, item: Any) -> dict:
-        if hasattr(item, "__getstate__"):
+        if hasattr(item, "_dzgetstate_"):
+            state = item._dzgetstate_()
+        elif hasattr(item, "__getstate__"):
             state = item.__getstate__()
         elif hasattr(item, "__dict__") or hasattr(item, "__slots__"):
             state = default_getstate(item)

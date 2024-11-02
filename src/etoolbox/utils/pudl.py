@@ -676,6 +676,10 @@ class PretendPudlTablCore:
 
     def __getattr__(self, item):
         warnings.warn(WARNING_TEXT, DeprecationWarning, stacklevel=2)
+        if "_dfs" not in self.__dict__:
+            raise AttributeError(
+                f"'{self.__class__.__qualname__}' object has no attribute '{item}'"
+            )
 
         if (n_item := self.table_name_map.get(item, item)) in self.__dict__["_dfs"]:
             return _Faker(self.__dict__["_dfs"][n_item])

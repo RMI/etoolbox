@@ -3,10 +3,11 @@ from datetime import datetime
 import pytest
 
 from etoolbox.utils.cloud import get, put
+from etoolbox.utils.testing import idfn
 
 
 @pytest.mark.parametrize(
-    "destination", ["test", pytest.param("test5", marks=pytest.mark.xfail)]
+    "destination", ["test", pytest.param("test5", marks=pytest.mark.xfail)], ids=idfn
 )
 def test_copy_to_cloud(temp_dir, destination):
     """Test uploading to RMI's Azure cloud storage."""
@@ -16,7 +17,9 @@ def test_copy_to_cloud(temp_dir, destination):
 
 
 @pytest.mark.parametrize(
-    "source", ["test_data.parquet", pytest.param("test_dir", marks=pytest.mark.xfail)]
+    "source",
+    ["test_data.parquet", pytest.param("test_dir", marks=pytest.mark.xfail)],
+    ids=idfn,
 )
 def test_get_from_cloud(temp_dir, source):
     """Test downloading from RMI's Azure cloud storage."""
