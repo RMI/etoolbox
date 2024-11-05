@@ -20,6 +20,11 @@ What's New?
    different than that for :mod:`pickle`. These new methods are ``_dzgetstate_``
    and ``_dzsetstate_``.
 
+Bug Fixes
+^^^^^^^^^
+*  Fixed a bug in the implementation of the alternative serialization methods that
+   caused recursion or other errors when serializing an object whose class implemented
+   ``__getattr__``.
 
 .. _release-v0-3-0:
 
