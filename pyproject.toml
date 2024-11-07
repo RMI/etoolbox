@@ -57,7 +57,7 @@ tests = [
     "pytest-cov>=2.10,<6.1",  # Pytest plugin for working with coverage
     "ruff>0.0.215,<0.7.3",
     "tox>=4.16.0,<4.24",  # Python test environment manager
-    "tqdm >= 4.63,< 4.67",
+    "tqdm >= 4.63,< 4.68",
     "requests_mock",  # used by remote_zip tests
     "pytest-socket",  #
 ]
