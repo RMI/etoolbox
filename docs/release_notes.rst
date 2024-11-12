@@ -19,6 +19,8 @@ What's New?
    state so that an object can specify a serialization for :class:`.DataZip` that is
    different than that for :mod:`pickle`. These new methods are ``_dzgetstate_``
    and ``_dzsetstate_``.
+*  :func:`.storage_options` to simplify reading from/writing to Azure using
+   :mod:`pandas` or :mod:`polars`.
 
 Bug Fixes
 ^^^^^^^^^

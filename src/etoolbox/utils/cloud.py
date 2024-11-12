@@ -59,6 +59,25 @@ def read_token() -> str:
     )
 
 
+def storage_options():
+    """Simplify reading from/writing to Azure using :mod:`pandas` or :mod:`polars`.
+
+    Examples
+    --------
+    >>> import polars as pl
+    >>> df = pl.read_parquet("az://raw-data/test_data.parquet", **storage_options())
+    >>> df.shape
+    (46, 13)
+
+    >>> import pandas as pd
+    >>> df = pd.read_parquet("az://raw-data/test_data.parquet", **storage_options())
+    >>> df.shape
+    (46, 12)
+
+    """
+    return {"storage_options": {"account_name": "rmicfezil", "sas_token": read_token()}}
+
+
 def rmi_cloud_fs(token=None) -> WholeFileCacheFileSystem:
     """Create a fsspec/AWS filesystem with a filecache."""
     return filesystem(
