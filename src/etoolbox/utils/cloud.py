@@ -90,7 +90,7 @@ def rmi_cloud_fs(token=None) -> WholeFileCacheFileSystem:
     >>>
     >>> fs = rmi_cloud_fs()
     >>> df = pd.read_parquet("az://raw-data/test_data.parquet", filesystem=fs)
-    >>> print(df.shape)  # doctest: +SKIP
+    >>> df.shape  # doctest: +SKIP
     (46, 12)
 
     Read with :mod:`polars` using the same filecache as with :mod:`pandas`.
@@ -99,7 +99,7 @@ def rmi_cloud_fs(token=None) -> WholeFileCacheFileSystem:
     >>>
     >>> with fs.open("az://raw-data/test_data.parquet") as f:
     ...     df = pl.read_parquet(f)
-    >>> print(df.shape)
+    >>> df.shape
     (46, 13)
 
     Write a parquet, or really anythin to Azure...
