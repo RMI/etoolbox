@@ -29,6 +29,8 @@ Bug Fixes
 *  Fixed a bug in the implementation of the alternative serialization methods that
    caused recursion or other errors when serializing an object whose class implemented
    ``__getattr__``.
+*  Attempt to fix doctest bug caused by pytest logging, see
+   `pytest#5908 <https://github.com/pytest-dev/pytest/issues/5908>`_
 
 .. _release-v0-3-0:
 
