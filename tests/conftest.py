@@ -6,34 +6,16 @@ Defines useful fixtures, command line args.
 import gzip
 import logging
 import shutil
-import sys
 from pathlib import Path
 
 import pandas as pd
 import pytest
 import yaml
-from _pytest.config import hookimpl
-from _pytest.doctest import DoctestItem
-from _pytest.nodes import Item
 
 from etoolbox.datazip._test_classes import _KlassSlots, _TestKlass
 from etoolbox.utils.logging_utils import setup_logging
 
 logger = logging.getLogger(__name__)
-
-
-@hookimpl(hookwrapper=True)
-def pytest_runtest_call(item: Item) -> None:
-    """Hook to suspend global capture when running doctests."""
-    if isinstance(item, DoctestItem):
-        capman = item.config.pluginmanager.getplugin("capturemanager")
-        if capman:
-            capman.suspend_global_capture(in_=True)
-            out, err = capman.read_global_capture()
-            sys.stdout.write(out)
-            sys.stderr.write(err)
-
-    yield
 
 
 @pytest.fixture
