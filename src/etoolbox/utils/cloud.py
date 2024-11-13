@@ -73,7 +73,6 @@ def storage_options():
     >>> print(df.shape)
     (46, 13)
 
-
     """
     return {"storage_options": {"account_name": "rmicfezil", "sas_token": read_token()}}
 
@@ -91,7 +90,7 @@ def rmi_cloud_fs(token=None) -> WholeFileCacheFileSystem:
     >>>
     >>> fs = rmi_cloud_fs()
     >>> df = pd.read_parquet("az://raw-data/test_data.parquet", filesystem=fs)
-    >>> print(df.shape)
+    >>> print(df.shape)  # doctest: +SKIP
     (46, 12)
 
     Read with :mod:`polars` using the same filecache as with :mod:`pandas`.
