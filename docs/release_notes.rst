@@ -21,6 +21,8 @@ What's New?
    and ``_dzsetstate_``.
 *  :func:`.storage_options` to simplify reading from/writing to Azure using
    :mod:`pandas` or :mod:`polars`.
+*  :func:`.generator_ownership` compiles ownership information for all generators using
+   data from :mod:`pudl`.
 
 Bug Fixes
 ^^^^^^^^^

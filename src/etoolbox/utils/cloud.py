@@ -60,26 +60,55 @@ def read_token() -> str:
 
 
 def storage_options():
-    """Simplify reading from/writing to Azure using :mod:`pandas` or :mod:`polars`.
+    """Simplify reading from Azure using :mod:`polars`.
+
+    When using :mod:`pandas` or writing to Azure, see :func:`.rmi_cloud_fs`.
 
     Examples
     --------
     >>> import polars as pl
+    >>> from etoolbox.utils.cloud import storage_options
+    >>>
     >>> df = pl.read_parquet("az://raw-data/test_data.parquet", **storage_options())
-    >>> df.shape
+    >>> print(df.shape)
     (46, 13)
 
-    >>> import pandas as pd
-    >>> df = pd.read_parquet("az://raw-data/test_data.parquet", **storage_options())
-    >>> df.shape
-    (46, 12)
 
     """
     return {"storage_options": {"account_name": "rmicfezil", "sas_token": read_token()}}
 
 
 def rmi_cloud_fs(token=None) -> WholeFileCacheFileSystem:
-    """Create a fsspec/AWS filesystem with a filecache."""
+    """Work with files on Azure.
+
+    This can be used to read or write arbitrary files to or from Azure. And for files
+    read from Azure, it will create and manage a local cache.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from etoolbox.utils.cloud import rmi_cloud_fs
+    >>>
+    >>> fs = rmi_cloud_fs()
+    >>> df = pd.read_parquet("az://raw-data/test_data.parquet", filesystem=fs)
+    >>> print(df.shape)
+    (46, 12)
+
+    Read with :mod:`polars` using the same filecache as with :mod:`pandas`.
+
+    >>> import polars as pl
+    >>>
+    >>> with fs.open("az://raw-data/test_data.parquet") as f:
+    ...     df = pl.read_parquet(f)
+    >>> print(df.shape)
+    (46, 13)
+
+    Write a parquet, or really anythin to Azure...
+
+    >>> with fs.open("az://raw-data/file.parquet", mode="wb") as f:  # doctest: +SKIP
+    ...     df.write_parquet(f)
+
+    """
     return filesystem(
         "filecache",
         target_protocol="az",

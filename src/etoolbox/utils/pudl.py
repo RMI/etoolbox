@@ -148,7 +148,8 @@ def pd_read_pudl(
 
     Args:
         table_name: name of table in PUDL sqlite database
-        release: ``nightly`` or ``stable``
+        release: ``nightly``, ``stable`` or versioned, use :func:`.pudl_list` to
+            see releases.
         token: ignored
         filters: passed to :func:`pyarrow.parquet.read_table`
         date_as_object: Cast dates to objects. If False, convert to datetime64
@@ -185,7 +186,8 @@ def pl_scan_pudl(
 
     Args:
         table_name: name of table in PUDL sqlite database
-        release: ``nightly`` or ``stable``
+        release: ``nightly``, ``stable`` or versioned, use :func:`.pudl_list` to
+            see releases.
         token: ignored
         use_polars: If ``True``, use polars AWS client (currently nonfunctional), this
             does not work with local caching. If ``False``, use
@@ -224,7 +226,8 @@ def pl_read_pudl(
 
     Args:
         table_name: name of table in PUDL sqlite database
-        release: ``nightly`` or ``stable``
+        release: ``nightly``, ``stable`` or versioned, use :func:`.pudl_list` to
+            see releases.
         token: ignored
         use_polars: use polars AWS client rather than s3fs, this does not
             work with local caching (must be false until we fix)
@@ -237,6 +240,98 @@ def pl_read_pudl(
         use_polars=use_polars,
         **kwargs,
     ).collect()
+
+
+def generator_ownership(
+    year: int | None = None, release: str = "nightly"
+) -> pl.DataFrame:
+    """Generator ownership.
+
+    Args:
+        year: year of report date to use
+        release: ``nightly``, ``stable`` or versioned, use :func:`.pudl_list` to
+            see releases.
+
+    Examples
+    --------
+    >>> from etoolbox.utils.pudl import generator_ownership
+    >>>
+    >>> generator_ownership(year=2023, release="v2024.10.0").sort(
+    ...     "plant_id_eia"
+    ... ).select("plant_id_eia", "generator_id", "owner_utility_id_eia").head()
+    shape: (5, 3)
+    ┌──────────────┬──────────────┬──────────────────────┐
+    │ plant_id_eia ┆ generator_id ┆ owner_utility_id_eia │
+    │ ---          ┆ ---          ┆ ---                  │
+    │ i64          ┆ str          ┆ i64                  │
+    ╞══════════════╪══════════════╪══════════════════════╡
+    │ 1            ┆ 1            ┆ 63560                │
+    │ 1            ┆ 2            ┆ 63560                │
+    │ 1            ┆ 3            ┆ 63560                │
+    │ 1            ┆ 5.1          ┆ 63560                │
+    │ 1            ┆ WT1          ┆ 63560                │
+    └──────────────┴──────────────┴──────────────────────┘
+
+    """
+    year = (
+        (
+            pl_read_pudl("core_eia860__scd_ownership")
+            .filter(pl.col("data_maturity") == "final")
+            .select("report_date")
+            .unique()
+            .max()
+            .to_series()
+            .item()
+            .year
+        )
+        if year is None
+        else year
+    )
+    return (
+        pl_scan_pudl("_out_eia__yearly_generators", release=release)
+        .filter(
+            (pl.col("data_maturity") == "final")
+            & (pl.col("report_date").dt.year() == year)
+            & (pl.col("operational_status") == "existing")
+        )
+        .select(
+            "plant_id_eia",
+            "generator_id",
+            "plant_name_eia",
+            "utility_id_eia",
+            "utility_name_eia",
+            "capacity_mw",
+        )
+        .join(
+            pl_scan_pudl("core_eia860__scd_ownership", release=release)
+            .filter(
+                (pl.col("data_maturity") == "final")
+                & (pl.col("report_date").dt.year() == year)
+            )
+            .select(
+                "plant_id_eia",
+                "generator_id",
+                "owner_utility_id_eia",
+                "owner_utility_name_eia",
+                "fraction_owned",
+            ),
+            on=["plant_id_eia", "generator_id"],
+            how="left",
+            validate="1:m",
+        )
+        .select(
+            pl.col("plant_id_eia").cast(pl.Int64),
+            "generator_id",
+            "plant_name_eia",
+            "capacity_mw",
+            pl.col("owner_utility_id_eia")
+            .fill_null(pl.col("utility_id_eia"))
+            .cast(pl.Int64),
+            pl.col("owner_utility_name_eia").fill_null(pl.col("utility_name_eia")),
+            pl.col("fraction_owned").fill_null(1.0),
+        )
+        .collect()
+    )
 
 
 """
