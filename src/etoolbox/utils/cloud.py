@@ -2,13 +2,9 @@
 
 import logging
 import os
-import sys
 from argparse import ArgumentParser
 from pathlib import Path
 
-from _pytest.config import hookimpl
-from _pytest.doctest import DoctestItem
-from _pytest.nodes import Item
 from cachetools.func import lru_cache
 from fsspec import filesystem
 from fsspec.implementations.cached import WholeFileCacheFileSystem
@@ -21,20 +17,6 @@ AZURE_CACHE_PATH = user_cache_path("rmi.cloud", ensure_exists=True)
 RMICFEZIL_TOKEN_PATH = CONFIG_PATH / "rmicfezil_token.txt"
 
 logger = logging.getLogger("etoolbox")
-
-
-@hookimpl(hookwrapper=True)
-def pytest_runtest_call(item: Item) -> None:
-    """Hook to suspend global capture when running doctests."""
-    if isinstance(item, DoctestItem):
-        capman = item.config.pluginmanager.getplugin("capturemanager")
-        if capman:
-            capman.suspend_global_capture(in_=True)
-            out, err = capman.read_global_capture()
-            sys.stdout.write(out)
-            sys.stderr.write(err)
-
-    yield
 
 
 def rmi_cloud_init():
