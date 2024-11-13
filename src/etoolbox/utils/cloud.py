@@ -68,10 +68,21 @@ def storage_options():
     --------
     >>> import polars as pl
     >>> from etoolbox.utils.cloud import storage_options
-    >>>
+
     >>> df = pl.read_parquet("az://raw-data/test_data.parquet", **storage_options())
-    >>> print(df.shape)
-    (46, 13)
+    >>> df.select("plant_id_eia", "re_type").head()  # doctest: +NORMALIZE_WHITESPACE
+    shape: (5, 2)
+    ┌──────────────────────┬─────────┐
+    │ plant_id_eia         ┆ re_type │
+    │ ---                  ┆ ---     │
+    │ i64                  ┆ str     │
+    ╞══════════════════════╪═════════╡
+    │ -1065799821027645681 ┆ solar   │
+    │ 500701449105794732   ┆ solar   │
+    │ 5264981444132581172  ┆ solar   │
+    │ 8596148642566783026  ┆ solar   │
+    │ 8293386810295812914  ┆ solar   │
+    └──────────────────────┴─────────┘
 
     """
     return {"storage_options": {"account_name": "rmicfezil", "sas_token": read_token()}}
@@ -87,20 +98,38 @@ def rmi_cloud_fs(token=None) -> WholeFileCacheFileSystem:
     --------
     >>> import pandas as pd
     >>> from etoolbox.utils.cloud import rmi_cloud_fs
-    >>>
+
     >>> fs = rmi_cloud_fs()
     >>> df = pd.read_parquet("az://raw-data/test_data.parquet", filesystem=fs)
-    >>> df.shape  # doctest: +SKIP
-    (46, 12)
+    >>> df.head()  # doctest: +NORMALIZE_WHITESPACE
+              plant_id_eia re_type  latitude  ...  dl_first  dl_last      years
+    0 -1065799821027645681   solar      38.0  ...      2006     2022  2006-2022
+    1   500701449105794732   solar      38.0  ...      2006     2022  2006-2022
+    2  5264981444132581172   solar      47.5  ...      2006     2022  2006-2022
+    3  8596148642566783026   solar      47.0  ...      2006     2022  2006-2022
+    4  8293386810295812914   solar      47.0  ...      2006     2022  2006-2022
+    <BLANKLINE>
+    [5 rows x 12 columns]
 
     Read with :mod:`polars` using the same filecache as with :mod:`pandas`.
 
     >>> import polars as pl
-    >>>
+
     >>> with fs.open("az://raw-data/test_data.parquet") as f:
     ...     df = pl.read_parquet(f)
-    >>> df.shape
-    (46, 13)
+    >>> df.select("plant_id_eia", "re_type").head()  # doctest: +NORMALIZE_WHITESPACE
+    shape: (5, 2)
+    ┌──────────────────────┬─────────┐
+    │ plant_id_eia         ┆ re_type │
+    │ ---                  ┆ ---     │
+    │ i64                  ┆ str     │
+    ╞══════════════════════╪═════════╡
+    │ -1065799821027645681 ┆ solar   │
+    │ 500701449105794732   ┆ solar   │
+    │ 5264981444132581172  ┆ solar   │
+    │ 8596148642566783026  ┆ solar   │
+    │ 8293386810295812914  ┆ solar   │
+    └──────────────────────┴─────────┘
 
     Write a parquet, or really anythin to Azure...
 
