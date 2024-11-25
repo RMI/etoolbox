@@ -226,7 +226,7 @@ def test_pudl_table_rename_entry_point(script_runner, test_dir, temp_dir):
 
 
 @pytest.mark.usefixtures("pudl_test_cache")
-def test_rmi_pudl_clean(pudl_test_cache):
+def test_rmi_pudl_clean():
     """Test :func:`.pudl_clean`."""
     from etoolbox.utils.pudl import CACHE_PATH
 

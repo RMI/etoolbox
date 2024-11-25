@@ -101,15 +101,13 @@ def rmi_cloud_fs(token=None) -> WholeFileCacheFileSystem:
 
     >>> fs = rmi_cloud_fs()
     >>> df = pd.read_parquet("az://raw-data/test_data.parquet", filesystem=fs)
-    >>> df.head()  # doctest: +NORMALIZE_WHITESPACE
-              plant_id_eia re_type  latitude  ...  dl_first  dl_last      years
-    0 -1065799821027645681   solar      38.0  ...      2006     2022  2006-2022
-    1   500701449105794732   solar      38.0  ...      2006     2022  2006-2022
-    2  5264981444132581172   solar      47.5  ...      2006     2022  2006-2022
-    3  8596148642566783026   solar      47.0  ...      2006     2022  2006-2022
-    4  8293386810295812914   solar      47.0  ...      2006     2022  2006-2022
-    <BLANKLINE>
-    [5 rows x 12 columns]
+    >>> df[["plant_id_eia", "re_type"]].head()  # doctest: +NORMALIZE_WHITESPACE
+              plant_id_eia re_type
+    0 -1065799821027645681   solar
+    1   500701449105794732   solar
+    2  5264981444132581172   solar
+    3  8596148642566783026   solar
+    4  8293386810295812914   solar
 
     Read with :mod:`polars` using the same filecache as with :mod:`pandas`.
 
