@@ -107,7 +107,7 @@ def pudl_config(temp_dir) -> str:
 
 
 @pytest.fixture(scope="session")
-def pudl_test_cache(temp_dir):  # noqa: PT004
+def pudl_test_cache(temp_dir):
     """Change PUDL cache path for testing."""
     import etoolbox.utils.pudl as pudl
 

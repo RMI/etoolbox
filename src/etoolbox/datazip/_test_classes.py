@@ -52,7 +52,7 @@ def _eq_func(self, other):
 class _TestKlassSlotsCore:
     """Test class with slots w/o get/set."""
 
-    __slots__ = ("foo", "_dfs", "tup", "lis")
+    __slots__ = ("_dfs", "foo", "lis", "tup")
 
     def __init__(self, **kwargs):
         """Init."""
@@ -72,7 +72,7 @@ class _TestKlassSlotsCore:
 class _KlassSlots(_TestKlassSlotsCore):
     """Generic class with slots and get/set."""
 
-    __slots__ = ("foo", "_dfs", "tup", "lis", "exclude")
+    __slots__ = ("_dfs", "exclude", "foo", "lis", "tup")
 
     def __init__(self, **kwargs):
         """Init."""
@@ -93,7 +93,7 @@ class _KlassSlots(_TestKlassSlotsCore):
 class _KlassSlotsDzstate(_KlassSlots):
     """Generic class with slots and get/set."""
 
-    __slots__ = ("foo", "_dfs", "tup", "lis", "exclude")
+    __slots__ = ("_dfs", "exclude", "foo", "lis", "tup")
 
     def _dzsetstate_(self, state):
         _, state = state
@@ -113,8 +113,8 @@ class _TestKlassSlotsDict:
     """Test class with slots and __dict__ w/o get/set."""
 
     __slots__ = (
-        "foo",
         "__dict__",
+        "foo",
     )
 
     def __init__(self, **kwargs):
