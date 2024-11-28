@@ -4,7 +4,6 @@ import logging
 import os
 import shutil
 import warnings
-from argparse import ArgumentParser
 from datetime import datetime
 from pathlib import Path
 from typing import ClassVar
@@ -25,28 +24,40 @@ CACHE_PATH = user_cache_path("rmi.pudl", ensure_exists=True) / "aws"
 BASE = "s3://pudl.catalyst.coop"
 
 
-def rmi_pudl_clean(*, delete_config: bool = False) -> None:
+def rmi_pudl_clean(args=None, *, dry: bool = True, legacy: bool = False) -> None:
     """Remove rmi.pudl local cache."""
-    parser = ArgumentParser(description=f"Remove rmi.pudl local cache at {CACHE_PATH}.")
-    parser.add_argument(
-        "-c, --config",
-        action="store_true",
-        help=f"Remove config at {TOKEN_PATH.parent} with authentication token too.",
-        default=False,
-        dest="del_config",
-    )
-    if parser.prog == "rmi-pudl-clean":
-        delete_config = parser.parse_args().del_config
+    all_ = False
+    if args is not None:
+        dry = args.dry
+        legacy = args.legacy
+        all_ = args.all
 
-    if CACHE_PATH.exists():
-        print("deleting local cache at " + str(CACHE_PATH))
-        shutil.rmtree(CACHE_PATH)
-    elif CACHE_PATH.parent.exists():
-        shutil.rmtree(CACHE_PATH.parent)
+    def del_token():
+        if TOKEN_PATH.parent.exists():
+            print(f"deleting local config at {TOKEN_PATH.parent}")
+            if not dry:
+                shutil.rmtree(TOKEN_PATH.parent, ignore_errors=True)
 
-    if delete_config and TOKEN_PATH.exists():
-        print("deleting local config at " + str(TOKEN_PATH.parent))
-        shutil.rmtree(TOKEN_PATH.parent)
+    if all_:
+        if CACHE_PATH.parent.exists():
+            print(f"deleting {CACHE_PATH.parent} cache directory ")
+            if not dry:
+                shutil.rmtree(CACHE_PATH.parent, ignore_errors=True)
+        del_token()
+        return
+
+    if CACHE_PATH.exists() and not legacy:
+        print(f"deleting local cache at {CACHE_PATH}")
+        if not dry:
+            shutil.rmtree(CACHE_PATH, ignore_errors=True)
+        return
+
+    del_token()
+    for f in CACHE_PATH.parent.iterdir():
+        if not f.is_dir():
+            print(f"deleting {f} cache file ")
+            if not dry:
+                f.unlink()
 
 
 def _filecache_filesystem() -> WholeFileCacheFileSystem:

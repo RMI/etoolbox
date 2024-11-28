@@ -10,7 +10,6 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
-import yaml
 
 from etoolbox.datazip._test_classes import _KlassSlots, _TestKlass
 from etoolbox.utils.logging_utils import setup_logging
@@ -98,6 +97,8 @@ def pd_backend(test_dir, request) -> str:
 @pytest.fixture(scope="session")
 def pudl_config(temp_dir) -> str:
     """Use to run test with both pandas backends."""
+    import yaml
+
     file = temp_dir / ".pudl5.yml"
     with open(file, "w") as f:
         yaml.safe_dump({"pudl_out": "/Users/pytest"}, f)
@@ -112,6 +113,51 @@ def pudl_test_cache(temp_dir):
     import etoolbox.utils.pudl as pudl
 
     pudl.CACHE_PATH = temp_dir / "pudl_cache"
+
+
+@pytest.fixture
+def pudl_test_cache_for_ep(temp_dir):
+    """Setup dummy pudl cache and config directories for testing."""
+    import etoolbox.utils.pudl as pudl
+
+    pudl.CACHE_PATH = temp_dir / "rmi.pudl.cache/aws"
+    pudl.TOKEN_PATH = temp_dir / "rmi.pudl/.pudl-access-key.json"
+
+    pudl.CACHE_PATH.mkdir(exist_ok=True, parents=True)
+    pudl.TOKEN_PATH.parent.mkdir(exist_ok=True)
+    pudl.TOKEN_PATH.touch(exist_ok=True)
+    (pudl.CACHE_PATH / "cache").touch()
+    (pudl.CACHE_PATH.parent / "cache").touch()
+
+
+@pytest.fixture
+def cloud_test_cache(temp_dir):
+    """Setup dummy cloud cache and config directories for testing."""
+    import etoolbox.utils.cloud as cloud
+
+    original_paths = (cloud.CONFIG_PATH, cloud.RMICFEZIL_TOKEN_PATH)
+
+    cloud.AZURE_CACHE_PATH = temp_dir / "rmi.cloud.cache"
+    cloud.CONFIG_PATH = temp_dir / "rmi.cloud"
+    cloud.RMICFEZIL_TOKEN_PATH = cloud.CONFIG_PATH / "rmicfezil_token.txt"
+
+    cloud.AZURE_CACHE_PATH.mkdir(exist_ok=True, parents=True)
+    cloud.CONFIG_PATH.mkdir(exist_ok=True, parents=True)
+    yield
+
+    shutil.rmtree(temp_dir / "rmi.cloud.cache", ignore_errors=True)
+    # shutil.rmtree(temp_dir / "rmi.cloud", ignore_errors=True)
+    cloud.CONFIG_PATH, cloud.RMICFEZIL_TOKEN_PATH = original_paths
+
+
+@pytest.fixture
+def cloud_test_cache_w_files(cloud_test_cache):
+    """Setup dummy cloud cache and config files for testing."""
+    import etoolbox.utils.cloud as cloud
+
+    with open(cloud.RMICFEZIL_TOKEN_PATH, "w") as f:
+        f.write("123")
+    (cloud.AZURE_CACHE_PATH / "cache").touch()
 
 
 @pytest.fixture(scope="session")

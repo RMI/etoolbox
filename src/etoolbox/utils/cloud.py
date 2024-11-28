@@ -2,47 +2,48 @@
 
 import logging
 import os
-from argparse import ArgumentParser
+import shutil
+from functools import lru_cache
 from pathlib import Path
 
-from cachetools.func import lru_cache
 from fsspec import filesystem
 from fsspec.implementations.cached import WholeFileCacheFileSystem
 from platformdirs import user_cache_path, user_config_path
 
 from etoolbox.utils.misc import all_logging_disabled
 
-CONFIG_PATH = user_config_path("rmi-cloud", ensure_exists=True)
+CONFIG_PATH = user_config_path("rmi.cloud", ensure_exists=True)
 AZURE_CACHE_PATH = user_cache_path("rmi.cloud", ensure_exists=True)
 RMICFEZIL_TOKEN_PATH = CONFIG_PATH / "rmicfezil_token.txt"
 
 logger = logging.getLogger("etoolbox")
 
 
-def rmi_cloud_init():
+def rmi_cloud_clean(args):
+    """Cleanup cache and config directories."""
+    print(f"deleting {AZURE_CACHE_PATH}")
+    if not args.dry:
+        shutil.rmtree(AZURE_CACHE_PATH, ignore_errors=True)
+    if args.all:
+        print(f"deleting config {CONFIG_PATH}")
+        if not args.dry:
+            shutil.rmtree(CONFIG_PATH, ignore_errors=True)
+
+
+def rmi_cloud_init(args):
     """Write SAS token file to disk."""
-    parser = ArgumentParser(
-        description="Store SAS token for reading from and writing to Azure."
-    )
-    parser.add_argument(
-        "token",
-        type=str,
-        help="SAS Token.",
-    )
-    parser.add_argument(
-        "-c,--clobber",
-        action="store_true",
-        default=False,
-        required=False,
-        help=f"Overwrite existing SAS token in {RMICFEZIL_TOKEN_PATH}.",
-        dest="clobber",
-    )
-    args = parser.parse_args()
-    if RMICFEZIL_TOKEN_PATH.exists() and not args.clobber:
-        raise FileExistsError("SAS Token already exists.")
+    if RMICFEZIL_TOKEN_PATH.exists():
+        if not args.clobber:
+            raise FileExistsError("SAS Token already exists.")
+        print(f"deleting {RMICFEZIL_TOKEN_PATH}")
+        if not args.dry:
+            RMICFEZIL_TOKEN_PATH.unlink()
+    print(f"write {args.token} to {RMICFEZIL_TOKEN_PATH}")
+    if args.dry:
+        return
     with open(RMICFEZIL_TOKEN_PATH, "w") as f:
         f.write(args.token)
-    logger.info("SAS Token written to %s.", RMICFEZIL_TOKEN_PATH)
+    print(f"SAS Token {args.token} written to {RMICFEZIL_TOKEN_PATH}.")
 
 
 @lru_cache
@@ -54,7 +55,7 @@ def read_token() -> str:
     elif (token := os.environ.get("RMICFEZIL_SAS_TOKEN")) is not None:
         return token
     raise RuntimeError(
-        "No SAS Token found, either run rmi-cloud-init or set "
+        "No SAS Token found, either run `rmi cloud init` or set "
         "RMICFEZIL_SAS_TOKEN environment variable."
     )
 

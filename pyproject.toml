@@ -31,6 +31,8 @@ dependencies = [
     "s3fs>=2022.11.0, <2024.11.0",
     "tzdata>=2022.7; platform_system=='Windows'",
 ]
+# entry points
+scripts.rmi = "etoolbox.main:main"
 
 [project.optional-dependencies]
 dev = [
@@ -72,11 +74,6 @@ version = {attr = "etoolbox._version.__version__"}
 
 [tool.setuptools_scm]
 write_to = "src/etoolbox/_version.py"
-
-[project.scripts]  # entry points
-rmi-pudl-clean = "etoolbox.utils.pudl:rmi_pudl_clean"
-rmi-cloud-init = "etoolbox.utils.cloud:rmi_cloud_init"
-pudl-table-rename = "etoolbox.utils.table_map:main"
 
 #######################################################################################
 # Configurations for linters and other tools

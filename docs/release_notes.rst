@@ -23,6 +23,8 @@ What's New?
    :mod:`pandas` or :mod:`polars`.
 *  :func:`.generator_ownership` compiles ownership information for all generators using
    data from :mod:`pudl`.
+*  New CLI built off a single command ``rmi`` with ``cloud`` and ``pudl`` subcommands
+   for cleaning caches and configs.
 
 Bug Fixes
 ^^^^^^^^^

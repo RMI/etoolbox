@@ -1,8 +1,6 @@
 """Test pretend PudlTabl."""
 
 import os
-import shutil
-import sys
 from unittest import mock
 
 import numpy as np
@@ -206,30 +204,11 @@ class TestAWSPudlNoInternet:
         assert not df.empty
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="does not run on windows")
-@pytest.mark.script_launch_mode("inprocess")
-def test_pudl_table_rename_entry_point(script_runner, test_dir, temp_dir):
-    """Test the pudl-table-rename entry point."""
-    from etoolbox.utils.table_map import PUDL_TABLE_MAP
-
-    updated = temp_dir / "_read_tables_sample.py"
-    shutil.copy(test_dir / "test_data/_read_tables_sample.py", updated)
-
-    script_runner.run(
-        ["pudl-table-rename", "*.py", "-y"], print_result=True, cwd=temp_dir
-    )
-
-    with open(updated) as file:
-        updated_content = file.read()
-    for old in PUDL_TABLE_MAP:
-        assert old not in updated_content
-
-
 @pytest.mark.usefixtures("pudl_test_cache")
 def test_rmi_pudl_clean():
     """Test :func:`.pudl_clean`."""
     from etoolbox.utils.pudl import CACHE_PATH
 
     assert CACHE_PATH.exists()
-    rmi_pudl_clean()
+    rmi_pudl_clean(dry=False, legacy=False)
     assert not CACHE_PATH.exists()

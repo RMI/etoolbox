@@ -374,39 +374,15 @@ PUDL_TABLE_MAP = {
 }
 
 
-def main():
-    from argparse import ArgumentParser
-
-    parser = ArgumentParser(
-        description="Rename PUDL tables in files that match a provided pattern."
-    )
-    parser.add_argument(
-        type=str,
-        help="Pattern for globbing files.",
-        dest="pattern",
-    )
-    parser.add_argument(
-        "-d, --dry-run",
-        action="store_true",
-        help="Only display what would have been done.",
-        dest="dry_run",
-    )
-    parser.add_argument(
-        "-y, --yes",
-        action="store_true",
-        help="Sets any confirmation values to 'yes' automatically. Users will not be "
-        " asked to confirm before tables are renamed.",
-        dest="yes",
-    )
-
-    paths = [p for p in Path.cwd().glob(parser.parse_args().pattern) if p.is_file()]
+def renamer(args):
+    paths = [p for p in Path.cwd().glob(args.pattern) if p.is_file()]
     path_str = "\n  ".join(str(p) for p in paths)
 
     print(f"The following files will have their tables renamed:\n  {path_str}")
-    if parser.parse_args().dry_run:
+    if args.dry:
         return
 
-    if not parser.parse_args().yes:
+    if not args.yes:
         prompt = input("Are you sure you want to rename tables in these files? [y/n]")
         if prompt.casefold() != "y":
             return
@@ -433,6 +409,68 @@ def main():
 
             # Replace the old file with the new one
             new_path.rename(path)
+
+
+def main():
+    from argparse import ArgumentParser
+
+    parser = ArgumentParser(
+        description="Rename PUDL tables in files that match a provided pattern."
+    )
+    parser.add_argument(
+        type=str,
+        help="Pattern for globbing files.",
+        dest="pattern",
+    )
+    parser.add_argument(
+        "-d, --dry-run",
+        action="store_true",
+        help="Only display what would have been done.",
+        dest="dry",
+    )
+    parser.add_argument(
+        "-y, --yes",
+        action="store_true",
+        help="Sets any confirmation values to 'yes' automatically. Users will not be "
+        " asked to confirm before tables are renamed.",
+        dest="yes",
+    )
+    return renamer(parser.parse_args())
+
+    # paths = [p for p in Path.cwd().glob(args.pattern) if p.is_file()]
+    # path_str = "\n  ".join(str(p) for p in paths)
+    #
+    # print(f"The following files will have their tables renamed:\n  {path_str}")
+    # if args.dry_run:
+    #     return
+    #
+    # if not args.yes:
+    #     prompt = input("Are you sure you want to rename tables in these files? [y/n]")
+    #     if prompt.casefold() != "y":
+    #         return
+    #
+    # for path in paths:
+    #     # Read the content of the original text file
+    #     with open(path) as file:
+    #         file_content = file.read()
+    #
+    #     # Perform the replacements using the dictionary
+    #     modified_content = file_content
+    #
+    #     # Iterate through the dictionary to replace old names with new ones
+    #     for old_name, new_name in PUDL_TABLE_MAP.items():
+    #         modified_content = modified_content.replace(
+    #             f'"{old_name}"', f'"{new_name}"'
+    #         ).replace(f"'{old_name}'", f"'{new_name}'")
+    #
+    #     if modified_content != file_content:
+    #         new_path = path.parent / (path.stem + "_new" + path.suffix)
+    #         # Write the modified content to the output file
+    #         with open(new_path, "w") as file:
+    #             file.write(modified_content)
+    #
+    #         # Replace the old file with the new one
+    #         new_path.rename(path)
 
 
 if __name__ == "__main__":
