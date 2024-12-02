@@ -139,12 +139,6 @@ def main():
     )
     pudl_rename_sp.set_defaults(func=renamer)
 
-    pudl_subparsers.add_parser(
-        "init",
-        deprecated=True,
-        help="pudl no longer requires initialization/authentication",
-    )
-
     args = parser.parse_args()
     args.func(args)
 
