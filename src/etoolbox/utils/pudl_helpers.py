@@ -279,7 +279,7 @@ def zero_pad_numeric_string(
         # Replace anything that's not entirely digits with NA
         .replace(r"[^\d]+", pd.NA, regex=True)
         # Set any string longer than n_digits to NA
-        .replace(f"[\\d]{{{n_digits+1},}}", pd.NA, regex=True)
+        .replace(f"[\\d]{{{n_digits + 1},}}", pd.NA, regex=True)
         # Pad the numeric string with leading zeroes to n_digits length
         .str.zfill(n_digits)
         # All-zero ZIP & FIPS codes are invalid.
