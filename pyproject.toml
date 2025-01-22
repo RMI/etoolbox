@@ -38,7 +38,7 @@ scripts.rmi = "etoolbox.main:main"
 dev = [
     "build>=0.9",
     "ruff>0.0.215,<0.9.3",
-    "tox>=4.16.0,<4.24",
+    "tox>=4.16.0,<4.25",
     "twine>=4.0",
 ]
 doc = [
@@ -58,7 +58,7 @@ tests = [
     "pytest-console-scripts>=1.1,<1.5",  # Allow automatic testing of scripts
     "pytest-cov>=2.10,<6.1",  # Pytest plugin for working with coverage
     "ruff>0.0.215,<0.9.3",
-    "tox>=4.16.0,<4.24",  # Python test environment manager
+    "tox>=4.16.0,<4.25",  # Python test environment manager
     "tqdm >= 4.63,< 4.68",
     "requests_mock",  # used by remote_zip tests
     "pytest-socket",  #
