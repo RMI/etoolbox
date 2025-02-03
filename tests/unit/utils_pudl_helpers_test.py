@@ -7,6 +7,7 @@ from etoolbox.utils.pudl_helpers import (
     month_year_to_date,
     remove_leading_zeros_from_numeric_strings,
     simplify_columns,
+    simplify_strings,
     sum_and_weighted_average_agg,
     zero_pad_numeric_string,
 )
@@ -181,6 +182,16 @@ def test_zero_pad_numeric_string(df, n_digits):
     assert (output.str.len() == n_digits).all()
     # Make sure all outputs are entirely numeric
     assert output.str.match(f"^[\\d]{{{n_digits}}}$").all()
+
+
+def test_simplify_strings():
+    """Test helper that simplify strings."""
+    assert (
+        pd.DataFrame({"a": ["Hello  World"]})
+        .pipe(simplify_strings, columns=["a"])
+        .compare(pd.DataFrame({"a": ["hello world"]}))
+        .empty
+    )
 
 
 @pytest.mark.parametrize(

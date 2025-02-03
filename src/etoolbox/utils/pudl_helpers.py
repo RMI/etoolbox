@@ -239,6 +239,38 @@ def simplify_columns(df):
     return df
 
 
+def simplify_strings(df, columns):
+    """Simplify the strings contained in a set of dataframe columns.
+
+    Performs several operations to simplify strings for comparison and parsing purposes.
+    These include removing Unicode control characters, stripping leading and trailing
+    whitespace, using lowercase characters, and compacting all internal whitespace to a
+    single space.
+
+    Leaves null values unaltered. Casts other values with astype(str).
+
+    Args:
+        df (pandas.DataFrame): DataFrame whose columns are being cleaned up.
+        columns (iterable): The labels of the string columns to be simplified.
+
+    Returns:
+        pandas.DataFrame: The whole DataFrame that was passed in, with
+        the string columns cleaned up.
+    """
+    out_df = df.copy()
+    for col in columns:
+        if col in out_df.columns:
+            out_df.loc[out_df[col].notna(), col] = (
+                out_df.loc[out_df[col].notna(), col]
+                .astype(str)
+                .str.replace(r"[\x00-\x1f\x7f-\x9f]", "", regex=True)
+                .str.strip()
+                .str.lower()
+                .str.replace(r"\s+", " ", regex=True)
+            )
+    return out_df
+
+
 def zero_pad_numeric_string(
     col: pd.Series,
     n_digits: int,
