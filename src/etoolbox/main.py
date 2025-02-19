@@ -1,10 +1,13 @@
 """etoolbox CLI utility functions."""
 
 import argparse
+import os
 
 from etoolbox.utils.cloud import (
     AZURE_CACHE_PATH,
     RMICFEZIL_TOKEN_PATH,
+    _get,
+    _list,
     rmi_cloud_clean,
     rmi_cloud_init,
 )
@@ -27,6 +30,38 @@ def main():
         "cloud", help="RMI cloud utilities", aliases=["azure"]
     )
     cloud_subparsers = cloud_parser.add_subparsers(required=True, title="subcommands")
+
+    cloud_list_sp = cloud_subparsers.add_parser(
+        "list",
+        help="list files in Azure container or directory",
+        description="List files in Azure container or directory.",
+    )
+    cloud_list_sp.add_argument(
+        "to_list_path",
+        type=str,
+        help="list files in directory of the form '<container>/...",
+    )
+    cloud_list_sp.set_defaults(func=_list)
+
+    cloud_get_sp = cloud_subparsers.add_parser(
+        "get",
+        help="download files from Azure",
+        description="Download files from Azure.",
+    )
+    cloud_get_sp.add_argument(
+        "to_get_path",
+        type=str,
+        help="remote file to download of the form '<container>/...",
+    )
+    cloud_get_sp.add_argument(
+        "-D,--destination",
+        type=str,
+        default=os.getcwd(),
+        required=False,
+        help="local destination for the downloaded files [defaults to cwd].",
+        dest="destination",
+    )
+    cloud_get_sp.set_defaults(func=_get)
 
     cloud_clean_sp = cloud_subparsers.add_parser(
         "clean",

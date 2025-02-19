@@ -12,7 +12,7 @@ from functools import partial
 from io import BytesIO
 from pathlib import Path, PosixPath, WindowsPath
 from types import NoneType
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import IO, TYPE_CHECKING, Any, ClassVar, Literal
 from zipfile import ZipFile
 from zoneinfo import ZoneInfo
 
@@ -35,6 +35,7 @@ from etoolbox.datazip._utils import (
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
+    from os import PathLike
 
     from etoolbox.datazip._types import JSONABLE, DZable
 
@@ -56,8 +57,8 @@ class DataZip(ZipFile):
 
     def __init__(
         self,
-        file: str | Path | BytesIO,
-        mode="r",
+        file: PathLike[str] | IO[bytes],
+        mode: Literal["r", "w"] = "r",
         ignore_pd_dtypes=False,  # noqa: FBT002
         *args,
         **kwargs,
@@ -151,8 +152,8 @@ class DataZip(ZipFile):
         if mode in ("a", "x"):
             raise ValueError("DataZip does not support modes 'a' or 'x'")
 
-        if isinstance(file, str):
-            file = Path(file)
+        # if isinstance(file, str):
+        #     file = Path(file)
 
         clobber = kwargs.pop("clobber", False)
         if isinstance(file, Path):

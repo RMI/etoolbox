@@ -1,5 +1,6 @@
 """Tools for working with RMI's Azure storage."""
 
+import json
 import logging
 import os
 import shutil
@@ -147,6 +148,43 @@ def rmi_cloud_fs(token=None) -> WholeFileCacheFileSystem:
         check_files=True,
         cache_timeout=None,
     )
+
+
+def cached_path(cloud_path: str) -> str | None:
+    """Get the local cache path of a cloud file.
+
+    Args:
+        cloud_path: path on azure, eg ``az://raw-data/test_data.parquet``
+
+    Examples
+    --------
+    >>> import polars as pl
+    >>> from etoolbox.utils.cloud import rmi_cloud_fs, cached_path
+
+    >>> fs = rmi_cloud_fs()
+    >>> cloud_path = "az://raw-data/test_data.parquet"
+    >>> with fs.open(cloud_path) as f:
+    ...     df = pl.read_parquet(f)
+    >>> cached_path(cloud_path)
+    '2a722b95bfff23b14d1deaa81cca3b697b875934df3858159d205d20dcf1e305'
+
+    """
+    cloud_path = cloud_path.removeprefix("az://").removeprefix("abfs://")
+    with open(AZURE_CACHE_PATH / "cache", "rb") as f:
+        cache_data = json.load(f)
+    return cache_data.get(cloud_path, {}).get("fn", None)
+
+
+def _get(args):
+    get(args.to_get_path, args.destination)
+
+
+def _list(args):
+    from pprint import pprint
+
+    fs = rmi_cloud_fs()
+    ls = fs.ls(args.to_list_path, detail=False)
+    pprint(ls)
 
 
 def get(to_get_path: str, destination: Path | str, fs=None) -> None:

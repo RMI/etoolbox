@@ -26,6 +26,40 @@ class TestCloudEntryPoint:
         with open(cloud.RMICFEZIL_TOKEN_PATH) as f:
             assert f.read() == "123"
 
+    @pytest.mark.script_launch_mode("inprocess")
+    def test_cloud_list(self, script_runner):
+        """Test rmi cloud init entry point."""
+        result = script_runner.run(
+            ["rmi", "cloud", "list", "raw-data"], capture_output=True
+        )
+        assert "raw-data/test_data.parquet" in result.stdout
+
+    @pytest.mark.script_launch_mode("inprocess")
+    def test_cloud_get_dest(self, script_runner, temp_dir):
+        """Test rmi cloud get."""
+        script_runner.run(
+            [
+                "rmi",
+                "cloud",
+                "get",
+                "raw-data/test_data.parquet",
+                "-D",
+                str(temp_dir / "test_data.parquet"),
+            ]
+        )
+        assert (temp_dir / "test_data.parquet").exists()
+
+    @pytest.mark.script_launch_mode("inprocess")
+    def test_cloud_get_cwd(self, script_runner, temp_dir):
+        """Test rmi cloud get."""
+        cwd_dir = temp_dir / "cwd_test"
+        cwd_dir.mkdir()
+
+        script_runner.run(
+            ["rmi", "cloud", "get", "raw-data/test_data.parquet"], cwd=cwd_dir
+        )
+        assert (cwd_dir / "test_data.parquet").exists()
+
     @pytest.mark.usefixtures("cloud_test_cache_w_files")
     @pytest.mark.script_launch_mode("inprocess")
     def test_cloud_init_clobber(self, script_runner):
