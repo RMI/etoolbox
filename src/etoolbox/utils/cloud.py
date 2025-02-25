@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import shutil
+from contextlib import nullcontext
 from functools import lru_cache
 from pathlib import Path
 
@@ -12,6 +13,14 @@ from fsspec.implementations.cached import WholeFileCacheFileSystem
 from platformdirs import user_cache_path, user_config_path
 
 from etoolbox.utils.misc import all_logging_disabled
+
+try:
+    import tqdm  # noqa: F401
+    from fsspec.callbacks import TqdmCallback as ProgressCallback
+
+except (ImportError, ModuleNotFoundError):
+    from fsspec.callbacks import DotPrinterCallback as ProgressCallback
+
 
 CONFIG_PATH = user_config_path("rmi.cloud", ensure_exists=True)
 AZURE_CACHE_PATH = user_cache_path("rmi.cloud", ensure_exists=True)
@@ -176,28 +185,38 @@ def cached_path(cloud_path: str) -> str | None:
 
 
 def _get(args):
-    get(args.to_get_path, args.destination)
+    get(args.to_get_path, args.destination, quiet=False)
+
+
+def _put(args):
+    to_put_path = Path(args.to_put_path).absolute()
+    if not to_put_path.exists():
+        raise FileNotFoundError(f"{to_put_path}")
+
+    put(Path(args.to_put_path), args.destination, quiet=False)
 
 
 def _list(args):
     from pprint import pprint
 
     fs = rmi_cloud_fs()
-    ls = fs.ls(args.to_list_path, detail=False)
+    ls = fs.ls(args.to_list_path, detail=args.detail)
     pprint(ls)
 
 
-def get(to_get_path: str, destination: Path | str, fs=None) -> None:
+def get(to_get_path: str, destination: Path | str, fs=None, *, quiet=True) -> None:
     """Download a remote file from the cloud.
 
     Args:
         to_get_path: remote file or folder to download of the form '<container>/...
         destination: local destination for the downloaded files
         fs: filesystem
+        quiet: disable logging of adlfs output
     """
     fs = rmi_cloud_fs() if fs is None else fs
     to_get_path = to_get_path.removeprefix("az://").removeprefix("abfs://")
-    with all_logging_disabled():
+    context = all_logging_disabled if quiet else nullcontext
+    with context():
         ls = fs.ls(to_get_path)
         if ls[0]["name"] != to_get_path:
             raise TypeError("`to_get_path` must be a file.")
@@ -205,10 +224,11 @@ def get(to_get_path: str, destination: Path | str, fs=None) -> None:
             rpath="az://" + to_get_path,
             lpath=str(destination),
             recursive=False,
+            callback=ProgressCallback(),
         )
 
 
-def put(to_put_path: Path, destination: str, fs=None) -> None:
+def put(to_put_path: Path, destination: str, fs=None, *, quiet=True) -> None:
     """Upload local files or directories to the cloud.
 
     Copies a specific file or tree of files. If destination
@@ -219,11 +239,14 @@ def put(to_put_path: Path, destination: str, fs=None) -> None:
         to_put_path: local file or folder to copy
         destination: copy destination of the form '<container>/...
         fs: filesystem
+        quiet: disable logging of adlfs output
     """
     fs = rmi_cloud_fs() if fs is None else fs
-    with all_logging_disabled():
+    context = all_logging_disabled if quiet else nullcontext
+    with context():
         fs.put(
             lpath=str(to_put_path),
             rpath="az://" + destination.removeprefix("az://").removeprefix("abfs://"),
             recursive=to_put_path.is_dir(),
+            callback=ProgressCallback(),
         )

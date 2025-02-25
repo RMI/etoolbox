@@ -24,7 +24,8 @@ What's New?
 *  :func:`.generator_ownership` compiles ownership information for all generators using
    data from :mod:`pudl`.
 *  New CLI built off a single command ``rmi`` with ``cloud`` and ``pudl`` subcommands
-   for cleaning caches and configs, and in the cloud case, getting and listing files.
+   for cleaning caches and configs, and in the cloud case, getting, putting,
+   and listing files.
 *  :class:`.DataZip` will not append ``.zip`` suffix to file paths passed to its init
    as strings.
 *  Added :func:`.simplify_strings` to :mod:`.pudl_helpers`.

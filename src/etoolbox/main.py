@@ -8,6 +8,7 @@ from etoolbox.utils.cloud import (
     RMICFEZIL_TOKEN_PATH,
     _get,
     _list,
+    _put,
     rmi_cloud_clean,
     rmi_cloud_init,
 )
@@ -41,6 +42,9 @@ def main():
         type=str,
         help="list files in directory of the form '<container>/...",
     )
+    cloud_list_sp.add_argument(
+        "-l", default=False, action="store_true", help="include detail", dest="detail"
+    )
     cloud_list_sp.set_defaults(func=_list)
 
     cloud_get_sp = cloud_subparsers.add_parser(
@@ -62,6 +66,24 @@ def main():
         dest="destination",
     )
     cloud_get_sp.set_defaults(func=_get)
+
+    cloud_put_sp = cloud_subparsers.add_parser(
+        "put",
+        help="upload files to Azure",
+        description="Upload files to Azure.",
+    )
+    cloud_put_sp.add_argument(
+        "to_put_path",
+        type=str,
+        help="local file or folder to copy",
+    )
+    cloud_put_sp.add_argument(
+        "-D,--destination",
+        type=str,
+        help="copy destination of the form '<container>/...",
+        dest="destination",
+    )
+    cloud_put_sp.set_defaults(func=_put)
 
     cloud_clean_sp = cloud_subparsers.add_parser(
         "clean",
