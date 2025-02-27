@@ -31,6 +31,9 @@ def rmi_pudl_clean(args=None, *, dry: bool = True, legacy: bool = False) -> None
         dry = args.dry
         legacy = args.legacy
         all_ = args.all
+    info = pudl_cache()
+    print(f"Will delete the following items using {info['size'].sum() * 1e-6:,.0f} MB")
+    print(info[["size", "time"]])
 
     def del_token():
         if TOKEN_PATH.parent.exists():
@@ -115,6 +118,36 @@ def _no_network_cache_path(release, table_name):
             )
             return CACHE_PATH / table_cache_data["fn"]
     return None
+
+
+def pudl_cache():
+    """Return info about the contents of the PUDL cache."""
+    cache_info_path = CACHE_PATH / "cache"
+    with open(cache_info_path) as f:
+        cache_data = json.loads(f.read())
+    cdl = [
+        v
+        | {
+            "size": (CACHE_PATH / v["fn"]).stat().st_size,
+            "time": datetime.fromtimestamp(v["time"]),
+            "original": (
+                split := v["original"].removeprefix("pudl.catalyst.coop/").split("/")
+            )[1],
+            "release": split[0],
+        }
+        for v in cache_data.values()
+    ]
+    return (
+        pd.DataFrame.from_records(cdl)
+        .set_index(["release", "original"])[["time", "size", "fn", "uid"]]
+        .sort_index()
+    )
+
+
+def _pudl_cache(args):
+    info = pudl_cache()
+    print(info)
+    print(f"\nTotal size: {info['size'].sum() * 1e-6:,.0f} MB")
 
 
 def pudl_list(

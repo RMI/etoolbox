@@ -126,7 +126,7 @@ def pudl_test_cache_for_ep(temp_dir):
     pudl.CACHE_PATH.mkdir(exist_ok=True, parents=True)
     pudl.TOKEN_PATH.parent.mkdir(exist_ok=True)
     pudl.TOKEN_PATH.touch(exist_ok=True)
-    (pudl.CACHE_PATH / "cache").touch()
+    pudl.pl_read_pudl("core_eia__codes_balancing_authorities")
     (pudl.CACHE_PATH.parent / "cache").touch()
 
 
@@ -146,7 +146,6 @@ def cloud_test_cache(temp_dir):
     yield
 
     shutil.rmtree(temp_dir / "rmi.cloud.cache", ignore_errors=True)
-    # shutil.rmtree(temp_dir / "rmi.cloud", ignore_errors=True)
     cloud.CONFIG_PATH, cloud.RMICFEZIL_TOKEN_PATH = original_paths
 
 
@@ -155,9 +154,8 @@ def cloud_test_cache_w_files(cloud_test_cache):
     """Setup dummy cloud cache and config files for testing."""
     import etoolbox.utils.cloud as cloud
 
-    with open(cloud.RMICFEZIL_TOKEN_PATH, "w") as f:
-        f.write("123")
-    (cloud.AZURE_CACHE_PATH / "cache").touch()
+    fs = cloud.rmi_cloud_fs()
+    _ = pd.read_parquet("az://raw-data/test_data.parquet", filesystem=fs)
 
 
 @pytest.fixture(scope="session")

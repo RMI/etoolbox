@@ -28,11 +28,19 @@ class TestCloudEntryPoint:
 
     @pytest.mark.script_launch_mode("inprocess")
     def test_cloud_list(self, script_runner):
-        """Test rmi cloud init entry point."""
+        """Test rmi cloud list entry point."""
         result = script_runner.run(
             ["rmi", "cloud", "list", "raw-data"], capture_output=True
         )
-        assert "raw-data/test_data.parquet" in result.stdout
+        assert "test_data.parquet" in result.stdout
+
+    @pytest.mark.script_launch_mode("inprocess")
+    def test_cloud_list_detail(self, script_runner):
+        """Test rmi cloud list entry point."""
+        result = script_runner.run(
+            ["rmi", "cloud", "list", "raw-data", "-l"], capture_output=True
+        )
+        assert "test_data.parquet" in result.stdout
 
     @pytest.mark.script_launch_mode("inprocess")
     def test_cloud_get_dest(self, script_runner, temp_dir):
@@ -110,6 +118,13 @@ class TestCloudEntryPoint:
         assert any(cloud.AZURE_CACHE_PATH.iterdir())
         assert cloud.CONFIG_PATH.exists()
 
+    @pytest.mark.usefixtures("cloud_test_cache_w_files")
+    @pytest.mark.script_launch_mode("inprocess")
+    def test_cloud_cache(self, script_runner):
+        """Test rmi cloud cache entry point."""
+        result = script_runner.run(["rmi", "cloud", "cache"], capture_output=True)
+        assert "Total size:" in result.stdout
+
 
 class TestPudlEntryPoint:
     @pytest.mark.skipif(sys.platform == "win32", reason="does not run on windows")
@@ -139,6 +154,13 @@ class TestPudlEntryPoint:
         script_runner.run(["rmi", "pudl", "clean"], print_result=True)
         assert pudl.CACHE_PATH.parent.exists()
         assert not pudl.CACHE_PATH.exists()
+
+    @pytest.mark.usefixtures("pudl_test_cache_for_ep")
+    @pytest.mark.script_launch_mode("inprocess")
+    def test_pudl_cache(self, script_runner):
+        """Test the rmi pudl cache entry point."""
+        result = script_runner.run(["rmi", "pudl", "cache"], capture_output=True)
+        assert "Total size:" in result.stdout
 
     @pytest.mark.usefixtures("pudl_test_cache_for_ep")
     @pytest.mark.script_launch_mode("inprocess")

@@ -6,6 +6,7 @@ import os
 from etoolbox.utils.cloud import (
     AZURE_CACHE_PATH,
     RMICFEZIL_TOKEN_PATH,
+    _cache_info,
     _get,
     _list,
     _put,
@@ -17,6 +18,7 @@ from etoolbox.utils.pudl import (
 )
 from etoolbox.utils.pudl import (
     TOKEN_PATH,
+    _pudl_cache,
     rmi_pudl_clean,
 )
 from etoolbox.utils.table_map import renamer
@@ -40,10 +42,14 @@ def main():
     cloud_list_sp.add_argument(
         "to_list_path",
         type=str,
-        help="list files in directory of the form '<container>/...",
+        help="list files in directory of the form '<container>/...'",
     )
     cloud_list_sp.add_argument(
-        "-l", default=False, action="store_true", help="include detail", dest="detail"
+        "-l,--detail",
+        default=False,
+        action="store_true",
+        help="include detail",
+        dest="detail",
     )
     cloud_list_sp.set_defaults(func=_list)
 
@@ -55,7 +61,7 @@ def main():
     cloud_get_sp.add_argument(
         "to_get_path",
         type=str,
-        help="remote file to download of the form '<container>/...",
+        help="remote file to download of the form '<container>/...'",
     )
     cloud_get_sp.add_argument(
         "-D,--destination",
@@ -73,17 +79,23 @@ def main():
         description="Upload files to Azure.",
     )
     cloud_put_sp.add_argument(
-        "to_put_path",
+        "source_path",
         type=str,
         help="local file or folder to copy",
     )
     cloud_put_sp.add_argument(
-        "-D,--destination",
+        "destination",
         type=str,
-        help="copy destination of the form '<container>/...",
-        dest="destination",
+        help="copy destination of the form '<container>/...'",
     )
     cloud_put_sp.set_defaults(func=_put)
+
+    cloud_cache_sp = cloud_subparsers.add_parser(
+        "cache",
+        help="show info about the local cache of cloud files",
+        description="Show info about the local cache of cloud files.",
+    )
+    cloud_cache_sp.set_defaults(func=_cache_info)
 
     cloud_clean_sp = cloud_subparsers.add_parser(
         "clean",
@@ -137,6 +149,13 @@ def main():
         help="PUDL utilities",
     )
     pudl_subparsers = pudl_parser.add_subparsers(required=True, title="subcommands")
+
+    pudl_cache_sp = pudl_subparsers.add_parser(
+        "cache",
+        help=f"delete local cache in {PUDL_CACHE_PATH}",
+        description=f"Remove rmi.pudl local cache at {PUDL_CACHE_PATH}.",
+    )
+    pudl_cache_sp.set_defaults(func=_pudl_cache)
 
     pudl_clean_sp = pudl_subparsers.add_parser(
         "clean",

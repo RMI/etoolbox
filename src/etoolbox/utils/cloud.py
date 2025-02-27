@@ -5,6 +5,7 @@ import logging
 import os
 import shutil
 from contextlib import nullcontext
+from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
 
@@ -31,7 +32,10 @@ logger = logging.getLogger("etoolbox")
 
 def rmi_cloud_clean(args):
     """Cleanup cache and config directories."""
-    print(f"deleting {AZURE_CACHE_PATH}")
+    info = cache_info()
+    size = info["size"].sum() * 1e-6
+    print(f"Will delete the following items using {size:,.0f} MB at {AZURE_CACHE_PATH}")
+    print(info[["size", "time"]])
     if not args.dry:
         shutil.rmtree(AZURE_CACHE_PATH, ignore_errors=True)
     if args.all:
@@ -159,6 +163,25 @@ def rmi_cloud_fs(token=None) -> WholeFileCacheFileSystem:
     )
 
 
+def cache_info():
+    """Return info about cloud cache contents."""
+    import pandas as pd
+
+    with open(AZURE_CACHE_PATH / "cache", "rb") as f:
+        cache_data = json.load(f)
+    cdl = [
+        v
+        | {
+            "size": (AZURE_CACHE_PATH / v["fn"]).stat().st_size,
+            "time": datetime.fromtimestamp(v["time"]),
+        }
+        for v in cache_data.values()
+    ]
+    return pd.DataFrame.from_records(cdl).set_index("original")[
+        ["time", "size", "fn", "uid"]
+    ]
+
+
 def cached_path(cloud_path: str) -> str | None:
     """Get the local cache path of a cloud file.
 
@@ -179,29 +202,22 @@ def cached_path(cloud_path: str) -> str | None:
 
     """
     cloud_path = cloud_path.removeprefix("az://").removeprefix("abfs://")
-    with open(AZURE_CACHE_PATH / "cache", "rb") as f:
-        cache_data = json.load(f)
-    return cache_data.get(cloud_path, {}).get("fn", None)
+    try:
+        return cache_info().loc[cloud_path, "fn"]
+    except KeyError:
+        return None
 
 
-def _get(args):
-    get(args.to_get_path, args.destination, quiet=False)
+def cloud_list(path: str, *, detail=False) -> list[str] | dict:
+    """List cloud files in a folder.
 
+    Args:
+        path: remote folder to list contents of e.g. '<container>/...'
+        detail: include detail information
 
-def _put(args):
-    to_put_path = Path(args.to_put_path).absolute()
-    if not to_put_path.exists():
-        raise FileNotFoundError(f"{to_put_path}")
-
-    put(Path(args.to_put_path), args.destination, quiet=False)
-
-
-def _list(args):
-    from pprint import pprint
-
+    """
     fs = rmi_cloud_fs()
-    ls = fs.ls(args.to_list_path, detail=args.detail)
-    pprint(ls)
+    return fs.ls(path, detail=detail)
 
 
 def get(to_get_path: str, destination: Path | str, fs=None, *, quiet=True) -> None:
@@ -250,3 +266,48 @@ def put(to_put_path: Path, destination: str, fs=None, *, quiet=True) -> None:
             recursive=to_put_path.is_dir(),
             callback=ProgressCallback(),
         )
+
+
+"""
+======================================= For CLI =======================================
+These are wrappers to use the above functions from the CLI
+"""
+
+
+def _cache_info(args):
+    info = cache_info()
+    print(info)
+    print(f"\nTotal size: {info['size'].sum() * 1e-6:,.0f} MB")
+
+
+def _list(args):
+    import pandas as pd
+
+    ls = cloud_list(args.to_list_path, detail=args.detail)
+    if args.detail:
+        cols = ["size", "creation_time", "last_modified", "type", "etag", "tags"]
+        ex = ["content_settings"] if any("content_settings" in d for d in ls) else None
+        info = (
+            pd.DataFrame.from_records(ls, exclude=ex)
+            .assign(
+                name=lambda x: x.name.str.replace(
+                    args.to_list_path, ""
+                ).str.removeprefix("/")
+            )
+            .set_index("name")
+        )
+        print(info[[c for c in cols if c in info.columns]])
+        return
+    print("\n".join(a.removeprefix(args.to_list_path).removeprefix("/") for a in ls))
+
+
+def _get(args):
+    get(args.to_get_path, args.destination, quiet=False)
+
+
+def _put(args):
+    source_path = Path(args.source_path).absolute()
+    if not source_path.exists():
+        raise FileNotFoundError(f"{source_path}")
+
+    put(source_path, args.destination, quiet=False)
