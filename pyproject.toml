@@ -28,7 +28,7 @@ dependencies = [
     "platformdirs >3.0,<4.4",
     "polars>=0.20,<1.25",
     "pyarrow>=9, <20",
-    "s3fs>=2022.11.0, <2025.3.0",
+    "s3fs>=2022.11.0, <2025.4.0",
     "tzdata>=2022.7; platform_system=='Windows'",
 ]
 # entry points
