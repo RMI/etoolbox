@@ -34,7 +34,7 @@ def main():
     many_small = _TestKlass(
         **{
             str(i): pd.DataFrame(np.random.rand(100, 100)).astype(
-                {i: "string" for i in range(30)} | {i: int for i in range(30, 60)}
+                dict.fromkeys(range(30), "string") | dict.fromkeys(range(30, 60), int)
             )
             for i in range(100)
         },
@@ -42,14 +42,14 @@ def main():
     few_big = _TestKlass(
         **{
             str(i): pd.DataFrame(np.random.rand(int(1e3), 100)).astype(
-                {i: "string" for i in range(30)} | {i: int for i in range(30, 60)}
+                dict.fromkeys(range(30), "string") | dict.fromkeys(range(30, 60), int)
             )
             for i in range(20)
         },
     )
     huge = _TestKlass(
         huge=pd.DataFrame(np.random.rand(int(1e6), 20)).astype(
-            {i: "string" for i in range(6)} | {i: int for i in range(6, 12)}
+            dict.fromkeys(range(6), "string") | dict.fromkeys(range(6, 12), int)
         )
     )
     dicts = _TestKlass(

@@ -68,9 +68,9 @@ def fix_int_na(df, columns, float_na=np.nan, int_na=-1, str_na=""):
         the postgresql COPY FROM command.
     """
     return (
-        df.replace({c: float_na for c in columns}, int_na)
-        .astype({c: int for c in columns})
-        .astype({c: str for c in columns})
+        df.replace(dict.fromkeys(columns, float_na), int_na)
+        .astype(dict.fromkeys(columns, int))
+        .astype(dict.fromkeys(columns, str))
         .replace({c: str(int_na) for c in columns}, str_na)
     )
 
