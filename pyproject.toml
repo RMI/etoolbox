@@ -52,7 +52,7 @@ doc = [
     "sphinxcontrib-mermaid>0.7,<1.1.0",
 ]
 tests = [
-    "coverage>=5.3,<7.8",  # Lets us track what code is being tested
+    "coverage>=5.3,<7.9",  # Lets us track what code is being tested
     "pre-commit>=2.9,<4.3",  # Allow us to run pre-commit hooks in testing
     "pytest>=6.2,<8.4",  # test framework
     "pytest-console-scripts>=1.1,<1.5",  # Allow automatic testing of scripts
