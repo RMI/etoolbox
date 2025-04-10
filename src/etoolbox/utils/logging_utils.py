@@ -141,6 +141,20 @@ LOG_RECORD_BUILTIN_ATTRS = {
 }
 
 
+class SafeFormatter(logging.Formatter):
+    """A formatter that fills in missing extras with defaults."""
+
+    def __init__(self, *, extra_defaults: dict[str, str] | None = None):  # noqa: D107
+        super().__init__()
+        self.extra_defaults = extra_defaults if extra_defaults is not None else {}
+
+    def format(self, record: logging.LogRecord) -> str:  # noqa: D102
+        for k, v in self.extra_defaults.items():
+            if not hasattr(record, k):
+                setattr(record, k, v)
+        return super().format(record)
+
+
 class JSONFormatter(logging.Formatter):
     """A JSON formatter for use in :class:`logging.Logger` objects."""
 
@@ -168,7 +182,7 @@ class JSONFormatter(logging.Formatter):
         message = {
             key: msg_val
             if (msg_val := always_fields.pop(val, None)) is not None
-            else getattr(record, val)
+            else getattr(record, val, "")
             for key, val in self.fmt_keys.items()
         }
         message.update(always_fields)
