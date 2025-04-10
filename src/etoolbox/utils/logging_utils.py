@@ -144,8 +144,17 @@ LOG_RECORD_BUILTIN_ATTRS = {
 class SafeFormatter(logging.Formatter):
     """A formatter that fills in missing extras with defaults."""
 
-    def __init__(self, *, extra_defaults: dict[str, str] | None = None):  # noqa: D107
-        super().__init__()
+    def __init__(  # noqa: D107
+        self,
+        fmt=None,
+        datefmt=None,
+        style="%",
+        validate=True,  # noqa: FBT002
+        *,
+        defaults=None,
+        extra_defaults: dict[str, str] | None = None,
+    ):
+        super().__init__(fmt, datefmt, style, validate, defaults=defaults)
         self.extra_defaults = extra_defaults if extra_defaults is not None else {}
 
     def format(self, record: logging.LogRecord) -> str:  # noqa: D102
