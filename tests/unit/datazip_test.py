@@ -325,6 +325,26 @@ def test_dzstate_decode(temp_dir, klass):
     assert obj0.foo == 2 and obj1.foo == 5  # noqa: PT018
 
 
+def test_dump_load_dict(temp_dir):
+    """Test dumping builtins."""
+    obj0 = {"foo": 2, "_dfs": [], "tup": (1,), "lis": [2], "exclude": ("foo",)}
+    file = temp_dir / "test_dump_dict_obj0.zip"
+    DataZip.dump(obj0, file)
+    obj1 = DataZip.load(file)
+    assert obj0["foo"] == 2 and obj1["foo"] == 2  # noqa: PT018
+
+
+def test_load_no_dump(temp_dir):
+    """Test dumping builtins."""
+    obj0 = {"foo": 2, "_dfs": [], "tup": (1,), "lis": [2], "exclude": ("foo",)}
+    file = temp_dir / "test_dump_dict_obj1.zip"
+    with DataZip(file, "w") as z0:
+        z0["a"] = obj0
+        z0["b"] = "a string"
+    obj1 = DataZip.load(file)
+    assert obj1["a"]["foo"] == 2 and obj1["b"] == "a string"  # noqa: PT018
+
+
 class TestWPDBackend:
     """Tests that involve pandas.
 

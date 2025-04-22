@@ -5,7 +5,7 @@ eToolBox Release Notes
 .. _release-v0-3-1:
 
 ---------------------------------------------------------------------------------------
-0.3.1 (2024-XX-XX)
+0.3.1 (2025-XX-XX)
 ---------------------------------------------------------------------------------------
 
 What's New?
@@ -29,6 +29,13 @@ What's New?
 *  :class:`.DataZip` will not append ``.zip`` suffix to file paths passed to its init
    as strings.
 *  Added :func:`.simplify_strings` to :mod:`.pudl_helpers`.
+*  Subclass of :mod:`logging.Formatter`, :mod:`.SafeFormatter` that can fill extra
+   values with defaults when they are not provided in the logging call. See
+   `here <https://docs.python.org/3/library/logging.html#logging.Logger.debug>`__ for
+   more info on the extra kwarg in logging calls.
+*  Option to disable use of ids in :class:`.DataZip` to keep track of multiple
+   references to the same object using ``ids_for_dedup`` kwarg.
+
 
 
 Bug Fixes
@@ -38,6 +45,8 @@ Bug Fixes
    ``__getattr__``.
 *  Attempt to fix doctest bug caused by pytest logging, see
    `pytest#5908 <https://github.com/pytest-dev/pytest/issues/5908>`_
+*  Fixed a bug that meant only zips created with :meth:`.DataZip.dump` could be opened
+   with :meth:`.DataZip.load`.
 
 .. _release-v0-3-0:
 

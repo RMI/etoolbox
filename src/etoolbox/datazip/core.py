@@ -61,6 +61,7 @@ class DataZip(ZipFile):
         mode: Literal["r", "w"] = "r",
         ignore_pd_dtypes=False,  # noqa: FBT002
         *args,
+        ids_for_dedup=True,
         **kwargs,
     ):
         """Create a DataZip.
@@ -79,6 +80,12 @@ class DataZip(ZipFile):
                 of ``pyarrow`` types.
             args: additional positional will be passed to
                 :meth:`zipfile.ZipFile.__init__`.
+            ids_for_dedup: If True, multiple references to the same object will not
+                cause the object to be stored multiple times. If False, the object
+                will be stored as many times as it has references. True can save space
+                but because ids are not unique for objects with non-overlapping
+                lifetimes, setting to True can result in subsequent new objects NOT
+                 being stored because they share an id with an earlier object.
             kwargs: keyword arguments will be passed to
                 :meth:`zipfile.ZipFile.__init__`.
 
@@ -170,6 +177,7 @@ class DataZip(ZipFile):
         super().__init__(file, mode, *args, **kwargs)
         self._ignore_pd_dtypes = ignore_pd_dtypes
         self._attributes, self._metadata = {"__state__": {}}, {"__rev__": 2}
+        self._ids_for_dedup = ids_for_dedup
         self._ids, self._red = {}, {}
         if mode == "r":
             self._attributes = self._json_get(
@@ -246,7 +254,12 @@ class DataZip(ZipFile):
         See :meth:`.DataZip.dump` for examples.
         """
         with DataZip(file, "r") as self:
-            return DataZip._decode_obj(self, self._attributes["state"], klass)
+            try:
+                return DataZip._decode_obj(self, self._attributes["state"], klass)
+            except KeyError:
+                if len(self.keys()) == 1:
+                    return self[next(iter(self.keys()))]
+                return dict(self.items())
 
     @classmethod
     def replace(
@@ -658,13 +671,8 @@ class DataZip(ZipFile):
                 "items": {k: self._encode(k, v) for k, v in item._asdict().items()},
                 "objinfo": _objinfo(item),
             }
-
-        if (id(item), type(item)) in self._ids:
-            return {
-                "__type__": _objinfo(item),
-                "__loc__": self._ids[(id(item), type(item))],
-            }
-
+        if self._ids_for_dedup and (loc := self._ids.get((id(item), type(item)), None)):
+            return {"__type__": _objinfo(item), "__loc__": loc}
         return self._encode_obj(name, item)
 
     def _encode_loc_helper(self, name: str, data: Any, to_write: Any) -> str:
@@ -693,7 +701,7 @@ class DataZip(ZipFile):
 
     def _encode_pd_df(self, name: str, df: pd.DataFrame, **kwargs) -> dict:
         """Write a df in the ZIP as parquet."""
-        if loc := self._ids.get((id(df), type(df)), None):
+        if self._ids_for_dedup and (loc := self._ids.get((id(df), type(df)), None)):
             return {"__type__": "pdDataFrame", "__loc__": loc}
         try:
             return {
@@ -722,7 +730,7 @@ class DataZip(ZipFile):
             ) from exc
 
     def _encode_pd_series(self, name: str, df: pd.Series, **kwargs) -> dict:
-        if loc := self._ids.get((id(df), type(df)), None):
+        if self._ids_for_dedup and (loc := self._ids.get((id(df), type(df)), None)):
             return {"__type__": "pdSeries", "__loc__": loc}
         return {
             "__type__": "pdSeries",
@@ -738,7 +746,7 @@ class DataZip(ZipFile):
 
     def _encode_pl_df(self, name: str, df: pl.DataFrame, **kwargs) -> dict:
         """Write a polars df in the ZIP as parquet."""
-        if loc := self._ids.get((id(df), type(df)), None):
+        if self._ids_for_dedup and (loc := self._ids.get((id(df), type(df)), None)):
             return {"__type__": "plDataFrame", "__loc__": loc}
         df.write_parquet(temp := BytesIO())
         return {
@@ -748,7 +756,7 @@ class DataZip(ZipFile):
 
     def _encode_pl_ldf(self, name: str, df: pl.LazyFrame, **kwargs) -> dict:
         """Write a polars df in the ZIP as parquet."""
-        if loc := self._ids.get((id(df), type(df)), None):
+        if self._ids_for_dedup and (loc := self._ids.get((id(df), type(df)), None)):
             return {"__type__": "plLazyFrame", "__loc__": loc}
         df.collect().write_parquet(temp := BytesIO())
         return {
@@ -758,7 +766,7 @@ class DataZip(ZipFile):
 
     def _encode_pl_series(self, name: str, df: pl.Series, **kwargs) -> dict:
         """Write a polars series in the ZIP as parquet."""
-        if loc := self._ids.get((id(df), type(df)), None):
+        if self._ids_for_dedup and (loc := self._ids.get((id(df), type(df)), None)):
             return {"__type__": "plSeries", "__loc__": loc}
         df.to_frame("IGNORE").write_parquet(temp := BytesIO())
         return {
@@ -768,7 +776,7 @@ class DataZip(ZipFile):
         }
 
     def _encode_ndarray(self, name: str, data: np.ndarray, **kwargs) -> dict:
-        if loc := self._ids.get((id(data), type(data)), None):
+        if self._ids_for_dedup and (loc := self._ids.get((id(data), type(data)), None)):
             return {"__type__": "ndarray", "__loc__": loc}
         np.save(temp := BytesIO(), data, allow_pickle=False)
         return {

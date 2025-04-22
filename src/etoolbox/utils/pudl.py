@@ -319,7 +319,7 @@ def generator_ownership(
     """
     year = (
         (
-            pl_read_pudl("core_eia860__scd_ownership")
+            pl_read_pudl("core_eia860__scd_ownership", release=release)
             .filter(pl.col("data_maturity") == "final")
             .select("report_date")
             .unique()
