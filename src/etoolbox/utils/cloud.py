@@ -4,15 +4,19 @@ import json
 import logging
 import os
 import shutil
+import subprocess
 from contextlib import nullcontext
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
 
+import numpy as np
+import pandas as pd
 from fsspec import filesystem
 from fsspec.implementations.cached import WholeFileCacheFileSystem
 from platformdirs import user_cache_path, user_config_path
 
+from etoolbox.datazip import DataZip
 from etoolbox.utils.misc import all_logging_disabled
 
 try:
@@ -144,7 +148,7 @@ def rmi_cloud_fs(token=None) -> WholeFileCacheFileSystem:
     │ 8293386810295812914  ┆ solar   │
     └──────────────────────┴─────────┘
 
-    Write a parquet, or really anythin to Azure...
+    Write a parquet, or really anything to Azure...
 
     >>> with fs.open("az://raw-data/file.parquet", mode="wb") as f:  # doctest: +SKIP
     ...     df.write_parquet(f)
@@ -176,6 +180,7 @@ def cache_info():
             "time": datetime.fromtimestamp(v["time"]),
         }
         for v in cache_data.values()
+        if (AZURE_CACHE_PATH / v["fn"]).exists()
     ]
     return pd.DataFrame.from_records(cdl).set_index("original")[
         ["time", "size", "fn", "uid"]
@@ -220,52 +225,194 @@ def cloud_list(path: str, *, detail=False) -> list[str] | dict:
     return fs.ls(path, detail=detail)
 
 
-def get(to_get_path: str, destination: Path | str, fs=None, *, quiet=True) -> None:
+AZ_MSG = (
+    "azcopy not installed at ``/opt/homebrew/bin/azcopy``\n"
+    "for better performance``brew install azcopy``, or set ``azcopy_path`` argument "
+    "if installed elsewhere"
+    "more info\nhttps://github.com/Azure/azure-storage-azcopy"
+)
+
+
+def get(
+    to_get_path: str,
+    destination: Path | str,
+    fs=None,
+    *,
+    quiet=True,
+    clobber=False,
+    azcopy_path="/opt/homebrew/bin/azcopy",
+) -> None:
     """Download a remote file from the cloud.
+
+    Uses ``azcopy`` CLI if available.
 
     Args:
         to_get_path: remote file or folder to download of the form '<container>/...
         destination: local destination for the downloaded files
         fs: filesystem
         quiet: disable logging of adlfs output
+        clobber: overwrite existing files and directories if True
+        azcopy_path: path to azcopy executable
     """
-    fs = rmi_cloud_fs() if fs is None else fs
     to_get_path = to_get_path.removeprefix("az://").removeprefix("abfs://")
-    context = all_logging_disabled if quiet else nullcontext
-    with context():
-        ls = fs.ls(to_get_path)
-        if ls[0]["name"] != to_get_path:
-            raise TypeError("`to_get_path` must be a file.")
-        fs.get(
-            rpath="az://" + to_get_path,
-            lpath=str(destination),
-            recursive=False,
-            callback=ProgressCallback(),
+    try:
+        subprocess.run([azcopy_path], capture_output=True)  # noqa: S603
+    except Exception:
+        print(AZ_MSG)
+        fs = rmi_cloud_fs() if fs is None else fs
+        context = all_logging_disabled if quiet else nullcontext
+        with context():
+            ls = fs.ls(to_get_path)
+            if ls[0]["name"] != to_get_path:
+                raise TypeError(
+                    "`to_get_path` must be a file when not using azcopy."
+                ) from None
+            fs.get(
+                rpath="az://" + to_get_path,
+                lpath=str(destination),
+                recursive=False,
+                callback=ProgressCallback(),
+            )
+    else:
+        subprocess.run(  # noqa: S603
+            [
+                azcopy_path,
+                "cp",
+                f"https://rmicfezil.blob.core.windows.net/{to_get_path}?{read_token()}",
+                f"{destination}",
+                f"--overwrite={str(clobber).casefold()}",
+                "--recursive=True",
+            ],
         )
 
 
-def put(to_put_path: Path, destination: str, fs=None, *, quiet=True) -> None:
+def put(
+    to_put_path: Path,
+    destination: str,
+    fs=None,
+    *,
+    quiet=True,
+    clobber=False,
+    azcopy_path="/opt/homebrew/bin/azcopy",
+) -> None:
     """Upload local files or directories to the cloud.
 
     Copies a specific file or tree of files. If destination
     ends with a "/", it will be assumed to be a directory, and target files
     will go within.
 
+    Uses ``azcopy`` CLI if available.
+
     Args:
         to_put_path: local file or folder to copy
         destination: copy destination of the form '<container>/...
         fs: filesystem
         quiet: disable logging of adlfs output
+        clobber: force overwriting of existing files (only works when azcopy is used)
+        azcopy_path: path to azcopy executable
     """
-    fs = rmi_cloud_fs() if fs is None else fs
-    context = all_logging_disabled if quiet else nullcontext
-    with context():
-        fs.put(
-            lpath=str(to_put_path),
-            rpath="az://" + destination.removeprefix("az://").removeprefix("abfs://"),
-            recursive=to_put_path.is_dir(),
-            callback=ProgressCallback(),
+    if not to_put_path.exists():
+        raise FileNotFoundError(to_put_path)
+    lpath = str(to_put_path)
+    rpath = ("az://" + destination.removeprefix("az://").removeprefix("abfs://"),)
+    recursive = to_put_path.is_dir()
+    try:
+        subprocess.run([azcopy_path], capture_output=True)  # noqa: S603
+    except Exception:
+        print(AZ_MSG)
+        context = all_logging_disabled if quiet else nullcontext
+        fs = rmi_cloud_fs() if fs is None else fs
+        with context():
+            fs.put(
+                lpath=lpath,
+                rpath=rpath,
+                recursive=recursive,
+                callback=ProgressCallback(),
+            )
+    else:
+        subprocess.run(  # noqa: S603
+            [
+                azcopy_path,
+                "cp",
+                lpath,
+                f"https://rmicfezil.blob.core.windows.net/{destination}?{read_token()}",
+                f"--overwrite={str(clobber).casefold()}",
+                f"--recursive={str(recursive).casefold()}",
+            ],
         )
+
+
+def read_patio_resource_results(datestr: str) -> dict[str, pd.DataFrame]:
+    """Reads patio resource results from Azure.
+
+    Reads patio resource results from Azure and returns the extracted data as a
+    dictionary (named list). The method handles the specific format of patio resource
+    files and manages file system interactions as well as cache mechanisms.
+
+    Args:
+        datestr: Date string that identifies the model run.
+
+    """
+    return read_patio_file(datestr, f"BAs_{datestr}_results.zip")
+
+
+def read_patio_file(
+    datestr: str, filename: str
+) -> dict[str, pd.DataFrame] | pd.DataFrame:
+    """Reads patio data from Azure.
+
+    The method handles the specific format of patio resource
+    files and manages file system interactions as well as cache mechanisms.
+
+    Args:
+        datestr: Date string that identifies the model run.
+        filename: Target filename for reading data.
+
+    """
+    fs = rmi_cloud_fs()
+
+    def _zip_read(name):
+        f = fs.open(f"az://patio-results/{datestr}/{name}")
+        f.close()
+        c_path = str(AZURE_CACHE_PATH / cached_path(f"patio-results/{datestr}/{name}"))
+        with DataZip(c_path, "r") as z:
+            out_dict = dict(z.items())
+        return out_dict
+
+    if ".parquet" in filename:
+        return pd.read_parquet(
+            f"az://patio-results/{datestr}/{filename}", filesystem=fs
+        )
+    if ".zip" in filename:
+        return _zip_read(filename)
+    for f in cloud_list(f"patio-results/{datestr}"):
+        f = f.rpartition("/")[-1]
+        if filename in f and ".parquet" in f:
+            return pd.read_parquet(f"az://patio-results/{datestr}/{f}")
+        if filename in f and ".csv" in f:
+            return pd.read_csv(f"az://patio-results/{datestr}/{f}")
+        if filename in f and ".zip" in f:
+            return _zip_read(f)
+    raise FileNotFoundError(f"patio-results/{datestr}/{filename} not found")
+
+
+def write_patio_econ_results(df: pd.DataFrame, datestr: str, filename: str):
+    """Writes economic results for patio data to a specified filename in Azure storage.
+
+    This function takes a DataFrame containing economic model results and writes the
+    DataFrame in the model run directory in Azure Blob Storage.
+
+    Args:
+        df: DataFrame containing financial or economic results that
+            need to be stored in the Azure Blob Storage.
+        datestr: Date string that identifies the model run.
+        filename: Target filename for storing the results.
+
+    """
+    filename = filename.removesuffix(".parquet")
+    fs = rmi_cloud_fs()
+    with fs.open(f"az://patio-results/{datestr}/{filename}.parquet", mode="wb") as f:
+        df.to_parquet(f)
 
 
 """
@@ -275,9 +422,24 @@ These are wrappers to use the above functions from the CLI
 
 
 def _cache_info(args):
-    info = cache_info()
+    info = (
+        (
+            cache_info()
+            .reset_index()
+            .assign(
+                blob=lambda x: x["original"].str.partition("/")[0],
+                original=lambda x: x["original"].str.partition("/")[2],
+                time=lambda x: x["time"].dt.strftime("%Y-%m-%d %H:%M:%S"),
+                fn=lambda x: x["fn"].str.slice(0, 5) + "...",
+                uid=lambda x: x["uid"].str.slice(0, 5) + "...",
+                size=lambda x: np.round(x["size"] * 1e-6, 1),
+            )
+        )
+        .sort_values(["blob", "time"])
+        .set_index(["blob", "original"])[["time", "size", "fn", "uid"]]
+    )
     print(info)
-    print(f"\nTotal size: {info['size'].sum() * 1e-6:,.0f} MB")
+    print(f"\nTotal size: {info['size'].sum():,.0f} MB")
 
 
 def _list(args):

@@ -23,9 +23,9 @@ What's New?
    :mod:`pandas` or :mod:`polars`.
 *  :func:`.generator_ownership` compiles ownership information for all generators using
    data from :mod:`pudl`.
-*  New CLI built off a single command ``rmi`` with ``cloud`` and ``pudl`` subcommands
-   for cleaning caches and configs, showing the contents of caches, and in the cloud
-   case, getting, putting, and listing files.
+*  New CLI built off a single command ``rmi`` or ``etb`` with ``cloud`` and ``pudl``
+   subcommands for cleaning caches and configs, showing the contents of caches, and in
+   the cloud case, getting, putting, and listing files.
 *  :class:`.DataZip` will not append ``.zip`` suffix to file paths passed to its init
    as strings.
 *  Added :func:`.simplify_strings` to :mod:`.pudl_helpers`.
@@ -35,6 +35,16 @@ What's New?
    more info on the extra kwarg in logging calls.
 *  Option to disable use of ids in :class:`.DataZip` to keep track of multiple
    references to the same object using ``ids_for_dedup`` kwarg.
+*  Instructions and additional helper functions to support using eToolBox from R,
+   specifically :func:`.read_patio_resource_results`, :func:`.read_patio_file`, and
+   :func:`.write_patio_econ_results`, see :ref:`eToolBox and R <etb-r-label>` for
+   details.
+*  Use azcopy under the hood in :func:`.get` and :func:`.put` which is faster and more
+   easily allows keeping directories in sync by only transferring the differences.
+*  :func:`.pl_scan_pudl` now works with ``use_polars=True`` which avoids using
+   :mod:`fsspec` in favor of :mod:`polars` faster implementation that can avoiding
+   downloading whole parquets when using predicate pushdown. Unfortunately this means
+   there is no local caching.
 
 
 

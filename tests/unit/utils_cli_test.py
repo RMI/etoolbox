@@ -35,6 +35,14 @@ class TestCloudEntryPoint:
         assert "test_data.parquet" in result.stdout
 
     @pytest.mark.script_launch_mode("inprocess")
+    def test_cloud_list_with_etb_entrypoint(self, script_runner):
+        """Test rmi cloud list entry point."""
+        result = script_runner.run(
+            ["etb", "cloud", "list", "raw-data"], capture_output=True
+        )
+        assert "test_data.parquet" in result.stdout
+
+    @pytest.mark.script_launch_mode("inprocess")
     def test_cloud_list_detail(self, script_runner):
         """Test rmi cloud list entry point."""
         result = script_runner.run(

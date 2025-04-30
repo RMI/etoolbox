@@ -33,6 +33,7 @@ dependencies = [
 ]
 # entry points
 scripts.rmi = "etoolbox.main:main"
+scripts.etb = "etoolbox.main:main"
 
 [project.optional-dependencies]
 dev = [

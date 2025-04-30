@@ -101,9 +101,7 @@ class TestPretendPudlTabl:
 
 @pytest.mark.usefixtures("pudl_test_cache")
 class TestAWSPudl:
-    @pytest.mark.parametrize(
-        "use_polars", [False, pytest.param(True, marks=pytest.mark.xfail)], ids=idfn
-    )
+    @pytest.mark.parametrize("use_polars", [False, True], ids=idfn)
     def test_pl_read_pudl_table(self, use_polars):
         """Test reading table from GCS as :class:`polars.DataFrame`."""
         df = pl_read_pudl(
@@ -111,9 +109,7 @@ class TestAWSPudl:
         )
         assert not df.is_empty()
 
-    @pytest.mark.parametrize(
-        "use_polars", [False, pytest.param(True, marks=pytest.mark.xfail)], ids=idfn
-    )
+    @pytest.mark.parametrize("use_polars", [False, True], ids=idfn)
     def test_pl_scan_pudl_table(self, use_polars):
         """Test reading table from GCS as :class:`polars.LazyFrame`."""
         df = pl_scan_pudl(

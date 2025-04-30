@@ -33,33 +33,27 @@ Desciption
       a couple useful features:
 
       *  Support for easily storing and retrieving a range of Python objects, including
-         builtins, pandas and numpy objects, and certain custom objects.
-      *  Store dataframes as parquets for space efficiency.
-
-   *  IOMixin - a mixin that allows a class to be stored in a DataZip. Usually.
+         builtins, pandas and numpy objects, and most custom objects.
+      *  Store dataframes and arrays in standard formats so DataZip and even Python are
+         not required for using data from DataZips.
 
 *  utils
 
-   * arrays - pandas and numpy comparison aids.
-   * match - helpers for Python's ``match`` syntax.
-   * pudl - tools for reading data from PUDL
+   * `pudl helpers <https://rmi.github.io/etoolbox/autoapi/etoolbox/utils/pudl_helpers/index.html>`__ - tools from PUDL for standardizing and cleaning data
+   * `pudl <https://rmi.github.io/etoolbox/autoapi/etoolbox/utils/pudl/index.html>`__ - tools for reading data from PUDL
+   * `cloud <https://rmi.github.io/etoolbox/autoapi/etoolbox/utils/cloud/index.html>`__- tools for reading and writing data from Azure
+
+For guidance on using eToolBox from R, see `here <https://rmi.github.io/etoolbox/etb_and_r.html>`__.
 
 Installation
 =======================================================================================
 
-Dispatch can be installed and used in it's own environment or installed into another
+eToolBox can be installed and used in it's own environment or installed into another
 environment using pip. To install it using pip:
 
 .. code-block:: bash
 
    pip install git+https://github.com/rmi/etoolbox.git
-
-Or from the dev branch:
-
-.. code-block:: bash
-
-   pip install git+https://github.com/rmi/etoolbox.git@dev
-
 
 .. warning::
 
@@ -77,7 +71,10 @@ To create an environment for eToolbox, navigate to the repo folder in terminal a
 .. code-block:: bash
 
    mamba update mamba
-   mamba env create --name etb --file environment.yml
+   mamba create -n etb python=3.13 pip
+   mamba activate etb
+   pip install git+https://github.com/rmi/etoolbox.git
+
 
 If you get a ``CondaValueError`` that the prefix already exists, that means an
 environment with the same name already exists. You must remove the old one before
@@ -87,8 +84,24 @@ creating the new one:
 
    mamba update mamba
    mamba env remove --name etb
-   mamba env create --name etb --file environment.yml
+   mamba create -n etb python=3.13 pip
+   mamba activate etb
+   pip install git+https://github.com/rmi/etoolbox.git
 
+Cloud Data Access
+=======================================================================================
+Setup
+---------------------------------------------------------------------------------------
+To access data stored in Azure you will need an SAS token, once you have that, run the
+following command replacing ``<SAS token>`` with your token.
+
+.. code-block:: bash
+
+    etb cloud init "<SAS token>"
+
+Now you can use any of the functions described in
+`cloud API reference <https://rmi.github.io/etoolbox/autoapi/etoolbox/utils/cloud/index.html>`__
+to read and write data to CFE's Azure storage.
 
 PUDL Data Access
 =======================================================================================

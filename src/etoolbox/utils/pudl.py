@@ -8,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import ClassVar
 
+import numpy as np
 import orjson as json
 import pandas as pd
 import polars as pl
@@ -145,9 +146,14 @@ def pudl_cache():
 
 
 def _pudl_cache(args):
-    info = pudl_cache()
+    info = pudl_cache().assign(
+        time=lambda x: x["time"].dt.strftime("%Y-%m-%d %H:%M:%S"),
+        fn=lambda x: x["fn"].str.slice(0, 5) + "...",
+        uid=lambda x: x["uid"].str.slice(0, 5) + "...",
+        size=lambda x: np.round(x["size"] * 1e-6, 1),
+    )
     print(info)
-    print(f"\nTotal size: {info['size'].sum() * 1e-6:,.0f} MB")
+    print(f"\nTotal size: {info['size'].sum():,.0f} MB")
 
 
 def pudl_list(
@@ -240,8 +246,9 @@ def pl_scan_pudl(
         kwargs: passed to :func:`polars.scan_parquet`
     """
     if use_polars:
-        raise RuntimeError(
-            "Unable to access PUDL tables with use_polars==True, please set to False."
+        return pl.scan_parquet(
+            f"{BASE}/{release}/{table_name}.parquet",
+            storage_options={"skip_signature": "true", "region": "us-west-2"},
         )
     if cached_path := _cache_path(table_name=table_name, release=release):
         return pl.scan_parquet(cached_path)
@@ -796,7 +803,7 @@ class PretendPudlTablCore:
        :class: warning
 
        ``PretendPudlTablCore`` will be removed in a future version, read tables directly
-       from the sqlite.
+       from AWS using :func:`pd_read_pudl`.
 
     """
 
