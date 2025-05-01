@@ -20,7 +20,7 @@ def test_copy_to_cloud(temp_dir, destination):
     """Test uploading to RMI's Azure cloud storage."""
     test_path = (temp_dir / datetime.now().strftime("%Y%m%d%H%M")).with_suffix(".txt")
     test_path.touch()
-    put(test_path, destination)
+    put(test_path, destination, azcopy_path="foo")
 
 
 @pytest.mark.parametrize(

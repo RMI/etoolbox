@@ -314,7 +314,6 @@ def put(
     if not to_put_path.exists():
         raise FileNotFoundError(to_put_path)
     lpath = str(to_put_path)
-    rpath = ("az://" + destination.removeprefix("az://").removeprefix("abfs://"),)
     recursive = to_put_path.is_dir()
     try:
         subprocess.run([azcopy_path], capture_output=True)  # noqa: S603
@@ -325,7 +324,8 @@ def put(
         with context():
             fs.put(
                 lpath=lpath,
-                rpath=rpath,
+                rpath="az://"
+                + destination.removeprefix("az://").removeprefix("abfs://"),
                 recursive=recursive,
                 callback=ProgressCallback(),
             )

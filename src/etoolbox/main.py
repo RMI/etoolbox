@@ -2,7 +2,9 @@
 
 import argparse
 import os
+import sys
 
+from etoolbox import __version__
 from etoolbox.utils.cloud import (
     AZURE_CACHE_PATH,
     RMICFEZIL_TOKEN_PATH,
@@ -27,7 +29,15 @@ from etoolbox.utils.table_map import renamer
 def main():
     """CLI entry point."""
     parser = argparse.ArgumentParser(description="etoolbox CLI Utilities")
-    subparsers = parser.add_subparsers(required=True, title="commands")
+    parser.add_argument(
+        "-v,--version",
+        action="store_true",
+        default=False,
+        required=False,
+        help="show version",
+        dest="version",
+    )
+    subparsers = parser.add_subparsers(required=False, title="commands")
 
     cloud_parser = subparsers.add_parser(
         "cloud", help="RMI cloud utilities", aliases=["azure"]
@@ -216,7 +226,13 @@ def main():
     pudl_rename_sp.set_defaults(func=renamer)
 
     args = parser.parse_args()
-    args.func(args)
+    if args.version:
+        print(__version__)
+        sys.exit(0)
+    try:
+        args.func(args)
+    except Exception:
+        parser.print_help()
 
 
 if __name__ == "__main__":
