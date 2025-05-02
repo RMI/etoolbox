@@ -43,7 +43,7 @@ def test_read_patio_results(temp_dir):
 def test_write_patio_econ_results(temp_dir):
     """Test writing to RMI's Azure cloud storage."""
     df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
-    write_patio_econ_results(df, "202504262322", "test_results.parquet")
+    write_patio_econ_results(df, "202504262322", "fun_times/test_results.parquet")
 
 
 def test_cache_info__():

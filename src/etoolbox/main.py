@@ -18,11 +18,8 @@ from etoolbox.utils.cloud import (
 from etoolbox.utils.pudl import (
     CACHE_PATH as PUDL_CACHE_PATH,
 )
-from etoolbox.utils.pudl import (
-    TOKEN_PATH,
-    _pudl_cache,
-    rmi_pudl_clean,
-)
+from etoolbox.utils.pudl import TOKEN_PATH, _pudl_cache, rmi_pudl_clean
+from etoolbox.utils.pudl import _list as _pudl_list
 from etoolbox.utils.table_map import renamer
 
 
@@ -197,6 +194,28 @@ def main():
         dest="dry",
     )
     pudl_clean_sp.set_defaults(func=rmi_pudl_clean)
+
+    pudl_list_sp = pudl_subparsers.add_parser(
+        "list",
+        help="list files in pudl container or directory",
+        description="List files in Azure container or directory.",
+    )
+    pudl_list_sp.add_argument(
+        "-r,--release",
+        type=str,
+        required=False,
+        default=None,
+        dest="release",
+        help="list files in release, or leave blank to see releases",
+    )
+    pudl_list_sp.add_argument(
+        "-l,--detail",
+        default=False,
+        action="store_true",
+        help="include detail",
+        dest="detail",
+    )
+    pudl_list_sp.set_defaults(func=_pudl_list)
 
     pudl_rename_sp = pudl_subparsers.add_parser(
         "rename",

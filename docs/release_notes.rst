@@ -45,6 +45,10 @@ What's New?
    :mod:`fsspec` in favor of :mod:`polars` faster implementation that can avoiding
    downloading whole parquets when using predicate pushdown. Unfortunately this means
    there is no local caching.
+*  :func:`.write_patio_econ_results` now works with :class:`str` and :class:`bytes` for
+   writing ``.json``, ``.csv``, ``.txt``, &c.
+*  Added ``etb pudl list`` command to the CLI for seeing pudl releases and data in
+   releases.
 
 
 

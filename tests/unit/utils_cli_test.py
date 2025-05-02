@@ -5,6 +5,8 @@ import sys
 
 import pytest
 
+from etoolbox.utils.testing import idfn
+
 
 class TestCloudEntryPoint:
     @pytest.mark.usefixtures("cloud_test_cache")
@@ -199,6 +201,22 @@ class TestPudlEntryPoint:
         script_runner.run(["rmi", "pudl", "clean", "-d"], print_result=True)
         assert pudl.CACHE_PATH.parent.exists()
         assert pudl.CACHE_PATH.exists()
+
+    @pytest.mark.parametrize(
+        "args,expected",
+        [
+            ((), "nightly"),
+            (("-l",), "nightly"),
+            (("-r", "nightly"), "core_eia860__scd_generators.parquet"),
+            (("-r", "nightly", "-l"), "core_eia860__scd_generators.parquet"),
+        ],
+        ids=idfn,
+    )
+    @pytest.mark.script_launch_mode("inprocess")
+    def test_pudl_list(self, script_runner, args, expected):
+        """Test rmi cloud list entry point."""
+        result = script_runner.run(["rmi", "pudl", "list", *args], capture_output=True)
+        assert expected in result.stdout
 
     @pytest.mark.usefixtures("pudl_test_cache_for_ep")
     @pytest.mark.script_launch_mode("inprocess")

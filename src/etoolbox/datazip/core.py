@@ -85,7 +85,7 @@ class DataZip(ZipFile):
                 will be stored as many times as it has references. True can save space
                 but because ids are not unique for objects with non-overlapping
                 lifetimes, setting to True can result in subsequent new objects NOT
-                 being stored because they share an id with an earlier object.
+                being stored because they share an id with an earlier object.
             kwargs: keyword arguments will be passed to
                 :meth:`zipfile.ZipFile.__init__`.
 

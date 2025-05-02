@@ -396,23 +396,36 @@ def read_patio_file(
     raise FileNotFoundError(f"patio-results/{datestr}/{filename} not found")
 
 
-def write_patio_econ_results(df: pd.DataFrame, datestr: str, filename: str):
+def write_patio_econ_results(
+    data: pd.DataFrame | str | bytes, datestr: str, filename: str
+) -> None:
     """Writes economic results for patio data to a specified filename in Azure storage.
 
-    This function takes a DataFrame containing economic model results and writes the
-    DataFrame in the model run directory in Azure Blob Storage.
-
     Args:
-        df: DataFrame containing financial or economic results that
-            need to be stored in the Azure Blob Storage.
+        data: DataFrame, or str or bytes representing
         datestr: Date string that identifies the model run.
-        filename: Target filename for storing the results.
+        filename: Target filename for storing the results, it must include an
+            appropriate file extension, ie parquet for a DataFrame;
+            csv json yaml yml toml or txt for str/bytes.
 
     """
-    filename = filename.removesuffix(".parquet")
+    name, _, suffix = filename.partition(".")
     fs = rmi_cloud_fs()
-    with fs.open(f"az://patio-results/{datestr}/{filename}.parquet", mode="wb") as f:
-        df.to_parquet(f)
+    if isinstance(data, pd.DataFrame):
+        if suffix != "parquet":
+            raise TypeError("to write a DataFrame as csv, pass it as a str or bytes")
+        with fs.open(f"az://patio-results/{datestr}/{name}.parquet", mode="wb") as f:
+            data.to_parquet(f)
+    elif isinstance(data, str | bytes):
+        allowed_file_types = ("csv", "json", "yaml", "yml", "toml", "txt")
+        if suffix.lower() not in allowed_file_types:
+            raise AssertionError(
+                f"Unsupported file format {suffix}, must be one of {allowed_file_types}"
+            )
+        with fs.open(f"az://patio-results/{datestr}/{name}.{suffix}", mode="wb") as f:
+            f.write(data.encode("utf-8") if isinstance(data, str) else data)
+    else:
+        raise RuntimeError(f"Unsupported type {type(data)}")
 
 
 """
