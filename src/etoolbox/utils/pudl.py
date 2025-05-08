@@ -185,36 +185,6 @@ def pudl_list(
     return [i["name"] for i in ls]
 
 
-def _list(args):
-    ls = pudl_list(args.release, detail=args.detail)
-    pre = args.release if args.release else ""
-    if args.detail:
-        all_cols = {k for d in ls for k in d}
-        cols = [co for co in ("name", "type", "size", "LastModified") if co in all_cols]
-        ex = list({"Key", "Size", "StorageClass"}.intersection(all_cols))
-        info = (
-            pd.DataFrame.from_records(ls, exclude=ex)
-            .assign(
-                name=lambda x: x.name.str.replace(
-                    "pudl.catalyst.coop/", ""
-                ).str.removeprefix(f"{pre}/"),
-                size=lambda x: np.round(x["size"] * 1e-6, 1),
-            )
-            .set_index("name")
-        )
-        print(
-            info[[c for c in cols if c in info.columns]]
-            .to_string()
-            .replace("\n", "\n\t")
-        )
-        return
-    print(
-        "\n".join(
-            a.removeprefix("pudl.catalyst.coop/").removeprefix(f"{pre}/") for a in ls
-        )
-    )
-
-
 def pd_read_pudl(
     table_name: str,
     release: str = "nightly",
@@ -412,6 +382,48 @@ def generator_ownership(
             pl.col("fraction_owned").fill_null(1.0),
         )
         .collect()
+    )
+
+
+"""
+======================================= For CLI =======================================
+These are wrappers to use the above functions from the CLI
+"""
+
+
+def _get_table_as_csv(args):
+    pl_scan_pudl(args.table, args.release, use_polars=True).collect().write_csv(
+        f"{args.destination}/{args.table}.csv"
+    )
+
+
+def _list(args):
+    ls = pudl_list(args.release, detail=args.detail)
+    pre = args.release if args.release else ""
+    if args.detail:
+        all_cols = {k for d in ls for k in d}
+        cols = [co for co in ("name", "type", "size", "LastModified") if co in all_cols]
+        ex = list({"Key", "Size", "StorageClass"}.intersection(all_cols))
+        info = (
+            pd.DataFrame.from_records(ls, exclude=ex)
+            .assign(
+                name=lambda x: x.name.str.replace(
+                    "pudl.catalyst.coop/", ""
+                ).str.removeprefix(f"{pre}/"),
+                size=lambda x: np.round(x["size"] * 1e-6, 1),
+            )
+            .set_index("name")
+        )
+        print(
+            info[[c for c in cols if c in info.columns]]
+            .to_string()
+            .replace("\n", "\n\t")
+        )
+        return
+    print(
+        "\n".join(
+            a.removeprefix("pudl.catalyst.coop/").removeprefix(f"{pre}/") for a in ls
+        )
     )
 
 

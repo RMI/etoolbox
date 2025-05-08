@@ -218,6 +218,25 @@ class TestPudlEntryPoint:
         result = script_runner.run(["rmi", "pudl", "list", *args], capture_output=True)
         assert expected in result.stdout
 
+    @pytest.mark.script_launch_mode("inprocess")
+    def test_pudl_get(self, script_runner, temp_dir):
+        """Test rmi cloud list entry point."""
+        result = script_runner.run(
+            [
+                "rmi",
+                "pudl",
+                "get",
+                "core_eia__codes_balancing_authority_subregions",
+                "stable",
+                "-D",
+                str(temp_dir),
+            ],
+            capture_output=True,
+        )
+        assert (
+            temp_dir / "core_eia__codes_balancing_authority_subregions.csv"
+        ).exists()
+
     @pytest.mark.usefixtures("pudl_test_cache_for_ep")
     @pytest.mark.script_launch_mode("inprocess")
     def test_pudl_clean_all_dry(self, script_runner):

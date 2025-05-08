@@ -12,6 +12,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import polars as pl
 from fsspec import filesystem
 from fsspec.implementations.cached import WholeFileCacheFileSystem
 from platformdirs import user_cache_path, user_config_path
@@ -353,7 +354,18 @@ def read_patio_resource_results(datestr: str) -> dict[str, pd.DataFrame]:
         datestr: Date string that identifies the model run.
 
     """
-    return read_patio_file(datestr, f"BAs_{datestr}_results.zip")
+    out = read_patio_file(datestr, f"BAs_{datestr}_results.zip")
+    for k, v in out.items():
+        if isinstance(v, pd.DataFrame):
+            out[k] = v.convert_dtypes(
+                convert_boolean=True,
+                convert_string=False,
+                convert_floating=False,
+                convert_integer=False,
+            )
+        elif isinstance(v, pl.DataFrame):
+            out[k] = v.to_pandas()
+    return out
 
 
 def read_patio_file(
@@ -485,4 +497,4 @@ def _put(args):
     if not source_path.exists():
         raise FileNotFoundError(f"{source_path}")
 
-    put(source_path, args.destination, quiet=False)
+    put(source_path, args.destination, quiet=False, clobber=args.clobber)

@@ -48,7 +48,7 @@ What's New?
 *  :func:`.write_patio_econ_results` now works with :class:`str` and :class:`bytes` for
    writing ``.json``, ``.csv``, ``.txt``, &c.
 *  Added ``etb pudl list`` command to the CLI for seeing pudl releases and data in
-   releases.
+   releases, as well as ``etb pudl get`` to download a table and save it as a csv.
 
 
 
@@ -61,6 +61,9 @@ Bug Fixes
    `pytest#5908 <https://github.com/pytest-dev/pytest/issues/5908>`_
 *  Fixed a bug that meant only zips created with :meth:`.DataZip.dump` could be opened
    with :meth:`.DataZip.load`.
+*  Fixed a bug where certain :class:`pandas.DataFrame` columns of dtype ``object``,
+   specifically columns with :class:`bool` and :class:`None` became lists rather than
+   DataFrame columns when the :func:`.read_patio_resource_results` is called from R.
 
 .. _release-v0-3-0:
 

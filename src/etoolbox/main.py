@@ -18,7 +18,12 @@ from etoolbox.utils.cloud import (
 from etoolbox.utils.pudl import (
     CACHE_PATH as PUDL_CACHE_PATH,
 )
-from etoolbox.utils.pudl import TOKEN_PATH, _pudl_cache, rmi_pudl_clean
+from etoolbox.utils.pudl import (
+    TOKEN_PATH,
+    _get_table_as_csv,
+    _pudl_cache,
+    rmi_pudl_clean,
+)
 from etoolbox.utils.pudl import _list as _pudl_list
 from etoolbox.utils.table_map import renamer
 
@@ -95,6 +100,14 @@ def main():
         type=str,
         help="copy destination of the form '<container>/...'",
     )
+    cloud_put_sp.add_argument(
+        "-c,--clobber",
+        default=False,
+        action="store_true",
+        required=False,
+        help="overwrite any existing data",
+        dest="clobber",
+    )
     cloud_put_sp.set_defaults(func=_put)
 
     cloud_cache_sp = cloud_subparsers.add_parser(
@@ -156,6 +169,31 @@ def main():
         help="PUDL utilities",
     )
     pudl_subparsers = pudl_parser.add_subparsers(required=True, title="subcommands")
+
+    pudl_get_sp = pudl_subparsers.add_parser(
+        "get",
+        help="download files from Azure",
+        description="Download files from Azure.",
+    )
+    pudl_get_sp.add_argument(
+        "table",
+        type=str,
+        help="table in pudl",
+    )
+    pudl_get_sp.add_argument(
+        "release",
+        type=str,
+        help="release to use, ``etb pudl list`` shows available releases.",
+    )
+    pudl_get_sp.add_argument(
+        "-D,--destination",
+        type=str,
+        default=os.getcwd(),
+        required=False,
+        help="local destination for the downloaded files [defaults to cwd].",
+        dest="destination",
+    )
+    pudl_get_sp.set_defaults(func=_get_table_as_csv)
 
     pudl_cache_sp = pudl_subparsers.add_parser(
         "cache",
