@@ -374,15 +374,19 @@ PUDL_TABLE_MAP = {
 }
 
 
-def renamer(args):
-    paths = [p for p in Path.cwd().glob(args.pattern) if p.is_file()]
+def renamer(args=None, pattern=None, *, dry=False, yes=False):
+    if args is not None:
+        pattern = args.pattern
+        dry = args.dry
+        yes = args.yes
+    paths = [p for p in Path.cwd().glob(pattern) if p.is_file()]
     path_str = "\n  ".join(str(p) for p in paths)
 
     print(f"The following files will have their tables renamed:\n  {path_str}")
-    if args.dry:
+    if dry:
         return
 
-    if not args.yes:
+    if not yes:
         prompt = input("Are you sure you want to rename tables in these files? [y/n]")
         if prompt.casefold() != "y":
             return

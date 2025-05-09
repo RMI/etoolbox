@@ -2,10 +2,10 @@
 eToolBox Release Notes
 =======================================================================================
 
-.. _release-v0-3-1:
+.. _release-v0-4-0.:
 
 ---------------------------------------------------------------------------------------
-0.3.1 (2025-XX-XX)
+0.4.0 (2025-05-08)
 ---------------------------------------------------------------------------------------
 
 What's New?
@@ -49,7 +49,7 @@ What's New?
    writing ``.json``, ``.csv``, ``.txt``, &c.
 *  Added ``etb pudl list`` command to the CLI for seeing pudl releases and data in
    releases, as well as ``etb pudl get`` to download a table and save it as a csv.
-
+*  Improved CLI using :mod:`click` and new CLI documentation.
 
 
 Bug Fixes

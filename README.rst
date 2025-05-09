@@ -44,6 +44,7 @@ Desciption
    * `cloud <https://rmi.github.io/etoolbox/autoapi/etoolbox/utils/cloud/index.html>`__- tools for reading and writing data from Azure
 
 For guidance on using eToolBox from R, see `here <https://rmi.github.io/etoolbox/etb_and_r.html>`__.
+For information on using the eToolBox CLI behind the ``etb`` command see `here <https://rmi.github.io/etoolbox/cli.html>`__
 
 Installation
 =======================================================================================

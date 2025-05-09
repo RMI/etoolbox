@@ -10,6 +10,7 @@ from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
 
+import click
 import numpy as np
 import pandas as pd
 import polars as pl
@@ -35,34 +36,43 @@ RMICFEZIL_TOKEN_PATH = CONFIG_PATH / "rmicfezil_token.txt"
 logger = logging.getLogger("etoolbox")
 
 
-def rmi_cloud_clean(args):
+def rmi_cloud_clean(args=None, *, dry: bool = False, all_: bool = False):
     """Cleanup cache and config directories."""
+    if args is not None:
+        dry = args.dry
+        all_ = args.all_
     info = cache_info()
     size = info["size"].sum() * 1e-6
-    print(f"Will delete the following items using {size:,.0f} MB at {AZURE_CACHE_PATH}")
-    print(info[["size", "time"]])
-    if not args.dry:
+    click.echo(
+        f"Will delete the following items using {size:,.0f} MB at {AZURE_CACHE_PATH}"
+    )
+    click.echo(info[["size", "time"]])
+    if not dry:
         shutil.rmtree(AZURE_CACHE_PATH, ignore_errors=True)
-    if args.all:
-        print(f"deleting config {CONFIG_PATH}")
-        if not args.dry:
+    if all_:
+        click.echo(f"deleting config {CONFIG_PATH}")
+        if not dry:
             shutil.rmtree(CONFIG_PATH, ignore_errors=True)
 
 
-def rmi_cloud_init(args):
+def rmi_cloud_init(args=None, token=None, *, dry: bool = False, clobber: bool = False):
     """Write SAS token file to disk."""
+    if args is not None:
+        token = args.token
+        dry = args.dry
+        clobber = args.clobber
     if RMICFEZIL_TOKEN_PATH.exists():
-        if not args.clobber:
+        if not clobber:
             raise FileExistsError("SAS Token already exists.")
         print(f"deleting {RMICFEZIL_TOKEN_PATH}")
-        if not args.dry:
+        if not dry:
             RMICFEZIL_TOKEN_PATH.unlink()
-    print(f"write {args.token} to {RMICFEZIL_TOKEN_PATH}")
-    if args.dry:
+    print(f"write {token} to {RMICFEZIL_TOKEN_PATH}")
+    if dry:
         return
     with open(RMICFEZIL_TOKEN_PATH, "w") as f:
-        f.write(args.token)
-    print(f"SAS Token {args.token} written to {RMICFEZIL_TOKEN_PATH}.")
+        f.write(token)
+    print(f"SAS Token {token} written to {RMICFEZIL_TOKEN_PATH}.")
 
 
 @lru_cache

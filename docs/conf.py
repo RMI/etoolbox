@@ -48,6 +48,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "autoapi.extension",
     "sphinx_issues",
+    "sphinx_click",
 ]
 todo_include_todos = True
 

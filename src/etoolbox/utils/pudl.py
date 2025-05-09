@@ -25,9 +25,10 @@ CACHE_PATH = user_cache_path("rmi.pudl", ensure_exists=True) / "aws"
 BASE = "s3://pudl.catalyst.coop"
 
 
-def rmi_pudl_clean(args=None, *, dry: bool = True, legacy: bool = False) -> None:
+def rmi_pudl_clean(
+    args=None, *, dry: bool = True, legacy: bool = False, all_: bool = False
+) -> None:
     """Remove rmi.pudl local cache."""
-    all_ = False
     if args is not None:
         dry = args.dry
         legacy = args.legacy

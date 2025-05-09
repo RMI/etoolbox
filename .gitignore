@@ -118,6 +118,9 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+# as a library, we don't want to lock
+uv.lock
+pixi.lock
 
 # Spyder project settings
 .spyderproject

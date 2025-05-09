@@ -30,10 +30,11 @@ dependencies = [
     "pyarrow>=9, <21",
     "s3fs>=2022.11.0, <2025.4.0",
     "tzdata>=2022.7; platform_system=='Windows'",
+    "click>8,<9"
 ]
 # entry points
 scripts.rmi = "etoolbox.main:main"
-scripts.etb = "etoolbox.main:main"
+scripts.etb = "etoolbox.cli:main"
 
 [project.optional-dependencies]
 dev = [
@@ -51,6 +52,7 @@ doc = [
     "sphinx-issues>=1.2,<5.1",
     "sphinx-autodoc-typehints>1.19,<3.1.1",
     "sphinxcontrib-mermaid>0.7,<1.1.0",
+    "sphinx-click",
 ]
 tests = [
     "coverage>=5.3,<7.9",  # Lets us track what code is being tested
@@ -100,7 +102,7 @@ filterwarnings = [
 report_level = "WARNING"
 ignore_roles = ["pr", "issue", "user", "include"]
 ignore_messages = '(Hyperlink target .* is not referenced\.$|Duplicate implicit target name:|An `AttributeError` error occured.*)'
-ignore_directives = ["bibliography", "todo", "include"]
+ignore_directives = ["bibliography", "todo", "include", "click"]
 
 [tool.ruff]
 line-length = 88
