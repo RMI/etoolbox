@@ -63,7 +63,7 @@ code_qa = [ # in local development these are provided globally, here for GHA
 dev_tooling = [ # in local development these are provided globally
     "rmi-etoolbox[code_qa]",
     "tox>=4.16.0,<4.26",  # Python test environment manager
-    "tox-uv",
+    "tox-uv>=1.25,<2",
 ]
 tests = ["rmi-etoolbox[dev,dev_tooling]"]
 optional = [
@@ -224,12 +224,13 @@ env_list = ["linters", "docs", "ci"]
 allowlist_externals = ["bash", "coverage", "sphinx-build", "pytest", "pre-commit", "ruff"]
 runner = "uv-venv-runner"
 passenv = ["RMICFEZIL_SAS_TOKEN"]
-skip_install = false
-recreate = true
+#skip_install = false
+#recreate = true
 
 [tool.tox.env.linters]
 description = "Run the pre-commit, flake8 and bandit linters."
 extras = ["code_qa"]
+deps = ["pre-commit-uv"]
 commands = [
     ['pre-commit', 'run', '--all-files', '--show-diff-on-failure', 'python-no-eval'],
     ['pre-commit', 'run', '--all-files', '--show-diff-on-failure', 'python-no-log-warn'],
