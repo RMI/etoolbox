@@ -95,19 +95,6 @@ def pd_backend(test_dir, request) -> str:
 
 
 @pytest.fixture(scope="session")
-def pudl_config(temp_dir) -> str:
-    """Use to run test with both pandas backends."""
-    import yaml
-
-    file = temp_dir / ".pudl5.yml"
-    with open(file, "w") as f:
-        yaml.safe_dump({"pudl_out": "/Users/pytest"}, f)
-    yield file
-    file.unlink()
-    assert not file.exists()
-
-
-@pytest.fixture(scope="session")
 def pudl_test_cache(temp_dir):
     """Change PUDL cache path for testing."""
     import etoolbox.utils.pudl as pudl

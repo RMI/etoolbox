@@ -50,7 +50,8 @@ What's New?
 *  Added ``etb pudl list`` command to the CLI for seeing pudl releases and data in
    releases, as well as ``etb pudl get`` to download a table and save it as a csv.
 *  Improved CLI using :mod:`click` and new CLI documentation.
-
+*  Remove :func:`.get_pudl_sql_url` and :class:`.PretendPudlTabl`.
+*  Migrate ``tox`` and GitHub Action tooling to ``uv``.
 
 Bug Fixes
 ^^^^^^^^^

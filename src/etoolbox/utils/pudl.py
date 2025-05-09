@@ -1,12 +1,10 @@
 """Functions and objects for accessing PUDL data."""
 
 import logging
-import os
 import shutil
 import warnings
 from datetime import datetime
 from pathlib import Path
-from typing import ClassVar
 
 import numpy as np
 import orjson as json
@@ -788,9 +786,7 @@ def conform_pudl_dtypes(df: pd.DataFrame) -> pd.DataFrame:
 
 class _WarnDict(dict):
     def __getitem__(self, item):
-        raise DeprecationWarning(
-            "Use `conform_pudl_dtypes(df)` or `df.pipe(conform_pudl_dtypes)`"
-        )
+        raise DeprecationWarning(WARNING_TEXT)
 
     def get(self, item, default=None):
         return self[item]
@@ -799,44 +795,9 @@ class _WarnDict(dict):
 PUDL_DTYPES = _WarnDict()
 
 
-def get_pudl_sql_url(file=PUDL_CONFIG) -> str:
+def get_pudl_sql_url(*args, **kwargs) -> str:
     """Get the URL for the pudl.sqlite DB."""
-    try:
-        pudl_path = f"{os.environ['PUDL_OUTPUT']}/pudl.sqlite"
-    except KeyError:
-        if file.exists():
-            import yaml
-
-            with open(file, "r") as f:  # noqa: UP015
-                pudl_path = f"{yaml.safe_load(f)['pudl_out']}/output/pudl.sqlite"
-        else:
-            pudl_path = Path.home() / "pudl-work/output/pudl.sqlite"
-            if not pudl_path.exists():
-                raise FileNotFoundError(
-                    f"~/.pudl.yml is missing, 'PUDL_OUTPUT' environment variable is "
-                    f"not set, and pudl.sqlite is not at {pudl_path}. Please move your "
-                    f"pudl.sqlite to {pudl_path}. The sqlite file can be downloaded "
-                    f"from https://s3.us-west-2.amazonaws.com/pudl.catalyst.coop/nightly/pudl.sqlite.gz"
-                ) from None
-    return f"sqlite:///{pudl_path}"
-
-
-class _Faker:
-    """Return a thing when called.
-
-    >>> fake = _Faker(5)
-    >>> fake()
-    5
-
-    """
-
-    def __init__(self, thing):
-        self.thing = thing
-
-    def __call__(self, *args, **kwargs):
-        if args or kwargs:
-            logger.warning("all arguments to _Faker are ignored.")
-        return self.thing
+    raise DeprecationWarning(WARNING_TEXT)
 
 
 class PretendPudlTablCore:
@@ -850,27 +811,11 @@ class PretendPudlTablCore:
 
     """
 
-    table_name_map: ClassVar[dict[str, str]] = {
-        "gen_original_eia923": "gen_og_eia923",
-        "gen_fuel_by_generator_energy_source_eia923": "gen_fuel_by_genid_esc_eia923",
-        "gen_fuel_by_generator_eia923": "gen_fuel_allocated_eia923",
-        "gen_fuel_by_generator_energy_source_owner_eia923": "gen_fuel_by_genid_esc_own",
-    }
+    def __init__(self, *args, **kwargs):  # noqa: D107
+        raise DeprecationWarning(WARNING_TEXT)
 
     def __setstate__(self, state):
-        warnings.warn(WARNING_TEXT, DeprecationWarning, stacklevel=2)
-
-        self.__dict__ = state
-        self._real_pt = None
-
-    def __getattr__(self, item):
-        warnings.warn(WARNING_TEXT, DeprecationWarning, stacklevel=2)
-
-        if (n_item := self.table_name_map.get(item, item)) in self.__dict__["_dfs"]:
-            return _Faker(self.__dict__["_dfs"][n_item])
-        raise KeyError(
-            f"{item} not found, available tables: {tuple(self.__dict__['_dfs'])}"
-        )
+        raise DeprecationWarning(WARNING_TEXT)
 
 
 PretendPudlTabl = PretendPudlTablCore

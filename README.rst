@@ -49,45 +49,22 @@ For information on using the eToolBox CLI behind the ``etb`` command see `here <
 Installation
 =======================================================================================
 
-eToolBox can be installed and used in it's own environment or installed into another
-environment using pip. To install it using pip:
+To install eToolBox as a tool using `uv <https://github.com/astral-sh/uv>`__.
+
+.. code-block:: bash
+
+   uv tool install git+https://github.com/rmi/etoolbox.git
+
+
+Or installed into any environment using pip.
 
 .. code-block:: bash
 
    pip install git+https://github.com/rmi/etoolbox.git
 
-.. warning::
-
-   Version 0.2.0 is the last version that supports the legacy PUDL objects such as
-   ``PudlTable`` and contains tools for replicating and working with those objects. You
-   can install a specific version like this:
-
-   .. code-block:: bash
-
-      pip install git+https://github.com/rmi/etoolbox.git@0.2.0
-
-
-To create an environment for eToolbox, navigate to the repo folder in terminal and run:
-
-.. code-block:: bash
-
-   mamba update mamba
-   mamba create -n etb python=3.13 pip
-   mamba activate etb
-   pip install git+https://github.com/rmi/etoolbox.git
-
-
-If you get a ``CondaValueError`` that the prefix already exists, that means an
-environment with the same name already exists. You must remove the old one before
-creating the new one:
-
-.. code-block:: bash
-
-   mamba update mamba
-   mamba env remove --name etb
-   mamba create -n etb python=3.13 pip
-   mamba activate etb
-   pip install git+https://github.com/rmi/etoolbox.git
+To add it as a dependency in a project add
+``"rmi.etoolbox @ git+https://github.com/rmi/etoolbox.git"`` to the
+``dependency`` section of ``pyproject.toml``.
 
 Cloud Data Access
 =======================================================================================

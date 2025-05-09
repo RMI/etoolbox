@@ -1,8 +1,5 @@
 """Test pretend PudlTabl."""
 
-import os
-from unittest import mock
-
 import numpy as np
 import pandas as pd
 import pytest
@@ -55,48 +52,19 @@ def test_pudl_dtypes_get():
         _ = PUDL_DTYPES.get("foo")
 
 
-class TestPudlLoc:
-    @mock.patch.dict(os.environ, {"PUDL_OUTPUT": "/Users/pytest/output"})
-    def test_get_pudl_sql_url_env(self):
-        """Test pudl.sqlite url from env variable."""
-        assert get_pudl_sql_url() == "sqlite:////Users/pytest/output/pudl.sqlite"
-
-    @mock.patch.dict(os.environ, {}, clear=True)
-    def test_get_pudl_sql_url_config_good(self, pudl_config):
-        """Test pudl.sqlite url from config."""
-        assert (
-            get_pudl_sql_url(pudl_config)
-            == "sqlite:////Users/pytest/output/pudl.sqlite"
-        )
-
-    @pytest.mark.skip(reason="added hard to test fallback")
-    @mock.patch.dict(os.environ, {}, clear=True)
-    def test_get_pudl_sql_url_config_bad(self, temp_dir):
-        """Test pudl.sqlite url from config failure."""
-        with pytest.raises(FileNotFoundError):
-            get_pudl_sql_url(temp_dir / ".foo.yml")
+def test_get_pudl_sql_url_env():
+    """Test pudl.sqlite url from env variable."""
+    with pytest.raises(DeprecationWarning):
+        get_pudl_sql_url()
 
 
 class TestPretendPudlTabl:
     """Tests for PretendPudlTabl."""
 
-    def test_type(self, test_dir, temp_dir):
-        """Test with a sample PudlTabl."""
-        pt = DataZip.load(test_dir / "test_data/pudltabl.zip", PretendPudlTabl)
-        assert type(pt) is PretendPudlTabl
-
     def test_load(self, test_dir, temp_dir):
         """Test with a sample PudlTabl."""
-        pt = DataZip.load(test_dir / "test_data/pudltabl.zip", PretendPudlTabl)
-        df = pt.epacamd_eia()
-        assert isinstance(df, pd.DataFrame)
-        assert not df.empty
-
-    def test_load_error(self, test_dir, temp_dir):
-        """Test with a sample PudlTabl."""
-        pt = DataZip.load(test_dir / "test_data/pudltabl.zip", PretendPudlTabl)
-        with pytest.raises(KeyError):
-            _ = pt.foo()
+        with pytest.raises(DeprecationWarning):
+            _ = DataZip.load(test_dir / "test_data/pudltabl.zip", PretendPudlTabl)
 
 
 @pytest.mark.usefixtures("pudl_test_cache")
