@@ -1,0 +1,117 @@
+etoolbox.cli
+============
+
+.. py:module:: etoolbox.cli
+
+.. autoapi-nested-parse::
+
+   etoolbox CLI utility functions.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   etoolbox.cli.main
+   etoolbox.cli.cloud
+   etoolbox.cli.rmi_cloud_get
+   etoolbox.cli.rmi_cloud_put
+   etoolbox.cli.rmi_cloud_list
+   etoolbox.cli.rmi_cloud_cache
+   etoolbox.cli.pudl
+   etoolbox.cli.rmi_pudl_get
+   etoolbox.cli.rmi_pudl_cache
+   etoolbox.cli.rmi_pudl_list
+   etoolbox.cli.rmi_pudl_rename
+
+
+Module Contents
+---------------
+
+.. py:function:: main()
+
+   eToolBox CLI.
+
+
+.. py:function:: cloud()
+
+   RMI cloud utilities.
+
+
+.. py:function:: rmi_cloud_get(source, destination, clobber)
+
+   Download a remote file from the cloud.
+
+   Uses ``azcopy`` CLI if available.
+
+   SOURCE: remote file or folder to download of the form ``<container>/...``
+   DESTINATION: local destination for the downloaded files
+
+
+.. py:function:: rmi_cloud_put(source, destination, *, clobber)
+
+   Upload local files or directories to the cloud.
+
+   Copies a specific file or tree of files. If destination
+   ends with a "/", it will be assumed to be a directory, and target files
+   will go within.
+
+   Uses ``azcopy`` CLI if available.
+
+   SOURCE: local file or folder to copy
+   DESTINATION: copy destination of the form ``<container>/...``
+
+
+.. py:function:: rmi_cloud_list(directory, *, detail)
+
+   List cloud files in a folder.
+
+   DIRECTORY: remote folder to list contents of e.g. ``<container>/...``
+
+
+.. py:function:: rmi_cloud_cache()
+
+   Return info about cloud cache contents.
+
+
+.. py:function:: pudl()
+
+   PUDL utilities.
+
+
+.. py:function:: rmi_pudl_get(table, release, destination)
+
+   Download PUDL table from AWS as a csv.
+
+   Downloads a specified PUDL table from AWS and saves it as a CSV file. This command
+   retrieves the selected table for a given release version and writes it to a given
+   destination directory. If no destination is provided, it defaults to the current
+   working directory.
+
+   TABLE: Name of the PUDL table to download.
+   RELEASE: Release version of the PUDL data to pull the table from.
+   DESTINATION: Path to the directory where the CSV file will be saved.
+       Defaults to the current working directory.
+
+
+.. py:function:: rmi_pudl_cache()
+
+   Return info about the contents of the PUDL cache.
+
+
+.. py:function:: rmi_pudl_list(release, detail)
+
+   List PUDL tables in AWS using ``ls`` command.
+
+   RELEASE: ``nightly``, ``stable`` or versioned, omit to list releases.
+
+
+.. py:function:: rmi_pudl_rename(pattern, dry_run, yes)
+
+   Rename PUDL tables in files that match a provided pattern.
+
+   PATTERN: pattern for globbing files.
+
+
