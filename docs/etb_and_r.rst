@@ -16,8 +16,13 @@ need to check out the
 `miniforge install <https://github.com/conda-forge/miniforge#windows>`__  instructions.
 If you do get it working let us know how you did it!
 
-Setup eToolBox with UV
---------------------------------------------------------------------------------------
+Installation
+=======================================================================================
+To use eToolBox in R you must install the R package
+`reticulate <https://rstudio.github.io/reticulate/>`__.
+
+Install with uv (Recommended)
+---------------------------------------------------------------------------------------
 
 Install `uv <https://github.com/astral-sh/uv>`__ with its standalone installer.
 
@@ -31,15 +36,14 @@ Install `uv <https://github.com/astral-sh/uv>`__ with its standalone installer.
 
    brew install uv
 
-Setup uv for eToolBox, install it and store the SAS key to enable
-access to data stored in Azure.
+Setup uv for eToolBox, install it and store the Azure account name and SAS token.
 
 .. code-block:: zsh
 
     uv python install 3.13
     uv tool install git+https://github.com/rmi/etoolbox.git --compile-bytecode
     uv tool update-shell
-    etb cloud init "<token>"
+    etb cloud init
 
 If you find that the ``etb`` command does not work even after restarting the terminal,
 you will need to make a manual change to ``.zshrc``.
@@ -48,64 +52,11 @@ you will need to make a manual change to ``.zshrc``.
 
     echo -n 'export PATH=~/.local/bin:$PATH' >> ~/.zshrc
 
-To use eToolBox in R you must install the R package
-`reticulate <https://rstudio.github.io/reticulate/>`__. Then you need to tell
-it where to find python using ``use_python``. The examples below show what this looks
-like on a macOS with Python installed using ``uv``.
+You must tell reticulate where to find python using ``use_python``. The examples below
+show what this looks like on macOS with Python installed using ``uv``.
 
-Using eToolBox to read and write patio result data to Azure
-===========================================================
-Details about available functions for use with Azure can be found in the API reference
-:mod:`.cloud`.
-
-.. code-block:: R
-
-    library(reticulate)
-
-    use_python("~/.local/share/uv/tools/rmi-etoolbox/bin/python")
-
-    # import pudl module from etoolbox
-    cloud <- import("etoolbox.utils.cloud")
-
-    # read patio resource model results
-    results <- cloud$read_patio_resource_results("202504270143")
-
-    # write ``result_df`` to ``output_file`` parquet in the ``202504270143``
-    # model run directory on Azure
-    cloud$write_patio_econ_results(result_df, "202504270143", "output_file.parquet")
-
-    # list all available results on Azure
-    cloud$cloud_list("patio-results")
-
-Using eToolBox to read PUDL data
-================================
-Details about available functions for use with PUDL can be found in the API reference
-:mod:`.pudl`.
-
-.. code-block:: R
-
-    library(reticulate)
-
-    use_python("~/.local/share/uv/tools/rmi-etoolbox/bin/python")
-
-    # to get consistent PUDL data and for reproducibility, set the pudl_release globally
-    pudl_release <- "v2025.2.0"
-
-    # import pudl module from etoolbox
-    pudl <- import("etoolbox.utils.pudl")
-
-    # read a pudl table
-    df <- pudl$pd_read_pudl("out_eia__yearly_utilities", release=pudl_release)
-
-    # list all pudl releases
-    pudl$pudl_list(NULL)
-
-    # list pudl tables in ``pudl_release`` release
-    pudl$pudl_list(pudl_release)
-
-
-Setup eToolBox with Miniforge
---------------------------------------------------------------------------------------
+Install with Miniforge
+---------------------------------------------------------------------------------------
 
 Current recommendation is to use ``uv`` as described above. However if you already use
 mamba or conda, or wDownload `miniforge <https://github.com/conda-forge/miniforge>`__
@@ -117,8 +68,8 @@ Unless you have a reason to say no, you'll want to say yes.
    curl -L -O "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh"
    bash Miniforge3-$(uname)-$(uname -m).sh
 
-Create a conda environment for eToolBox, install it and store the SAS key to enable
-access to data stored in Azure.
+Create a conda environment for eToolBox, install it and store the Azure account name
+and SAS token.
 
 .. code-block:: zsh
 
@@ -126,13 +77,11 @@ access to data stored in Azure.
     mamba activate etb
     pip install git+https://github.com/rmi/etoolbox.git
     mamba activate etb
-    etb cloud init "<token>"
+    etb cloud init
 
-To use eToolBox in R you must install the R package
-`reticulate <https://rstudio.github.io/reticulate/>`__. Then you need to tell
-it where to find python using ``use_condaenv``. You may need to look in your home
-directory to see what the ``miniforge`` directory is called, it should be
-``miniforge``, ``miniforge3`` or something like that, you then use that instead of
+You must tell reticulate where to find python using ``use_condaenv``. You may need to
+look in your home directory to see what the ``miniforge`` directory is called, it should
+be ``miniforge``, ``miniforge3`` or something like that, you then use that instead of
 ``<miniforge>`` in the samples below.
 
 .. note::
@@ -141,8 +90,13 @@ directory to see what the ``miniforge`` directory is called, it should be
     python side of this. So long as eToolBox is installed on the path of a python
     interpreter and you can point reticulate at that interpreter, this should work.
 
-Using eToolBox to read and write patio result data to Azure
-===========================================================
+Using eToolBox from R
+=======================================================================================
+
+
+Reading and writing patio result data to Azure
+---------------------------------------------------------------------------------------
+
 Details about available functions for use with Azure can be found in the API reference
 :mod:`.cloud`.
 
@@ -150,13 +104,17 @@ Details about available functions for use with Azure can be found in the API ref
 
     library(reticulate)
 
-    use_condaenv("~/<miniforge>/envs/etb")
+    use_python("~/.local/share/uv/tools/rmi-etoolbox/bin/python")
+    # or use_condaenv("~/<miniforge>/envs/etb") if installed using miniforge
 
     # import pudl module from etoolbox
     cloud <- import("etoolbox.utils.cloud")
 
     # read patio resource model results
     results <- cloud$read_patio_resource_results("202504270143")
+
+    # read patio colo results
+    summary <- read_patio_file("colo_202504230013", "colo_summary.parquet")
 
     # write ``result_df`` to ``output_file`` parquet in the ``202504270143``
     # model run directory on Azure
@@ -165,8 +123,8 @@ Details about available functions for use with Azure can be found in the API ref
     # list all available results on Azure
     cloud$cloud_list("patio-results")
 
-Using eToolBox to read PUDL data
-================================
+Reading PUDL data
+---------------------------------------------------------------------------------------
 Details about available functions for use with PUDL can be found in the API reference
 :mod:`.pudl`.
 
@@ -174,7 +132,8 @@ Details about available functions for use with PUDL can be found in the API refe
 
     library(reticulate)
 
-    use_condaenv("~/<miniforge>/envs/etb")
+    use_python("~/.local/share/uv/tools/rmi-etoolbox/bin/python")
+    # or use_condaenv("~/<miniforge>/envs/etb") if installed using miniforge
 
     # to get consistent PUDL data and for reproducibility, set the pudl_release globally
     pudl_release <- "v2025.2.0"

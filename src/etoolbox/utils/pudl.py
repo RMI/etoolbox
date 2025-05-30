@@ -6,7 +6,6 @@ import warnings
 from datetime import datetime
 from pathlib import Path
 
-import numpy as np
 import orjson as json
 import pandas as pd
 import polars as pl
@@ -24,13 +23,9 @@ BASE = "s3://pudl.catalyst.coop"
 
 
 def rmi_pudl_clean(
-    args=None, *, dry: bool = True, legacy: bool = False, all_: bool = False
+    *, dry: bool = True, legacy: bool = False, all_: bool = False
 ) -> None:
     """Remove rmi.pudl local cache."""
-    if args is not None:
-        dry = args.dry
-        legacy = args.legacy
-        all_ = args.all
     info = pudl_cache()
     print(f"Will delete the following items using {info['size'].sum() * 1e-6:,.0f} MB")
     print(info[["size", "time"]])
@@ -76,7 +71,7 @@ def _filecache_filesystem() -> WholeFileCacheFileSystem:
 
 
 def _cache_path(table_name: str, release: str = "nightly") -> Path | None:
-    """Determine the local path a cached PUDL table and validate it if possible.
+    """Determine the local path to a cached PUDL table and validate it if possible.
 
     Args:
         table_name: name of pudl table
@@ -144,21 +139,10 @@ def pudl_cache():
     )
 
 
-def _pudl_cache(args):
-    info = pudl_cache().assign(
-        time=lambda x: x["time"].dt.strftime("%Y-%m-%d %H:%M:%S"),
-        fn=lambda x: x["fn"].str.slice(0, 5) + "...",
-        uid=lambda x: x["uid"].str.slice(0, 5) + "...",
-        size=lambda x: np.round(x["size"] * 1e-6, 1),
-    )
-    print(info)
-    print(f"\nTotal size: {info['size'].sum():,.0f} MB")
-
-
 def pudl_list(
     release: str = "nightly", token: dict | str | None = None, *, detail: bool = False
 ) -> list[str | dict[str, str | int]]:
-    """List PUDL tables in AWS using ``ls`` command.
+    """List PUDL tables in AWS using the ``ls`` command.
 
     Args:
         release: ``nightly``, ``stable`` or versioned, pass ``None`` to list all
@@ -174,7 +158,7 @@ def pudl_list(
     >>> pudl_list(None)  # doctest: +ELLIPSIS
     ['pudl.catalyst.coop/nightly', 'pudl.catalyst.coop/stable', ...]
 
-    For the most recent, you want the last on the list ie ``releases[-1]``
+    For the most recent, you want the last on the list i.e. ``releases[-1]``
 
     """
     fs = _filecache_filesystem()
@@ -193,7 +177,7 @@ def pd_read_pudl(
     date_as_object: bool = False,
     **kwargs,
 ) -> pd.DataFrame:
-    """Read PUDL table from AWS as :class:`pandas.DataFrame`.
+    """Read a PUDL table from AWS as :class:`pandas.DataFrame`.
 
     Args:
         table_name: name of table in PUDL sqlite database
@@ -385,52 +369,9 @@ def generator_ownership(
 
 
 """
-======================================= For CLI =======================================
-These are wrappers to use the above functions from the CLI
-"""
-
-
-def _get_table_as_csv(args):
-    pl_scan_pudl(args.table, args.release, use_polars=True).collect().write_csv(
-        f"{args.destination}/{args.table}.csv"
-    )
-
-
-def _list(args):
-    ls = pudl_list(args.release, detail=args.detail)
-    pre = args.release if args.release else ""
-    if args.detail:
-        all_cols = {k for d in ls for k in d}
-        cols = [co for co in ("name", "type", "size", "LastModified") if co in all_cols]
-        ex = list({"Key", "Size", "StorageClass"}.intersection(all_cols))
-        info = (
-            pd.DataFrame.from_records(ls, exclude=ex)
-            .assign(
-                name=lambda x: x.name.str.replace(
-                    "pudl.catalyst.coop/", ""
-                ).str.removeprefix(f"{pre}/"),
-                size=lambda x: np.round(x["size"] * 1e-6, 1),
-            )
-            .set_index("name")
-        )
-        print(
-            info[[c for c in cols if c in info.columns]]
-            .to_string()
-            .replace("\n", "\n\t")
-        )
-        return
-    print(
-        "\n".join(
-            a.removeprefix("pudl.catalyst.coop/").removeprefix(f"{pre}/") for a in ls
-        )
-    )
-
-
-"""
 ====================================== DEPRECATED ======================================
 These are here for backwards compatibility and will eventually be removed.
 """
-PUDL_CONFIG = Path.home() / ".pudl.yml"
 SUGGESTION = """
     from etoolbox.utils.pudl import pd_read_pudl
 
@@ -781,6 +722,7 @@ def conform_pudl_dtypes(df: pd.DataFrame) -> pd.DataFrame:
         )
 
     """
+    warnings.warn(WARNING_TEXT, DeprecationWarning, stacklevel=2)
     return df.astype(DTYPES.loc[df.columns.intersection(DTYPES.index)].to_dict())
 
 

@@ -1,5 +1,6 @@
 """Tools for working with RMI's Azure storage."""
 
+import base64
 import json
 import logging
 import os
@@ -11,7 +12,6 @@ from functools import lru_cache
 from pathlib import Path
 
 import click
-import numpy as np
 import pandas as pd
 import polars as pl
 from fsspec import filesystem
@@ -31,16 +31,14 @@ except (ImportError, ModuleNotFoundError):
 
 CONFIG_PATH = user_config_path("rmi.cloud", ensure_exists=True)
 AZURE_CACHE_PATH = user_cache_path("rmi.cloud", ensure_exists=True)
-RMICFEZIL_TOKEN_PATH = CONFIG_PATH / "rmicfezil_token.txt"
+ETB_AZURE_TOKEN_PATH = CONFIG_PATH / "etb_azure_token.txt"
+ETB_AZURE_ACCOUNT_NAME_PATH = CONFIG_PATH / "etb_azure_account_name.txt"
 
 logger = logging.getLogger("etoolbox")
 
 
-def rmi_cloud_clean(args=None, *, dry: bool = False, all_: bool = False):
+def cloud_clean(*, dry: bool = False, all_: bool = False):
     """Cleanup cache and config directories."""
-    if args is not None:
-        dry = args.dry
-        all_ = args.all_
     info = cache_info()
     size = info["size"].sum() * 1e-6
     click.echo(
@@ -55,37 +53,123 @@ def rmi_cloud_clean(args=None, *, dry: bool = False, all_: bool = False):
             shutil.rmtree(CONFIG_PATH, ignore_errors=True)
 
 
-def rmi_cloud_init(args=None, token=None, *, dry: bool = False, clobber: bool = False):
+def cloud_setup():
+    """Interactive cloud setup."""
+    if not ETB_AZURE_ACCOUNT_NAME_PATH.exists():
+        account_name = click.prompt("Enter Azure Account Name: ")
+    else:
+        if (
+            click.prompt(
+                f"Azure Account Name is currently "
+                f"'{ETB_AZURE_ACCOUNT_NAME_PATH.read_text()}', "
+                f"would you like to change it? [y/N]",
+                default="n",
+            ).casefold()
+            == "y"
+        ):
+            account_name = click.prompt("Enter Azure Account Name: ")
+        else:
+            account_name = ""
+    if account_name:
+        with open(ETB_AZURE_ACCOUNT_NAME_PATH, "w") as f:
+            f.write(account_name.strip())
+        click.echo(
+            f"Azure account name: {account_name} written to "
+            f"{ETB_AZURE_ACCOUNT_NAME_PATH}."
+        )
+
+    if not ETB_AZURE_TOKEN_PATH.exists():
+        token = click.prompt("Enter Azure Token: ", type=str)
+    else:
+        if (
+            click.prompt(
+                "Azure Token exists, would you like to change it? [y/N]", default="n"
+            ).casefold()
+            == "y"
+        ):
+            token = click.prompt("Enter Azure Token: ", type=str)
+        else:
+            token = ""
+    if token:
+        token = token.strip("'").strip('"').encode("utf-8")
+        if token.startswith(b"sv="):
+            token = base64.b64encode(token)
+        with open(ETB_AZURE_TOKEN_PATH, "wb") as f:
+            f.write(token)
+        click.echo(f"SAS Token written to {ETB_AZURE_TOKEN_PATH}.")
+
+
+def cloud_init(
+    account_name: str,
+    token: bytes | str,
+    *,
+    dry_run: bool = False,
+    clobber: bool = False,
+):
     """Write SAS token file to disk."""
-    if args is not None:
-        token = args.token
-        dry = args.dry
-        clobber = args.clobber
-    if RMICFEZIL_TOKEN_PATH.exists():
+    if not account_name and not token:
+        return cloud_setup()
+    if ETB_AZURE_ACCOUNT_NAME_PATH.exists():
+        if not clobber:
+            raise FileExistsError("Account name already exists.")
+        click.echo(f"delete {ETB_AZURE_ACCOUNT_NAME_PATH}")
+        if not dry_run:
+            ETB_AZURE_ACCOUNT_NAME_PATH.unlink()
+    if ETB_AZURE_TOKEN_PATH.exists() and token:
         if not clobber:
             raise FileExistsError("SAS Token already exists.")
-        print(f"deleting {RMICFEZIL_TOKEN_PATH}")
-        if not dry:
-            RMICFEZIL_TOKEN_PATH.unlink()
-    print(f"write {token} to {RMICFEZIL_TOKEN_PATH}")
-    if dry:
+        click.echo(f"delete {ETB_AZURE_TOKEN_PATH}")
+        if not dry_run:
+            ETB_AZURE_TOKEN_PATH.unlink()
+    if dry_run:
+        click.echo(f"write SAS Token to {ETB_AZURE_TOKEN_PATH}")
+        click.echo(f"write {account_name} to {ETB_AZURE_ACCOUNT_NAME_PATH}")
         return
-    with open(RMICFEZIL_TOKEN_PATH, "w") as f:
-        f.write(token)
-    print(f"SAS Token {token} written to {RMICFEZIL_TOKEN_PATH}.")
+    if token:
+        if isinstance(token, str):
+            token = token.strip("'").strip('"').encode("utf-8")
+        if token.startswith(b"sv="):
+            token = base64.b64encode(token)
+        with open(ETB_AZURE_TOKEN_PATH, "wb") as f:
+            f.write(token)
+        click.echo(f"SAS Token written to {ETB_AZURE_TOKEN_PATH}.")
+    with open(ETB_AZURE_ACCOUNT_NAME_PATH, "w") as f:
+        f.write(account_name)
+    click.echo(
+        f"Azure account name: {account_name} written to {ETB_AZURE_ACCOUNT_NAME_PATH}."
+    )
 
 
 @lru_cache
 def read_token() -> str:
     """Read SAS token from disk or environment variable."""
-    if RMICFEZIL_TOKEN_PATH.exists():
-        with open(RMICFEZIL_TOKEN_PATH) as f:
-            return f.read()
-    elif (token := os.environ.get("RMICFEZIL_SAS_TOKEN")) is not None:
+    if ETB_AZURE_TOKEN_PATH.exists():
+        return base64.b64decode(ETB_AZURE_TOKEN_PATH.read_text()).decode("utf-8")
+    if (token := os.environ.get("ETB_AZURE_SAS_TOKEN")) is not None:
         return token
-    raise RuntimeError(
-        "No SAS Token found, either run `rmi cloud init` or set "
-        "RMICFEZIL_SAS_TOKEN environment variable."
+    if (old_path := CONFIG_PATH / "rmicfezil_token.txt").exists():
+        with open(old_path) as f:
+            token = f.read()
+        with open(ETB_AZURE_TOKEN_PATH, "wb") as f:
+            f.write(base64.b64encode(token.encode("utf-8")))
+        old_path.unlink()
+        return read_token()
+    raise ValueError(
+        "No SAS Token found, either run `etb cloud init` or set "
+        "ETB_AZURE_SAS_TOKEN environment variable."
+    )
+
+
+@lru_cache
+def read_account_name() -> str:
+    """Read SAS token from disk or environment variable."""
+    if ETB_AZURE_ACCOUNT_NAME_PATH.exists():
+        return ETB_AZURE_ACCOUNT_NAME_PATH.read_text()
+    elif (token := os.environ.get("ETB_AZURE_ACCOUNT_NAME")) is not None:
+        return token
+    raise ValueError(
+        "No Azure account name found, either re-run `etb cloud init` "
+        "or set ETB_AZURE_ACCOUNT_NAME environment variable."
     )
 
 
@@ -115,10 +199,15 @@ def storage_options():
     └──────────────────────┴─────────┘
 
     """
-    return {"storage_options": {"account_name": "rmicfezil", "sas_token": read_token()}}
+    return {
+        "storage_options": {
+            "account_name": read_account_name(),
+            "sas_token": read_token(),
+        }
+    }
 
 
-def rmi_cloud_fs(token=None) -> WholeFileCacheFileSystem:
+def rmi_cloud_fs(account_name=None, token=None) -> WholeFileCacheFileSystem:
     """Work with files on Azure.
 
     This can be used to read or write arbitrary files to or from Azure. And for files
@@ -159,7 +248,7 @@ def rmi_cloud_fs(token=None) -> WholeFileCacheFileSystem:
     │ 8293386810295812914  ┆ solar   │
     └──────────────────────┴─────────┘
 
-    Write a parquet, or really anything to Azure...
+    Write a parquet file, or really anything to Azure...
 
     >>> with fs.open("az://raw-data/file.parquet", mode="wb") as f:  # doctest: +SKIP
     ...     df.write_parquet(f)
@@ -169,7 +258,9 @@ def rmi_cloud_fs(token=None) -> WholeFileCacheFileSystem:
         "filecache",
         target_protocol="az",
         target_options={
-            "account_name": "rmicfezil",
+            "account_name": read_account_name()
+            if account_name is None
+            else account_name,
             "sas_token": read_token() if token is None else token,
         },
         cache_storage=str(AZURE_CACHE_PATH),
@@ -180,8 +271,6 @@ def rmi_cloud_fs(token=None) -> WholeFileCacheFileSystem:
 
 def cache_info():
     """Return info about cloud cache contents."""
-    import pandas as pd
-
     with open(AZURE_CACHE_PATH / "cache", "rb") as f:
         cache_data = json.load(f)
     cdl = [
@@ -202,7 +291,7 @@ def cached_path(cloud_path: str) -> str | None:
     """Get the local cache path of a cloud file.
 
     Args:
-        cloud_path: path on azure, eg ``az://raw-data/test_data.parquet``
+        cloud_path: path on azure, e.g. ``az://raw-data/test_data.parquet``
 
     Examples
     --------
@@ -258,7 +347,7 @@ def get(
     Uses ``azcopy`` CLI if available.
 
     Args:
-        to_get_path: remote file or folder to download of the form '<container>/...
+        to_get_path: remote file or folder to download of the form ``<container>/...``
         destination: local destination for the downloaded files
         fs: filesystem
         quiet: disable logging of adlfs output
@@ -289,7 +378,7 @@ def get(
             [
                 azcopy_path,
                 "cp",
-                f"https://rmicfezil.blob.core.windows.net/{to_get_path}?{read_token()}",
+                f"https://{read_account_name()}.blob.core.windows.net/{to_get_path}?{read_token()}",
                 f"{destination}",
                 f"--overwrite={str(clobber).casefold()}",
                 "--recursive=True",
@@ -316,7 +405,7 @@ def put(
 
     Args:
         to_put_path: local file or folder to copy
-        destination: copy destination of the form '<container>/...
+        destination: copy destination of the form ``<container>/...``
         fs: filesystem
         quiet: disable logging of adlfs output
         clobber: force overwriting of existing files (only works when azcopy is used)
@@ -346,7 +435,7 @@ def put(
                 azcopy_path,
                 "cp",
                 lpath,
-                f"https://rmicfezil.blob.core.windows.net/{destination}?{read_token()}",
+                f"https://{read_account_name()}.blob.core.windows.net/{destination}?{read_token()}",
                 f"--overwrite={str(clobber).casefold()}",
                 f"--recursive={str(recursive).casefold()}",
             ],
@@ -405,14 +494,18 @@ def read_patio_file(
         return pd.read_parquet(
             f"az://patio-results/{datestr}/{filename}", filesystem=fs
         )
+    if ".csv" in filename:
+        with fs.open(f"az://patio-results/{datestr}/{filename}", "rb") as fp:
+            return pd.read_csv(fp)
     if ".zip" in filename:
         return _zip_read(filename)
     for f in cloud_list(f"patio-results/{datestr}"):
         f = f.rpartition("/")[-1]
         if filename in f and ".parquet" in f:
-            return pd.read_parquet(f"az://patio-results/{datestr}/{f}")
+            return pd.read_parquet(f"az://patio-results/{datestr}/{f}", filesystem=fs)
         if filename in f and ".csv" in f:
-            return pd.read_csv(f"az://patio-results/{datestr}/{f}")
+            with fs.open(f"az://patio-results/{datestr}/{f}", "rb") as fp:
+                return pd.read_csv(fp)
         if filename in f and ".zip" in f:
             return _zip_read(f)
     raise FileNotFoundError(f"patio-results/{datestr}/{filename} not found")
@@ -427,7 +520,7 @@ def write_patio_econ_results(
         data: DataFrame, or str or bytes representing
         datestr: Date string that identifies the model run.
         filename: Target filename for storing the results, it must include an
-            appropriate file extension, ie parquet for a DataFrame;
+            appropriate file extension, i.e., parquet for a DataFrame;
             csv json yaml yml toml or txt for str/bytes.
 
     """
@@ -448,63 +541,3 @@ def write_patio_econ_results(
             f.write(data.encode("utf-8") if isinstance(data, str) else data)
     else:
         raise RuntimeError(f"Unsupported type {type(data)}")
-
-
-"""
-======================================= For CLI =======================================
-These are wrappers to use the above functions from the CLI
-"""
-
-
-def _cache_info(args):
-    info = (
-        (
-            cache_info()
-            .reset_index()
-            .assign(
-                blob=lambda x: x["original"].str.partition("/")[0],
-                original=lambda x: x["original"].str.partition("/")[2],
-                time=lambda x: x["time"].dt.strftime("%Y-%m-%d %H:%M:%S"),
-                fn=lambda x: x["fn"].str.slice(0, 5) + "...",
-                uid=lambda x: x["uid"].str.slice(0, 5) + "...",
-                size=lambda x: np.round(x["size"] * 1e-6, 1),
-            )
-        )
-        .sort_values(["blob", "time"])
-        .set_index(["blob", "original"])[["time", "size", "fn", "uid"]]
-    )
-    print(info)
-    print(f"\nTotal size: {info['size'].sum():,.0f} MB")
-
-
-def _list(args):
-    import pandas as pd
-
-    ls = cloud_list(args.to_list_path, detail=args.detail)
-    if args.detail:
-        cols = ["size", "creation_time", "last_modified", "type", "etag", "tags"]
-        ex = ["content_settings"] if any("content_settings" in d for d in ls) else None
-        info = (
-            pd.DataFrame.from_records(ls, exclude=ex)
-            .assign(
-                name=lambda x: x.name.str.replace(
-                    args.to_list_path, ""
-                ).str.removeprefix("/")
-            )
-            .set_index("name")
-        )
-        print(info[[c for c in cols if c in info.columns]])
-        return
-    print("\n".join(a.removeprefix(args.to_list_path).removeprefix("/") for a in ls))
-
-
-def _get(args):
-    get(args.to_get_path, args.destination, quiet=False)
-
-
-def _put(args):
-    source_path = Path(args.source_path).absolute()
-    if not source_path.exists():
-        raise FileNotFoundError(f"{source_path}")
-
-    put(source_path, args.destination, quiet=False, clobber=args.clobber)

@@ -11,7 +11,6 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from etoolbox.datazip._test_classes import _KlassSlots, _TestKlass
 from etoolbox.utils.logging_utils import setup_logging
 
 logger = logging.getLogger(__name__)
@@ -29,24 +28,24 @@ def df_dict() -> dict:
     }
 
 
-@pytest.fixture
-def klass_w_slot(df_dict):
-    """Generic class that uses slots."""
-    obj = _KlassSlots()
-    obj.foo = df_dict["a"]
-    obj.tup = (1, 2)
-    obj.lis = (3, 4)
-    obj._dfs = df_dict
-    return obj
-
-
-@pytest.fixture
-def klass_wo_slot(df_dict):
-    """Generic class that does not use slots."""
-    obj = _TestKlass()
-    obj.foo = df_dict["a"]
-    obj._dfs = df_dict
-    return obj
+# @pytest.fixture
+# def klass_w_slot(df_dict):
+#     """Generic class that uses slots."""
+#     obj = _KlassSlots()
+#     obj.foo = df_dict["a"]
+#     obj.tup = (1, 2)
+#     obj.lis = (3, 4)
+#     obj._dfs = df_dict
+#     return obj
+#
+#
+# @pytest.fixture
+# def klass_wo_slot(df_dict):
+#     """Generic class that does not use slots."""
+#     obj = _TestKlass()
+#     obj.foo = df_dict["a"]
+#     obj._dfs = df_dict
+#     return obj
 
 
 @pytest.fixture(scope="session")
@@ -71,27 +70,6 @@ def temp_dir(test_dir) -> Path:
     out.mkdir(exist_ok=True)
     yield out
     shutil.rmtree(out)
-
-
-@pytest.fixture(
-    scope="class",
-    params=[
-        "pandas",
-        pytest.param(
-            "pyarrow",
-            marks=pytest.mark.skipif(
-                pd.__version__ < "4.0.0",
-                reason="`pandas.options.mode.dtype_backend` "
-                "option not available before 2.0.0",
-            ),
-        ),
-    ],
-)
-def pd_backend(test_dir, request) -> str:
-    """Use to run test with both pandas backends."""
-    if pd.__version__ > "4.0.0":
-        pd.set_option("mode.dtype_backend", request.param)
-    return request.param
 
 
 @pytest.fixture(scope="session")
@@ -122,18 +100,25 @@ def cloud_test_cache(temp_dir):
     """Setup dummy cloud cache and config directories for testing."""
     import etoolbox.utils.cloud as cloud
 
-    original_paths = (cloud.CONFIG_PATH, cloud.RMICFEZIL_TOKEN_PATH)
+    original_paths = (
+        cloud.CONFIG_PATH,
+        cloud.ETB_AZURE_TOKEN_PATH,
+        cloud.ETB_AZURE_ACCOUNT_NAME_PATH,
+    )
 
     cloud.AZURE_CACHE_PATH = temp_dir / "rmi.cloud.cache"
     cloud.CONFIG_PATH = temp_dir / "rmi.cloud"
-    cloud.RMICFEZIL_TOKEN_PATH = cloud.CONFIG_PATH / "rmicfezil_token.txt"
+    cloud.ETB_AZURE_TOKEN_PATH = cloud.CONFIG_PATH / "rmicfezil_token.txt"
+    cloud.ETB_AZURE_ACCOUNT_NAME_PATH = cloud.CONFIG_PATH / "etb_azure_account_name.txt"
 
     cloud.AZURE_CACHE_PATH.mkdir(exist_ok=True, parents=True)
     cloud.CONFIG_PATH.mkdir(exist_ok=True, parents=True)
     yield
 
     shutil.rmtree(temp_dir / "rmi.cloud.cache", ignore_errors=True)
-    cloud.CONFIG_PATH, cloud.RMICFEZIL_TOKEN_PATH = original_paths
+    cloud.CONFIG_PATH, cloud.ETB_AZURE_TOKEN_PATH, cloud.ETB_AZURE_ACCOUNT_NAME_PATH = (
+        original_paths
+    )
 
 
 @pytest.fixture

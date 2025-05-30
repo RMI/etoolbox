@@ -22,9 +22,9 @@ def assert_equal(left, right, check_pd_dtype=True) -> None:  # noqa: FBT002
     elif isinstance(right, pd.DataFrame):
         pd.testing.assert_frame_equal(left, right, check_dtype=check_pd_dtype)
     elif isinstance(right, pl.Series):
-        pltesting.assert_series_equal(left, right, check_dtype=check_pd_dtype)
+        pltesting.assert_series_equal(left, right, check_dtypes=check_pd_dtype)
     elif isinstance(right, pl.DataFrame | pl.LazyFrame):
-        pltesting.assert_frame_equal(left, right, check_dtype=check_pd_dtype)
+        pltesting.assert_frame_equal(left, right, check_dtypes=check_pd_dtype)
     elif isinstance(right, list | tuple):
         for v0, v1 in zip(left, right, strict=True):
             assert_equal(v0, v1)

@@ -12,7 +12,7 @@ from functools import partial
 from io import BytesIO
 from pathlib import Path, PosixPath, WindowsPath
 from types import NoneType
-from typing import IO, TYPE_CHECKING, Any, ClassVar, Literal
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 from zipfile import ZipFile
 from zoneinfo import ZoneInfo
 
@@ -57,7 +57,7 @@ class DataZip(ZipFile):
 
     def __init__(
         self,
-        file: PathLike[str] | IO[bytes],
+        file: str | PathLike | BytesIO,
         mode: Literal["r", "w"] = "r",
         ignore_pd_dtypes=False,  # noqa: FBT002
         *args,

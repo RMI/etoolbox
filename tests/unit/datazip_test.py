@@ -345,16 +345,16 @@ def test_load_no_dump(temp_dir):
     assert obj1["a"]["foo"] == 2 and obj1["b"] == "a string"  # noqa: PT018
 
 
-class TestWPDBackend:
+class TestWPandas:
     """Tests that involve pandas.
 
     These tests get run with both ``pyarrow`` and ``pandas`` backends if
     ``pandas.__version__ >= '2.0.0'``.
     """
 
-    def test_datazip_contains_len(self, pd_backend, temp_dir):
+    def test_datazip_contains_len(self, temp_dir):
         """Test override of ``in``."""
-        file = temp_dir / f"test_datazip_contains_len_{pd_backend}.zip"
+        file = temp_dir / "test_datazip_contains_len.zip"
         with DataZip(file, "w") as z:
             z["a"] = pd.Series([1, 2, 3, 4])
         with DataZip(file, "r") as z1:
@@ -382,19 +382,19 @@ class TestWPDBackend:
             with DataZip(file, "r") as z5:
                 assert z5["b"] == 16
 
-    def test_dup_names(self, pd_backend, temp_dir):
+    def test_dup_names(self, temp_dir):
         """Test that object with the same name are both stored."""
         expected = [
             {"series": pd.Series([1, 2, 3, 4], name="series")},
             {"series": pd.Series([1, 2, 355, 4])},
         ]
-        with DataZip(temp_dir / f"test_dup_names_{pd_backend}.zip", "w") as z0:
+        with DataZip(temp_dir / "test_dup_names.zip", "w") as z0:
             z0["stuff"] = expected
             assert len(set(z0.namelist())) == 2
-        with DataZip(temp_dir / f"test_dup_names_{pd_backend}.zip", "r") as z1:
+        with DataZip(temp_dir / "test_dup_names.zip", "r") as z1:
             assert_equal(z1["stuff"], expected)
 
-    def test_legacy(self, pd_backend, temp_dir):
+    def test_legacy(self, temp_dir):
         """Test that legacy DataZip can be opened and used."""
         expected_df = pd.DataFrame(
             [[0.1, 1.2], [0.5, 1.9], [1.1, 3.2]],
@@ -418,7 +418,7 @@ class TestWPDBackend:
                 "profs": ["pandas.core.frame", "DataFrame", None],
             },
         }
-        dz_file = temp_dir / f"test_legacy_{pd_backend}.zip"
+        dz_file = temp_dir / "test_legacy.zip"
         with ZipFile(dz_file, "w") as z:
             z.writestr(
                 "__attributes__.json", json.dumps({}, ensure_ascii=False, indent=4)
@@ -523,9 +523,9 @@ class TestWPDBackend:
         ],
         ids=idfn,
     )
-    def test_types_w_pd(self, pd_backend, temp_dir, key, ignore_dtypes, expected):
+    def test_types_w_pd(self, temp_dir, key, ignore_dtypes, expected):
         """Test preservation of types, dtypes, and contents."""
-        file = temp_dir / f"test_types_w_pd_{key}_{pd_backend}_{ignore_dtypes}.zip"
+        file = temp_dir / f"test_types_w_pd_{key}_{ignore_dtypes}.zip"
         with DataZip(file, "w") as z0:
             z0[key] = expected
             pass
@@ -540,7 +540,6 @@ class TestWPDBackend:
             # the original
             if all(
                 (
-                    "arrow" in pd_backend,
                     "arrow" not in key,
                     ignore_dtypes,
                     pd.__version__ < "2.0.0",
@@ -552,9 +551,9 @@ class TestWPDBackend:
             else:
                 assert_equal(read, expected)
 
-    def test_dup_names2(self, pd_backend, temp_dir):
+    def test_dup_names2(self, temp_dir):
         """Test what duplicate named items become."""
-        file = temp_dir / f"test_dup_names2_{pd_backend}.zip"
+        file = temp_dir / "test_dup_names2.zip"
         with DataZip(file, "w") as z0:
             z0["a"] = {
                 "a": {"b": pd.Series([1, 2])},
@@ -580,9 +579,9 @@ class TestWPDBackend:
         ],
         ids=idfn,
     )
-    def test_reset_id(self, pd_backend, temp_dir, name, obj, reset_ids):
+    def test_reset_id(self, temp_dir, name, obj, reset_ids):
         """Test that resetting IDs stores object with same ID separately."""
-        file = temp_dir / f"test_id_reset_{name}_{pd_backend}.zip"
+        file = temp_dir / f"test_id_reset_{name}.zip"
         with DataZip(file, "w") as z0:
             z0["a"] = obj
             if reset_ids:
@@ -624,9 +623,9 @@ class TestWPDBackend:
         ],
         ids=idfn,
     )
-    def test_dup(self, pd_backend, temp_dir, name, obj, test):
+    def test_dup(self, temp_dir, name, obj, test):
         """Test that object referenced multiple times is stored once."""
-        with DataZip(temp_dir / f"test_dup_{name}_{pd_backend}.zip", "w") as z0:
+        with DataZip(temp_dir / f"test_dup_{name}.zip", "w") as z0:
             z0["a"] = obj
             z0["b"] = obj
             assert len(z0) == 2
@@ -634,7 +633,7 @@ class TestWPDBackend:
                 assert "b.parquet" not in z0.namelist()
             elif test == "state":
                 assert len(z0["__state__"]) == 1
-        with DataZip(temp_dir / f"test_dup_{name}_{pd_backend}.zip", "r") as z1:
+        with DataZip(temp_dir / f"test_dup_{name}.zip", "r") as z1:
             a = z1["a"]
             b = z1["b"]
             assert id(a) == id(b)
@@ -652,12 +651,10 @@ class TestWPDBackend:
         ],
         ids=idfn,
     )
-    def test_embedded_state_obj(self, pd_backend, temp_dir, klass):
+    def test_embedded_state_obj(self, temp_dir, klass):
         """Test creating a datazip with a :class:`typing.NamedTuple` in it."""
         obj = self.make_klass(klass)
-        file = (
-            temp_dir / f"test_embedded_state_obj_{klass.__qualname__}_{pd_backend}.zip"
-        )
+        file = temp_dir / f"test_embedded_state_obj_{klass.__qualname__}.zip"
         with DataZip(file, "w") as z0:
             z0["a"] = obj
         with DataZip(file, "r") as z1:
@@ -675,17 +672,15 @@ class TestWPDBackend:
         ],
         ids=idfn,
     )
-    def test_datazip_dump_load(self, pd_backend, temp_dir, klass):
+    def test_datazip_dump_load(self, temp_dir, klass):
         """Test dump/load on different sorts of objects."""
         obj = self.make_klass(klass)
-        file = (
-            temp_dir / f"test_datazip_dump_load_{klass.__qualname__}_{pd_backend}.zip"
-        )
+        file = temp_dir / f"test_datazip_dump_load_{klass.__qualname__}.zip"
         DataZip.dump(obj, file)
         obj1 = DataZip.load(file)
         assert obj1 == obj
 
-    def test_datazip_dump_load_buffer(self, pd_backend):
+    def test_datazip_dump_load_buffer(self):
         """Test creating dump/load with slots."""
         obj = self.make_klass(_KlassSlots)
         DataZip.dump(obj, temp := BytesIO())

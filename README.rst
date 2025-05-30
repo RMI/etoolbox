@@ -22,7 +22,7 @@ eToolBox: A set of tools and functions we use across projects
     :target: https://github.com/astral-sh/ruff
     :alt: Ruff
 
-Desciption
+Description
 =======================================================================================
 
 *  datazip
@@ -33,7 +33,7 @@ Desciption
       a couple useful features:
 
       *  Support for easily storing and retrieving a range of Python objects, including
-         builtins, pandas and numpy objects, and most custom objects.
+         builtins, pandas, polars, and numpy objects, and most custom objects.
       *  Store dataframes and arrays in standard formats so DataZip and even Python are
          not required for using data from DataZips.
 
@@ -44,38 +44,70 @@ Desciption
    * `cloud <https://rmi.github.io/etoolbox/autoapi/etoolbox/utils/cloud/index.html>`__- tools for reading and writing data from Azure
 
 For guidance on using eToolBox from R, see `here <https://rmi.github.io/etoolbox/etb_and_r.html>`__.
-For information on using the eToolBox CLI behind the ``etb`` command see `here <https://rmi.github.io/etoolbox/cli.html>`__
+For information on using the eToolBox CLI behind the ``etb`` command see
+`here <https://rmi.github.io/etoolbox/cli.html>`__.
 
 Installation
 =======================================================================================
+Install with uv (Recommended)
+---------------------------------------------------------------------------------------
+If you don't have `uv <https://github.com/astral-sh/uv>`__ installed. More information
+and alternative installation instructions
+`here <https://docs.astral.sh/uv/getting-started/installation/>`__.
 
-To install eToolBox as a tool using `uv <https://github.com/astral-sh/uv>`__.
+.. code-block:: zsh
 
-.. code-block:: bash
+   brew install uv
+   uv python install 3.13
+   uv tool update-shell
 
-   uv tool install git+https://github.com/rmi/etoolbox.git
+Install eToolBox as a tool.
 
+.. code-block:: zsh
 
-Or installed into any environment using pip.
+   uv tool install git+https://github.com/rmi/etoolbox.git --compile-bytecode
+
+Upgrade eToolBox.
+
+.. code-block:: zsh
+
+   uv tool upgrade rmi-etoolbox --compile-bytecode
+
+Once you've install it, you can access it with the ``etb`` command. For information
+on using the eToolBox CLI see `here <https://rmi.github.io/etoolbox/cli.html>`__. If
+the ``etb`` command does not work, even after restarting your terminal / shell. Run the
+following command.
+
+.. code-block:: zsh
+
+    uv tool update-shell
+
+Install with pip
+---------------------------------------------------------------------------------------
+Or installed into any conda, mamba or virtual environment using pip.
 
 .. code-block:: bash
 
    pip install git+https://github.com/rmi/etoolbox.git
 
+As a dependency in a project
+-------------------------------------------
 To add it as a dependency in a project add
 ``"rmi.etoolbox @ git+https://github.com/rmi/etoolbox.git"`` to the
 ``dependency`` section of ``pyproject.toml``.
+
 
 Cloud Data Access
 =======================================================================================
 Setup
 ---------------------------------------------------------------------------------------
 To access data stored in Azure you will need an SAS token, once you have that, run the
-following command replacing ``<SAS token>`` with your token.
+following command, you will be prompted for your Azure account name and SAS token. RMI
+users can find both in their password manager.
 
 .. code-block:: bash
 
-    etb cloud init "<SAS token>"
+    etb cloud init
 
 Now you can use any of the functions described in
 `cloud API reference <https://rmi.github.io/etoolbox/autoapi/etoolbox/utils/cloud/index.html>`__

@@ -2,6 +2,25 @@
 eToolBox Release Notes
 =======================================================================================
 
+.. _release-v0-4-1.:
+
+---------------------------------------------------------------------------------------
+0.4.1 (2025-XX-XX)
+---------------------------------------------------------------------------------------
+
+What's New?
+^^^^^^^^^^^
+*  Add colocation results example to ref:`eToolBox and R <etb-r-label>` and simplify
+   structure.
+*  ``etb cloud init`` walks you through setup if no arguments are provided.
+*  Azure account name is is set / stored rather than hard coded.
+*  Update and cleanup readme.
+
+Bug Fixes
+^^^^^^^^^
+*  Fixed a bug in :func:`.read_patio_file` where the fallback process for missing
+   specified file extensions was incorrect for csv and parquet files.
+
 .. _release-v0-4-0.:
 
 ---------------------------------------------------------------------------------------

@@ -33,7 +33,7 @@ dependencies = [
     "click>8,<9"
 ]
 # entry points
-scripts.rmi = "etoolbox.main:main"
+scripts.rmi = "etoolbox.cli:main"
 scripts.etb = "etoolbox.cli:main"
 
 [project.optional-dependencies]
@@ -223,7 +223,7 @@ env_list = ["linters", "docs", "ci"]
 [tool.tox.env_run_base]
 allowlist_externals = ["bash", "coverage", "sphinx-build", "pytest", "ruff", "pre-commit"]
 runner = "uv-venv-runner"
-passenv = ["RMICFEZIL_SAS_TOKEN"]
+passenv = ["ETB_AZURE_SAS_TOKEN", "ETB_AZURE_ACCOUNT_NAME"]
 extras = ["qa", "dev", "doc", "optional"]
 
 [tool.tox.env.linters]

@@ -10,11 +10,11 @@ from etoolbox import __version__
 from etoolbox.utils.cloud import (
     AZURE_CACHE_PATH,
     cache_info,
+    cloud_clean,
+    cloud_init,
     cloud_list,
     get,
     put,
-    rmi_cloud_clean,
-    rmi_cloud_init,
 )
 from etoolbox.utils.pudl import CACHE_PATH as PUDL_CACHE_PATH
 from etoolbox.utils.pudl import pl_scan_pudl, pudl_cache, pudl_list, rmi_pudl_clean
@@ -47,7 +47,7 @@ def cloud():
     show_default=True,
     help="Overwrite existing files",
 )
-def rmi_cloud_get(source, destination, clobber):
+def etb_cloud_get(source, destination, clobber):
     """Download a remote file from the cloud.
 
     Uses ``azcopy`` CLI if available.
@@ -71,7 +71,7 @@ def rmi_cloud_get(source, destination, clobber):
     show_default=True,
     help="Overwrite existing files",
 )
-def rmi_cloud_put(source: Path, destination: str, *, clobber: bool):
+def etb_cloud_put(source: Path, destination: str, *, clobber: bool):
     """Upload local files or directories to the cloud.
 
     Copies a specific file or tree of files. If destination
@@ -100,13 +100,11 @@ def rmi_cloud_put(source: Path, destination: str, *, clobber: bool):
     show_default=True,
     help="Show file details.",
 )
-def rmi_cloud_list(directory: str, *, detail: bool):
+def etb_cloud_list(directory: str, *, detail: bool):
     """List cloud files in a folder.
 
     DIRECTORY: remote folder to list contents of e.g. ``<container>/...``
     """
-    import pandas as pd
-
     ls = cloud_list(directory, detail=detail)
     if detail:
         cols = ["size", "creation_time", "last_modified", "type", "etag", "tags"]
@@ -124,7 +122,7 @@ def rmi_cloud_list(directory: str, *, detail: bool):
 
 
 @cloud.command(name="cache", help="Return info about cloud cache contents.")
-def rmi_cloud_cache():
+def etb_cloud_cache():
     """Return info about cloud cache contents."""
     info = (
         (
@@ -161,13 +159,17 @@ def rmi_cloud_cache():
     show_default=True,
     help="Delete config as well as file cache.",
 )
-def _rmi_cloud_clean(*, dry_run: bool, all_: bool):
+def etb_cloud_clean(*, dry_run: bool, all_: bool):
     """Cleanup cache and config directories."""
-    rmi_cloud_clean(dry=dry_run, all_=all_)
+    cloud_clean(dry=dry_run, all_=all_)
 
 
-@cloud.command("init", help="Store SAS token for reading from and writing to Azure.")
-@click.argument("token", type=str)
+@cloud.command(
+    "init",
+    help="Store SAS token and account name for reading from and writing to Azure.",
+)
+@click.argument("account_name", type=str, required=False, default="")
+@click.argument("token", type=str, required=False, default="")
 @click.option(
     "-d",
     "--dry-run",
@@ -183,9 +185,9 @@ def _rmi_cloud_clean(*, dry_run: bool, all_: bool):
     show_default=True,
     help="Overwrite existing files.",
 )
-def _rmi_cloud_init(token, *, dry_run: bool, clobber: bool):
+def etb_cloud_init(account_name, token, *, dry_run: bool, clobber: bool):
     """Write SAS token file to disk."""
-    rmi_cloud_init(token=token, dry=dry_run, clobber=clobber)
+    cloud_init(account_name, token, dry_run=dry_run, clobber=clobber)
 
 
 @main.group(help="PUDL utilities.")
@@ -200,7 +202,7 @@ def pudl():
 @click.argument(
     "destination", type=click.Path(path_type=Path), default=Path.cwd(), required=False
 )
-def rmi_pudl_get(table, release, destination):
+def etb_pudl_get(table, release, destination):
     """Download PUDL table from AWS as a csv.
 
     Downloads a specified PUDL table from AWS and saves it as a CSV file. This command
@@ -223,7 +225,7 @@ def rmi_pudl_get(table, release, destination):
     help=f"List files stored in ``rmi.pudl`` local cache at "
     f"``{PUDL_CACHE_PATH.relative_to(Path.home())}``.",
 )
-def rmi_pudl_cache():
+def etb_pudl_cache():
     """Return info about the contents of the PUDL cache."""
     info = pudl_cache().assign(
         time=lambda x: x["time"].dt.strftime("%Y-%m-%d %H:%M:%S"),
@@ -243,7 +245,7 @@ def rmi_pudl_cache():
 @click.option("-l", "--legacy", is_flag=True, default=False, show_default=True)
 @click.option("-a", "--all", "all_", is_flag=True, default=False, show_default=True)
 @click.option("-d", "--dry-run", is_flag=True, default=False, show_default=True)
-def _rmi_pudl_clean(legacy, all_, dry_run):
+def etb_pudl_clean(legacy, all_, dry_run):
     """Remove rmi.pudl local cache."""
     rmi_pudl_clean(legacy=legacy, all_=all_, dry=dry_run)
 
@@ -258,7 +260,7 @@ def _rmi_pudl_clean(legacy, all_, dry_run):
     show_default=True,
     help="If True, return details of each table, otherwise just names.",
 )
-def rmi_pudl_list(release, detail):
+def etb_pudl_list(release, detail):
     """List PUDL tables in AWS using ``ls`` command.
 
     RELEASE: ``nightly``, ``stable`` or versioned, omit to list releases.
@@ -306,7 +308,7 @@ def rmi_pudl_list(release, detail):
     help="Sets any confirmation values to 'yes' automatically. users will not be "
     "asked to confirm before tables are renamed.",
 )
-def rmi_pudl_rename(pattern, dry_run, yes):
+def etb_pudl_rename(pattern, dry_run, yes):
     """Rename PUDL tables in files that match a provided pattern.
 
     PATTERN: pattern for globbing files.

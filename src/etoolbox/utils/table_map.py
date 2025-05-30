@@ -374,11 +374,7 @@ PUDL_TABLE_MAP = {
 }
 
 
-def renamer(args=None, pattern=None, *, dry=False, yes=False):
-    if args is not None:
-        pattern = args.pattern
-        dry = args.dry
-        yes = args.yes
+def renamer(pattern, *, dry=False, yes=False):
     paths = [p for p in Path.cwd().glob(pattern) if p.is_file()]
     path_str = "\n  ".join(str(p) for p in paths)
 
