@@ -28,7 +28,8 @@ jobs:
       #          pip install tox
       - name: test with tox
         env:
-          RMICFEZIL_SAS_TOKEN: ${{ secrets.RMICFEZIL_SAS_TOKEN }}
+          ETB_AZURE_SAS_TOKEN: ${{ secrets.ETB_AZURE_SAS_TOKEN }}
+          ETB_AZURE_ACCOUNT_NAME: ${{ secrets.ETB_AZURE_ACCOUNT_NAME }}
         run: tox
       #        run: tox -e ci
 
