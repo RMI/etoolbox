@@ -1,13 +1,13 @@
 [build-system]
-requires = ["setuptools>=60", "setuptools_scm>=8"]
+requires = [ "setuptools>=60", "setuptools_scm>=8" ]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "rmi.etoolbox"
 description = "A set of tools and functions we use across projects."
-license = {file = "LICENSE.txt"}
+license = { file = "LICENSE.txt" }
 readme = "README.rst"
-dynamic = ["version"]
+dynamic = [ "version" ]
 classifiers = [
     "Natural Language :: English",
     "Operating System :: OS Independent",
@@ -21,15 +21,15 @@ classifiers = [
 ]
 requires-python = ">=3.10,<3.14"
 dependencies = [
-    "adlfs>=2023.9.0, <2024.13.0",
-    "fsspec>=2022.11.0, <2025.6.0",
-    "orjson >= 3.8, < 3.11",
-    "pandas >= 1.4,< 2.3",
-    "platformdirs >3.0,<4.4",
+    "adlfs>=2023.9.0,<2024.13.0",
+    "fsspec>=2022.11.0,<2025.6.0",
+    "orjson>=3.8,<3.11",
+    "pandas>=1.4,< 2.3",
+    "platformdirs>3.0,<4.4",
     "polars>=0.20,<1.30",
-    "pyarrow>=9, <21",
+    "pyarrow>=9,<21",
     "s3fs>=2022.11.0, <2025.6.0",
-    "tzdata>=2022.7; platform_system=='Windows'",
+    "tzdata>=2022.7;platform_system=='Windows'",
     "click>8,<9"
 ]
 # entry points
@@ -41,7 +41,7 @@ dev = [
     "coverage>=5.3,<7.9",  # Lets us track what code is being tested
     "pytest>=6.2,<8.4",  # test framework
     "pytest-console-scripts>=1.1,<1.5",  # Allow automatic testing of scripts
-    "tqdm >= 4.63,< 4.68",
+    "tqdm>=4.63,<4.68",
     "requests_mock",  # used by remote_zip tests
     "pytest-socket",  #
 ]
@@ -65,7 +65,7 @@ tooling = [ # in local development these are provided globally
     "tox>=4.16.0,<4.27",  # Python test environment manager
     "tox-uv>=1.25,<2",
 ]
-tests = ["rmi-etoolbox[dev,tooling]"]
+tests = [ "rmi-etoolbox[dev,tooling]" ]
 optional = [
     "plotly>5.10,<6.2",
     "sqlalchemy>1.4,<2.1",
@@ -73,7 +73,7 @@ optional = [
 pudl-test = []
 
 [tool.setuptools.dynamic]
-version = {attr = "etoolbox._version.__version__"}
+version = { attr = "etoolbox._version.__version__" }
 
 [tool.setuptools_scm]
 write_to = "src/etoolbox/_version.py"
@@ -86,13 +86,13 @@ max-line-length = 88
 ignore-path = "docs/_build"
 
 [tool.pytest.ini_options]
-testpaths = ["."]
-addopts = ["--verbose", "--doctest-modules"]
+testpaths = [ "." ]
+addopts = [ "--verbose", "--doctest-modules" ]
 log_format = "%(asctime)s [%(levelname)8s] %(name)s:%(lineno)s %(message)s"
-log_date_format=" %Y-%m-%d %H:%M:%S"
+log_date_format = " %Y-%m-%d %H:%M:%S"
 log_cli = true
 log_cli_level = "WARNING"
-doctest_optionflags = ["NORMALIZE_WHITESPACE", "IGNORE_EXCEPTION_DETAIL", "ELLIPSIS"]
+doctest_optionflags = [ "NORMALIZE_WHITESPACE", "IGNORE_EXCEPTION_DETAIL", "ELLIPSIS" ]
 filterwarnings = [
     "ignore:distutils Version classes are deprecated:DeprecationWarning",
     "ignore:Creating a LegacyVersion:DeprecationWarning:pkg_resources[.*]",
@@ -100,9 +100,9 @@ filterwarnings = [
 
 [tool.rstcheck]
 report_level = "WARNING"
-ignore_roles = ["pr", "issue", "user", "include"]
+ignore_roles = [ "pr", "issue", "user", "include" ]
 ignore_messages = '(Hyperlink target .* is not referenced\.$|Duplicate implicit target name:|An `AttributeError` error occured.*)'
-ignore_directives = ["bibliography", "todo", "include", "click"]
+ignore_directives = [ "bibliography", "todo", "include", "click" ]
 
 [tool.ruff]
 line-length = 88
@@ -196,9 +196,9 @@ pycodestyle.max-doc-length = 88
 pydocstyle.convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["F401"]
-"docs/conf.py" = ["E501"]
-"docs/benchmarks.py" = ["D103", "S301", "S311"]
+"__init__.py" = [ "F401" ]
+"docs/conf.py" = [ "E501" ]
+"docs/benchmarks.py" = [ "D103", "S301", "S311" ]
 "tests/*.py" = [
     "D100",  # Missing docstring in public module
     "D101",  # Missing docstring in public class
@@ -211,49 +211,49 @@ pydocstyle.convention = "google"
     "SIM117",  # Use a single `with` statement with multiple contexts instead of nested `with` statements
 
 ]
-"tests/unit/utils_remote_zip_test.py" = ["D102", "D103", "D107", "FBT002"]
-"_test_classes.py" = ["FBT003"]
-"table_map.py" = ["D103", "E501"]
-"pudl_helpers.py" = ["PD901"]
+"tests/unit/utils_remote_zip_test.py" = [ "D102", "D103", "D107", "FBT002" ]
+"_test_classes.py" = [ "FBT003" ]
+"table_map.py" = [ "D103", "E501" ]
+"pudl_helpers.py" = [ "PD901" ]
 
 
 [tool.tox]
-env_list = ["linters", "docs", "ci"]
+env_list = [ "linters", "docs", "ci" ]
 
 [tool.tox.env_run_base]
-allowlist_externals = ["bash", "coverage", "sphinx-build", "pytest", "ruff", "pre-commit"]
+allowlist_externals = [ "bash", "coverage", "sphinx-build", "pytest", "ruff", "pre-commit" ]
 runner = "uv-venv-runner"
-passenv = ["ETB_AZURE_SAS_TOKEN", "ETB_AZURE_ACCOUNT_NAME"]
-extras = ["qa", "dev", "doc", "optional"]
+passenv = [ "ETB_AZURE_SAS_TOKEN", "ETB_AZURE_ACCOUNT_NAME" ]
+extras = [ "qa", "dev", "doc", "optional" ]
 
 [tool.tox.env.linters]
 description = "Run the pre-commit, flake8 and bandit linters."
 commands = [
-    ['pre-commit', 'run', '--all-files', '--show-diff-on-failure', 'python-no-eval'],
-    ['pre-commit', 'run', '--all-files', '--show-diff-on-failure', 'python-no-log-warn'],
-    ['pre-commit', 'run', '--all-files', '--show-diff-on-failure', 'python-check-blanket-noqa'],
-    ['pre-commit', 'run', '--all-files', '--show-diff-on-failure', 'check-merge-conflict'],
-    ['pre-commit', 'run', '--all-files', '--show-diff-on-failure', 'check-yaml'],
-    ['pre-commit', 'run', '--all-files', '--show-diff-on-failure', 'check-case-conflict'],
-    ['pre-commit', 'run', '--all-files', '--show-diff-on-failure', 'debug-statements'],
-    ['pre-commit', 'run', '--all-files', '--show-diff-on-failure', 'name-tests-test'],
-    ['ruff', 'check', '.'],
+    [ "pre-commit", "run", "--all-files", "--show-diff-on-failure", "python-no-eval" ],
+    [ "pre-commit", "run", "--all-files", "--show-diff-on-failure", "python-no-log-warn" ],
+    [ "pre-commit", "run", "--all-files", "--show-diff-on-failure", "python-check-blanket-noqa" ],
+    [ "pre-commit", "run", "--all-files", "--show-diff-on-failure", "check-merge-conflict" ],
+    [ "pre-commit", "run", "--all-files", "--show-diff-on-failure", "check-yaml" ],
+    [ "pre-commit", "run", "--all-files", "--show-diff-on-failure", "check-case-conflict" ],
+    [ "pre-commit", "run", "--all-files", "--show-diff-on-failure", "debug-statements" ],
+    [ "pre-commit", "run", "--all-files", "--show-diff-on-failure", "name-tests-test" ],
+    [ "ruff", "check", "." ],
 ]
 
 [tool.tox.env.docs]
 description = "Build the HTML docs from scratch using Sphinx."
 commands = [
-    ['bash', '-c', 'rm -rf docs/_build'],
-    ['doc8', 'docs/', 'README.rst'],
-    ['rstcheck', '--config', 'pyproject.toml', '--recursive', './'],
-    ['sphinx-build', '-b', 'html', 'docs', 'docs/_build/html']
+    [ "bash", "-c", "rm -rf docs/_build" ],
+    [ "doc8", "docs/", "README.rst" ],
+    [ "rstcheck", "--config", "pyproject.toml", "--recursive", "./" ],
+    [ "sphinx-build", "-b", "html", "docs", "docs/_build/html" ],
 ]
 
 [tool.tox.env.ci]
 description = "un all continuous integration (CI) checks & generate test coverage."
 commands = [
-    ['coverage', 'erase'],
-    ['coverage', 'run', '--source={envsitepackagesdir}/etoolbox', '-m', 'pytest', '--doctest-modules', '{envsitepackagesdir}/etoolbox', 'tests/unit'],
-    ['coverage', 'lcov', '-o', 'coverage.info'],
-    ['coverage', 'report', '--sort=cover']
+    [ "coverage", "erase" ],
+    [ "coverage", "run", "--source={envsitepackagesdir}/etoolbox", "-m", "pytest", "--doctest-modules", "{envsitepackagesdir}/etoolbox", "tests/unit" ],
+    [ "coverage", "lcov", "-o", "coverage.info" ],
+    [ "coverage", "report", "--sort=cover" ],
 ]

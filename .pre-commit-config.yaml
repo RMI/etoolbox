@@ -54,7 +54,7 @@ repos:
     rev: v1.1.2
     hooks:
       - id: doc8
-        args: ["--config", "pyproject.toml"]
+        args: [--config, pyproject.toml]
 
   # Lint any RST files and embedded code blocks for syntax / formatting errors
   - repo: https://github.com/rstcheck/rstcheck
@@ -62,7 +62,7 @@ repos:
     hooks:
       - id: rstcheck
         additional_dependencies: ["rstcheck[toml, sphinx]"]
-        args: ["--config", "pyproject.toml"]
+        args: [--config, pyproject.toml]
 
 # Configuration for pre-commit.ci
 ci:
