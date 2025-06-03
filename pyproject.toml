@@ -39,7 +39,7 @@ scripts.etb = "etoolbox.cli:main"
 [project.optional-dependencies]
 dev = [
     "coverage>=5.3,<7.9",  # Lets us track what code is being tested
-    "pytest>=6.2,<8.4",  # test framework
+    "pytest>=6.2,<8.5",  # test framework
     "pytest-console-scripts>=1.1,<1.5",  # Allow automatic testing of scripts
     "tqdm>=4.63,<4.68",
     "requests_mock",  # used by remote_zip tests
