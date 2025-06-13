@@ -26,7 +26,7 @@ dependencies = [
     "orjson>=3.8,<3.11",
     "pandas>= 1.4,< 2.4",
     "platformdirs>3.0,<4.4",
-    "polars>=0.20,<1.30",
+    "polars>=0.20,<1.31",
     "pyarrow>=9,<21",
     "s3fs>=2022.11.0, <2025.6.0",
     "tzdata>=2022.7;platform_system=='Windows'",
