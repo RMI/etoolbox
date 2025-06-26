@@ -15,6 +15,11 @@ What's New?
 *  ``etb cloud init`` walks you through setup if no arguments are provided.
 *  Azure account name is is set / stored rather than hard coded.
 *  Update and cleanup readme.
+*  :func:`.read_patio_file` is now :func:`.read_cloud_file` and only takes a filename
+   which can represent any file in any of the account's containers. It also supports reading
+   all filetypes that :func:`.write_cloud_file` does.
+*  :func:`.write_patio_econ_results` is now :func:`.write_cloud_file` and only takes
+   a filename which can represent any file in any of the account's containers.
 
 Bug Fixes
 ^^^^^^^^^

@@ -14,6 +14,8 @@ from pathlib import Path
 import click
 import pandas as pd
 import polars as pl
+import tomllib
+import yaml
 from fsspec import filesystem
 from fsspec.implementations.cached import WholeFileCacheFileSystem
 from platformdirs import user_cache_path, user_config_path
@@ -453,7 +455,7 @@ def read_patio_resource_results(datestr: str) -> dict[str, pd.DataFrame]:
         datestr: Date string that identifies the model run.
 
     """
-    out = read_patio_file(datestr, f"BAs_{datestr}_results.zip")
+    out = read_cloud_file(f"patio-results/{datestr}/BAs_{datestr}_results.zip")
     for k, v in out.items():
         if isinstance(v, pd.DataFrame):
             out[k] = v.convert_dtypes(
@@ -467,69 +469,80 @@ def read_patio_resource_results(datestr: str) -> dict[str, pd.DataFrame]:
     return out
 
 
-def read_patio_file(
-    datestr: str, filename: str
-) -> dict[str, pd.DataFrame] | pd.DataFrame:
-    """Reads patio data from Azure.
+def read_cloud_file(filename: str) -> dict[str, pd.DataFrame] | pd.DataFrame:
+    """Read parquet, csv, or DataZip files from Azure.
 
     The method handles the specific format of patio resource
     files and manages file system interactions as well as cache mechanisms.
 
     Args:
-        datestr: Date string that identifies the model run.
-        filename: Target filename for reading data.
+        filename: the full path to the file including container and file extension.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from etoolbox.utils.cloud import read_cloud_file
+
+    >>> df = read_cloud_file("patio-data/20241031/utility_ids.parquet")
+    >>> df.head()  # doctest: +NORMALIZE_WHITESPACE
+       utility_id_ferc1  ...  public_private_unmapped
+    0               1.0  ...                 unmapped
+    1             342.0  ...                   public
+    2             294.0  ...                   public
+    3             394.0  ...                   public
+    4             349.0  ...                   public
+    <BLANKLINE>
+    [5 rows x 37 columns]
 
     """
     fs = rmi_cloud_fs()
-
-    def _zip_read(name):
-        f = fs.open(f"az://patio-results/{datestr}/{name}")
-        f.close()
-        c_path = str(AZURE_CACHE_PATH / cached_path(f"patio-results/{datestr}/{name}"))
-        with DataZip(c_path, "r") as z:
-            out_dict = dict(z.items())
-        return out_dict
+    filename = filename.removeprefix("az://").removeprefix("abfs://")
 
     if ".parquet" in filename:
-        return pd.read_parquet(
-            f"az://patio-results/{datestr}/{filename}", filesystem=fs
-        )
+        return pd.read_parquet(f"az://{filename}", filesystem=fs)
     if ".csv" in filename:
-        with fs.open(f"az://patio-results/{datestr}/{filename}", "rb") as fp:
+        with fs.open(f"az://{filename}", "rb") as fp:
             return pd.read_csv(fp)
+    if ".json" in filename:
+        with fs.open(f"az://{filename}", "rb") as fp:
+            return json.load(fp)
+    if ".toml" in filename:
+        with fs.open(f"az://{filename}", "rb") as fp:
+            return tomllib.load(fp)
+    if ".txt" in filename:
+        with fs.open(f"az://{filename}", "r") as fp:
+            return fp.read()
+    if ".yaml" in filename or ".yml" in filename:
+        with fs.open(f"az://{filename}", "rb") as fp:
+            return yaml.safe_load(fp)
     if ".zip" in filename:
-        return _zip_read(filename)
-    for f in cloud_list(f"patio-results/{datestr}"):
-        f = f.rpartition("/")[-1]
-        if filename in f and ".parquet" in f:
-            return pd.read_parquet(f"az://patio-results/{datestr}/{f}", filesystem=fs)
-        if filename in f and ".csv" in f:
-            with fs.open(f"az://patio-results/{datestr}/{f}", "rb") as fp:
-                return pd.read_csv(fp)
-        if filename in f and ".zip" in f:
-            return _zip_read(f)
-    raise FileNotFoundError(f"patio-results/{datestr}/{filename} not found")
+        f = fs.open(f"az://{filename}")
+        f.close()
+        with DataZip(str(AZURE_CACHE_PATH / cached_path(filename)), "r") as z:
+            return dict(z.items())
+    raise ValueError(
+        f"{filename} is not a parquet, csv, json, toml, txt, yaml/yml, or zip."
+    )
 
 
-def write_patio_econ_results(
-    data: pd.DataFrame | str | bytes, datestr: str, filename: str
-) -> None:
+def write_cloud_file(data: pd.DataFrame | str | bytes, filename: str) -> None:
     """Writes economic results for patio data to a specified filename in Azure storage.
 
     Args:
         data: DataFrame, or str or bytes representing
-        datestr: Date string that identifies the model run.
-        filename: Target filename for storing the results, it must include an
-            appropriate file extension, i.e., parquet for a DataFrame;
-            csv json yaml yml toml or txt for str/bytes.
+        filename: Target filename for storing the results, it must include the
+            container, full path, and appropriate file extension, i.e., parquet for
+            a DataFrame; csv json yaml yml toml or txt for str/bytes.
 
     """
-    name, _, suffix = filename.partition(".")
+    name, _, suffix = (
+        filename.removeprefix("az://").removeprefix("abfs://").partition(".")
+    )
     fs = rmi_cloud_fs()
     if isinstance(data, pd.DataFrame):
         if suffix != "parquet":
             raise TypeError("to write a DataFrame as csv, pass it as a str or bytes")
-        with fs.open(f"az://patio-results/{datestr}/{name}.parquet", mode="wb") as f:
+        with fs.open(f"az://{name}.parquet", mode="wb") as f:
             data.to_parquet(f)
     elif isinstance(data, str | bytes):
         allowed_file_types = ("csv", "json", "yaml", "yml", "toml", "txt")
@@ -537,7 +550,7 @@ def write_patio_econ_results(
             raise AssertionError(
                 f"Unsupported file format {suffix}, must be one of {allowed_file_types}"
             )
-        with fs.open(f"az://patio-results/{datestr}/{name}.{suffix}", mode="wb") as f:
+        with fs.open(f"az://{name}.{suffix}", mode="wb") as f:
             f.write(data.encode("utf-8") if isinstance(data, str) else data)
     else:
         raise RuntimeError(f"Unsupported type {type(data)}")

@@ -114,11 +114,11 @@ Details about available functions for use with Azure can be found in the API ref
     results <- cloud$read_patio_resource_results("202504270143")
 
     # read patio colo results
-    summary <- read_patio_file("colo_202504230013", "colo_summary.parquet")
+    summary <- read_cloud_file("patio-results/colo_202504230013/colo_summary.parquet")
 
     # write ``result_df`` to ``output_file`` parquet in the ``202504270143``
     # model run directory on Azure
-    cloud$write_patio_econ_results(result_df, "202504270143", "output_file.parquet")
+    cloud$write_cloud_file(result_df, "patio-results/202504270143/output_file.parquet")
 
     # list all available results on Azure
     cloud$cloud_list("patio-results")
