@@ -22,6 +22,10 @@ eToolBox: A set of tools and functions we use across projects
     :target: https://github.com/astral-sh/ruff
     :alt: Ruff
 
+.. image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json
+    :target: https://github.com/astral-sh/uv
+    :alt: uv
+
 Description
 =======================================================================================
 

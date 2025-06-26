@@ -480,7 +480,6 @@ def read_cloud_file(filename: str) -> dict[str, pd.DataFrame] | pd.DataFrame:
 
     Examples
     --------
-    >>> import pandas as pd
     >>> from etoolbox.utils.cloud import read_cloud_file
 
     >>> df = read_cloud_file("patio-data/20241031/utility_ids.parquet")
@@ -496,27 +495,27 @@ def read_cloud_file(filename: str) -> dict[str, pd.DataFrame] | pd.DataFrame:
 
     """
     fs = rmi_cloud_fs()
-    filename = filename.removeprefix("az://").removeprefix("abfs://")
+    filename = "az://" + filename.removeprefix("az://").removeprefix("abfs://")
 
     if ".parquet" in filename:
-        return pd.read_parquet(f"az://{filename}", filesystem=fs)
+        return pd.read_parquet(filename, filesystem=fs)
     if ".csv" in filename:
-        with fs.open(f"az://{filename}", "rb") as fp:
+        with fs.open(filename, "rb") as fp:
             return pd.read_csv(fp)
     if ".json" in filename:
-        with fs.open(f"az://{filename}", "rb") as fp:
+        with fs.open(filename, "rb") as fp:
             return json.load(fp)
     if ".toml" in filename:
-        with fs.open(f"az://{filename}", "rb") as fp:
+        with fs.open(filename, "rb") as fp:
             return tomllib.load(fp)
     if ".txt" in filename:
-        with fs.open(f"az://{filename}", "r") as fp:
+        with fs.open(filename, "r") as fp:
             return fp.read()
     if ".yaml" in filename or ".yml" in filename:
-        with fs.open(f"az://{filename}", "rb") as fp:
+        with fs.open(filename, "rb") as fp:
             return yaml.safe_load(fp)
     if ".zip" in filename:
-        f = fs.open(f"az://{filename}")
+        f = fs.open(filename)
         f.close()
         with DataZip(str(AZURE_CACHE_PATH / cached_path(filename)), "r") as z:
             return dict(z.items())
