@@ -68,7 +68,7 @@ tooling = [ # in local development these are provided globally
 ]
 tests = [ "rmi-etoolbox[dev,tooling]" ]
 optional = [
-    "plotly>5.10,<6.2",
+    "plotly>5.10,<6.3",
     "sqlalchemy>1.4,<2.1",
 ]
 pudl-test = []
