@@ -30,7 +30,8 @@ dependencies = [
     "pyarrow>=9,<21",
     "s3fs>=2022.11.0, <2025.6.0",
     "tzdata>=2022.7;platform_system=='Windows'",
-    "click>8,<9"
+    "click>8,<9",
+    "pyyaml>=6.0.2",
 ]
 # entry points
 scripts.rmi = "etoolbox.cli:main"
