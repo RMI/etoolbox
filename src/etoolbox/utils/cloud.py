@@ -289,11 +289,13 @@ def cache_info():
     ]
 
 
-def cached_path(cloud_path: str) -> str | None:
+def cached_path(cloud_path: str, *, download=False) -> str | None:
     """Get the local cache path of a cloud file.
 
     Args:
         cloud_path: path on azure, e.g. ``az://raw-data/test_data.parquet``
+        download: download the file from Azure to create a local cache if it
+            does not exist.
 
     Examples
     --------
@@ -309,6 +311,9 @@ def cached_path(cloud_path: str) -> str | None:
 
     """
     cloud_path = cloud_path.removeprefix("az://").removeprefix("abfs://")
+    if download:
+        f = rmi_cloud_fs().open(cloud_path)
+        f.close()
     try:
         return cache_info().loc[cloud_path, "fn"]
     except KeyError:
