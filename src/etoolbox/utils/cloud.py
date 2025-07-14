@@ -185,20 +185,20 @@ def storage_options():
     >>> import polars as pl
     >>> from etoolbox.utils.cloud import storage_options
 
-    >>> df = pl.read_parquet("az://raw-data/test_data.parquet", **storage_options())
-    >>> df.select("plant_id_eia", "re_type").head()  # doctest: +NORMALIZE_WHITESPACE
+    >>> df = pl.read_parquet("az://patio-data/test_data.parquet", **storage_options())
+    >>> df.head()  # doctest: +NORMALIZE_WHITESPACE
     shape: (5, 2)
-    ┌──────────────────────┬─────────┐
-    │ plant_id_eia         ┆ re_type │
-    │ ---                  ┆ ---     │
-    │ i64                  ┆ str     │
-    ╞══════════════════════╪═════════╡
-    │ -1065799821027645681 ┆ solar   │
-    │ 500701449105794732   ┆ solar   │
-    │ 5264981444132581172  ┆ solar   │
-    │ 8596148642566783026  ┆ solar   │
-    │ 8293386810295812914  ┆ solar   │
-    └──────────────────────┴─────────┘
+    ┌────────────────────┬──────────────────┐
+    │ energy_source_code ┆ co2_mt_per_mmbtu │
+    │ ---                ┆ ---              │
+    │ str                ┆ f64              │
+    ╞════════════════════╪══════════════════╡
+    │ AB                 ┆ 1.1817e-7        │
+    │ ANT                ┆ 1.0369e-7        │
+    │ BFG                ┆ 2.7432e-7        │
+    │ BIT                ┆ 9.3280e-8        │
+    │ BLQ                ┆ 9.4480e-8        │
+    └────────────────────┴──────────────────┘
 
     """
     return {
@@ -221,38 +221,38 @@ def rmi_cloud_fs(account_name=None, token=None) -> WholeFileCacheFileSystem:
     >>> from etoolbox.utils.cloud import rmi_cloud_fs
 
     >>> fs = rmi_cloud_fs()
-    >>> df = pd.read_parquet("az://raw-data/test_data.parquet", filesystem=fs)
-    >>> df[["plant_id_eia", "re_type"]].head()  # doctest: +NORMALIZE_WHITESPACE
-              plant_id_eia re_type
-    0 -1065799821027645681   solar
-    1   500701449105794732   solar
-    2  5264981444132581172   solar
-    3  8596148642566783026   solar
-    4  8293386810295812914   solar
+    >>> df = pd.read_parquet("az://patio-data/test_data.parquet", filesystem=fs)
+    >>> df.head()  # doctest: +NORMALIZE_WHITESPACE
+      energy_source_code  co2_mt_per_mmbtu
+    0                 AB      1.181700e-07
+    1                ANT      1.036900e-07
+    2                BFG      2.743200e-07
+    3                BIT      9.328000e-08
+    4                BLQ      9.448000e-08
 
     Read with :mod:`polars` using the same filecache as with :mod:`pandas`.
 
     >>> import polars as pl
 
-    >>> with fs.open("az://raw-data/test_data.parquet") as f:
+    >>> with fs.open("az://patio-data/test_data.parquet") as f:
     ...     df = pl.read_parquet(f)
-    >>> df.select("plant_id_eia", "re_type").head()  # doctest: +NORMALIZE_WHITESPACE
+    >>> df.head()  # doctest: +NORMALIZE_WHITESPACE
     shape: (5, 2)
-    ┌──────────────────────┬─────────┐
-    │ plant_id_eia         ┆ re_type │
-    │ ---                  ┆ ---     │
-    │ i64                  ┆ str     │
-    ╞══════════════════════╪═════════╡
-    │ -1065799821027645681 ┆ solar   │
-    │ 500701449105794732   ┆ solar   │
-    │ 5264981444132581172  ┆ solar   │
-    │ 8596148642566783026  ┆ solar   │
-    │ 8293386810295812914  ┆ solar   │
-    └──────────────────────┴─────────┘
+    ┌────────────────────┬──────────────────┐
+    │ energy_source_code ┆ co2_mt_per_mmbtu │
+    │ ---                ┆ ---              │
+    │ str                ┆ f64              │
+    ╞════════════════════╪══════════════════╡
+    │ AB                 ┆ 1.1817e-7        │
+    │ ANT                ┆ 1.0369e-7        │
+    │ BFG                ┆ 2.7432e-7        │
+    │ BIT                ┆ 9.3280e-8        │
+    │ BLQ                ┆ 9.4480e-8        │
+    └────────────────────┴──────────────────┘
 
     Write a parquet file, or really anything to Azure...
 
-    >>> with fs.open("az://raw-data/file.parquet", mode="wb") as f:  # doctest: +SKIP
+    >>> with fs.open("az://patio-data/file.parquet", mode="wb") as f:  # doctest: +SKIP
     ...     df.write_parquet(f)
 
     """
@@ -303,11 +303,11 @@ def cached_path(cloud_path: str, *, download=False) -> str | None:
     >>> from etoolbox.utils.cloud import rmi_cloud_fs, cached_path
 
     >>> fs = rmi_cloud_fs()
-    >>> cloud_path = "az://raw-data/test_data.parquet"
+    >>> cloud_path = "az://patio-data/test_data.parquet"
     >>> with fs.open(cloud_path) as f:
     ...     df = pl.read_parquet(f)
     >>> cached_path(cloud_path)
-    '2a722b95bfff23b14d1deaa81cca3b697b875934df3858159d205d20dcf1e305'
+    '656706c40cb490423b652aa6d3b4903c56ab6c798ac4eb2fa3ccbab39ceebc4a'
 
     """
     cloud_path = cloud_path.removeprefix("az://").removeprefix("abfs://")
@@ -361,7 +361,11 @@ def get(
         clobber: overwrite existing files and directories if True
         azcopy_path: path to azcopy executable
     """
-    to_get_path = to_get_path.removeprefix("az://").removeprefix("abfs://")
+    to_get_path = (
+        to_get_path.removeprefix("az://")
+        .removeprefix("abfs://")
+        .removeprefix(f"https://{read_account_name()}.blob.core.windows.net/")
+    )
     try:
         subprocess.run([azcopy_path], capture_output=True)  # noqa: S603
     except Exception:
@@ -421,6 +425,11 @@ def put(
     if not to_put_path.exists():
         raise FileNotFoundError(to_put_path)
     lpath = str(to_put_path)
+    destination = (
+        destination.removeprefix("az://")
+        .removeprefix("abfs://")
+        .removeprefix(f"https://{read_account_name()}.blob.core.windows.net/")
+    )
     recursive = to_put_path.is_dir()
     try:
         subprocess.run([azcopy_path], capture_output=True)  # noqa: S603
@@ -431,8 +440,7 @@ def put(
         with context():
             fs.put(
                 lpath=lpath,
-                rpath="az://"
-                + destination.removeprefix("az://").removeprefix("abfs://"),
+                rpath="az://" + destination,
                 recursive=recursive,
                 callback=ProgressCallback(),
             )
@@ -503,7 +511,11 @@ def read_cloud_file(filename: str) -> dict[str, pd.DataFrame] | pd.DataFrame:
     filename = "az://" + filename.removeprefix("az://").removeprefix("abfs://")
 
     if ".parquet" in filename:
-        return pd.read_parquet(filename, filesystem=fs)
+        try:
+            return pd.read_parquet(filename, filesystem=fs)
+        except Exception:
+            with fs.open(filename) as fp:
+                return pl.read_parquet(fp).to_pandas()
     if ".csv" in filename:
         with fs.open(filename, "rb") as fp:
             return pd.read_csv(fp)

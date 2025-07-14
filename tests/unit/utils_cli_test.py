@@ -54,19 +54,19 @@ class TestCloudEntryPoint:
     @pytest.mark.script_launch_mode("inprocess")
     def test_cloud_list(self, script_runner):
         """Test rmi cloud list entry point."""
-        result = script_runner.run(["etb", "cloud", "list", "raw-data"])
+        result = script_runner.run(["etb", "cloud", "list", "patio-data"])
         assert "test_data.parquet" in result.stdout
 
     @pytest.mark.script_launch_mode("inprocess")
     def test_cloud_list_with_etb_entrypoint(self, script_runner):
         """Test rmi cloud list entry point."""
-        result = script_runner.run(["etb", "cloud", "list", "raw-data"])
+        result = script_runner.run(["etb", "cloud", "list", "patio-data"])
         assert "test_data.parquet" in result.stdout
 
     @pytest.mark.script_launch_mode("inprocess")
     def test_cloud_list_detail(self, script_runner):
         """Test rmi cloud list entry point."""
-        result = script_runner.run(["etb", "cloud", "list", "raw-data", "-l"])
+        result = script_runner.run(["etb", "cloud", "list", "patio-data", "-l"])
         assert "test_data.parquet" in result.stdout
 
     @pytest.mark.script_launch_mode("inprocess")
@@ -77,7 +77,7 @@ class TestCloudEntryPoint:
                 "etb",
                 "cloud",
                 "get",
-                "raw-data/test_data.parquet",
+                "patio-data/test_data.parquet",
                 str(temp_dir / "test_data.parquet"),
             ]
         )
@@ -88,7 +88,7 @@ class TestCloudEntryPoint:
         """Test rmi cloud get."""
         cwd = Path.cwd()
 
-        script_runner.run(["etb", "cloud", "get", "raw-data/test_data.parquet"])
+        script_runner.run(["etb", "cloud", "get", "patio-data/test_data.parquet"])
         path = cwd / "test_data.parquet"
         assert path.exists()
         path.unlink()

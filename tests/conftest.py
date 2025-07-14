@@ -127,7 +127,7 @@ def cloud_test_cache_w_files(cloud_test_cache):
     import etoolbox.utils.cloud as cloud
 
     fs = cloud.rmi_cloud_fs()
-    _ = pd.read_parquet("az://raw-data/test_data.parquet", filesystem=fs)
+    _ = pd.read_parquet("az://patio-data/test_data.parquet", filesystem=fs)
 
 
 @pytest.fixture(scope="session")

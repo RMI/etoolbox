@@ -27,7 +27,7 @@ def test_copy_to_cloud(temp_dir, destination):
 )
 def test_get_from_cloud(temp_dir, source):
     """Test downloading from RMI's Azure cloud storage."""
-    get("raw-data/" + source, temp_dir)
+    get("patio-data/" + source, temp_dir)
     assert (temp_dir / source).exists()
 
 

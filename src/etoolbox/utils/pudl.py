@@ -156,7 +156,7 @@ def pudl_list(
     List PUDL releases, the actual release is the part after the ``/``.
 
     >>> pudl_list(None)  # doctest: +ELLIPSIS
-    ['pudl.catalyst.coop/nightly', 'pudl.catalyst.coop/stable', ...]
+    ['pudl.catalyst.coop/pudl_dbt_tests.duckdb', 'pudl.catalyst.coop/nightly', ...]
 
     For the most recent, you want the last on the list i.e. ``releases[-1]``
 
