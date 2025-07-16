@@ -22,7 +22,7 @@ classifiers = [
 requires-python = ">=3.10,<3.14"
 dependencies = [
     "adlfs>=2023.9.0,<2024.13.0",
-    "fsspec>=2022.11.0,<2025.6.0",
+    "fsspec>=2022.11.0,<2025.8.0",
     "orjson>=3.8,<3.12",
     "pandas>= 1.4,< 2.4",
     "platformdirs>3.0,<4.4",
