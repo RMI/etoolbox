@@ -20,6 +20,8 @@ What's New?
    all filetypes that :func:`.write_cloud_file` does.
 *  :func:`.write_patio_econ_results` is now :func:`.write_cloud_file` and only takes
    a filename which can represent any file in any of the account's containers.
+*  Remove :mod:`.remote_zip` as we never used it or actively maintained it.
+   If that functionality is needed, use the original package `python-remotezip <https://github.com/gtsystem/python-remotezip>`_.
 
 Bug Fixes
 ^^^^^^^^^
