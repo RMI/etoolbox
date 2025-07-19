@@ -1,0 +1,248 @@
+etoolbox.utils.cloud
+====================
+
+.. py:module:: etoolbox.utils.cloud
+
+.. autoapi-nested-parse::
+
+   Tools for working with RMI's Azure storage.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   etoolbox.utils.cloud.cloud_clean
+   etoolbox.utils.cloud.cloud_setup
+   etoolbox.utils.cloud.cloud_init
+   etoolbox.utils.cloud.read_token
+   etoolbox.utils.cloud.read_account_name
+   etoolbox.utils.cloud.storage_options
+   etoolbox.utils.cloud.rmi_cloud_fs
+   etoolbox.utils.cloud.cache_info
+   etoolbox.utils.cloud.cached_path
+   etoolbox.utils.cloud.cloud_list
+   etoolbox.utils.cloud.get
+   etoolbox.utils.cloud.put
+   etoolbox.utils.cloud.read_patio_resource_results
+   etoolbox.utils.cloud.read_cloud_file
+   etoolbox.utils.cloud.write_cloud_file
+
+
+Module Contents
+---------------
+
+.. py:function:: cloud_clean(*, dry = False, all_ = False)
+
+   Cleanup cache and config directories.
+
+
+.. py:function:: cloud_setup()
+
+   Interactive cloud setup.
+
+
+.. py:function:: cloud_init(account_name, token, *, dry_run = False, clobber = False)
+
+   Write SAS token file to disk.
+
+
+.. py:function:: read_token()
+
+   Read SAS token from disk or environment variable.
+
+
+.. py:function:: read_account_name()
+
+   Read SAS token from disk or environment variable.
+
+
+.. py:function:: storage_options()
+
+   Simplify reading from Azure using :mod:`polars`.
+
+   When using :mod:`pandas` or writing to Azure, see :func:`.rmi_cloud_fs`.
+
+   .. rubric:: Examples
+
+   >>> import polars as pl
+   >>> from etoolbox.utils.cloud import storage_options
+
+   >>> df = pl.read_parquet("az://patio-data/test_data.parquet", **storage_options())
+   >>> df.head()  # doctest: +NORMALIZE_WHITESPACE
+   shape: (5, 2)
+   ┌────────────────────┬──────────────────┐
+   │ energy_source_code ┆ co2_mt_per_mmbtu │
+   │ ---                ┆ ---              │
+   │ str                ┆ f64              │
+   ╞════════════════════╪══════════════════╡
+   │ AB                 ┆ 1.1817e-7        │
+   │ ANT                ┆ 1.0369e-7        │
+   │ BFG                ┆ 2.7432e-7        │
+   │ BIT                ┆ 9.3280e-8        │
+   │ BLQ                ┆ 9.4480e-8        │
+   └────────────────────┴──────────────────┘
+
+
+.. py:function:: rmi_cloud_fs(account_name=None, token=None)
+
+   Work with files on Azure.
+
+   This can be used to read or write arbitrary files to or from Azure. And for files
+   read from Azure, it will create and manage a local cache.
+
+   .. rubric:: Examples
+
+   >>> import pandas as pd
+   >>> from etoolbox.utils.cloud import rmi_cloud_fs
+
+   >>> fs = rmi_cloud_fs()
+   >>> df = pd.read_parquet("az://patio-data/test_data.parquet", filesystem=fs)
+   >>> df.head()  # doctest: +NORMALIZE_WHITESPACE
+     energy_source_code  co2_mt_per_mmbtu
+   0                 AB      1.181700e-07
+   1                ANT      1.036900e-07
+   2                BFG      2.743200e-07
+   3                BIT      9.328000e-08
+   4                BLQ      9.448000e-08
+
+   Read with :mod:`polars` using the same filecache as with :mod:`pandas`.
+
+   >>> import polars as pl
+
+   >>> with fs.open("az://patio-data/test_data.parquet") as f:
+   ...     df = pl.read_parquet(f)
+   >>> df.head()  # doctest: +NORMALIZE_WHITESPACE
+   shape: (5, 2)
+   ┌────────────────────┬──────────────────┐
+   │ energy_source_code ┆ co2_mt_per_mmbtu │
+   │ ---                ┆ ---              │
+   │ str                ┆ f64              │
+   ╞════════════════════╪══════════════════╡
+   │ AB                 ┆ 1.1817e-7        │
+   │ ANT                ┆ 1.0369e-7        │
+   │ BFG                ┆ 2.7432e-7        │
+   │ BIT                ┆ 9.3280e-8        │
+   │ BLQ                ┆ 9.4480e-8        │
+   └────────────────────┴──────────────────┘
+
+   Write a parquet file, or really anything to Azure...
+
+   >>> with fs.open("az://patio-data/file.parquet", mode="wb") as f:  # doctest: +SKIP
+   ...     df.write_parquet(f)
+
+
+.. py:function:: cache_info()
+
+   Return info about cloud cache contents.
+
+
+.. py:function:: cached_path(cloud_path, *, download=False)
+
+   Get the local cache path of a cloud file.
+
+   :param cloud_path: path on azure, e.g. ``az://raw-data/test_data.parquet``
+   :param download: download the file from Azure to create a local cache if it
+                    does not exist.
+
+   .. rubric:: Examples
+
+   >>> import polars as pl
+   >>> from etoolbox.utils.cloud import rmi_cloud_fs, cached_path
+
+   >>> fs = rmi_cloud_fs()
+   >>> cloud_path = "az://patio-data/test_data.parquet"
+   >>> with fs.open(cloud_path) as f:
+   ...     df = pl.read_parquet(f)
+   >>> cached_path(cloud_path)
+   '656706c40cb490423b652aa6d3b4903c56ab6c798ac4eb2fa3ccbab39ceebc4a'
+
+
+.. py:function:: cloud_list(path, *, detail=False)
+
+   List cloud files in a folder.
+
+   :param path: remote folder to list contents of e.g. '<container>/...'
+   :param detail: include detail information
+
+
+.. py:function:: get(to_get_path, destination, fs=None, *, quiet=True, clobber=False, azcopy_path='/opt/homebrew/bin/azcopy')
+
+   Download a remote file from the cloud.
+
+   Uses ``azcopy`` CLI if available.
+
+   :param to_get_path: remote file or folder to download of the form ``<container>/...``
+   :param destination: local destination for the downloaded files
+   :param fs: filesystem
+   :param quiet: disable logging of adlfs output
+   :param clobber: overwrite existing files and directories if True
+   :param azcopy_path: path to azcopy executable
+
+
+.. py:function:: put(to_put_path, destination, fs=None, *, quiet=True, clobber=False, azcopy_path='/opt/homebrew/bin/azcopy')
+
+   Upload local files or directories to the cloud.
+
+   Copies a specific file or tree of files. If destination
+   ends with a "/", it will be assumed to be a directory, and target files
+   will go within.
+
+   Uses ``azcopy`` CLI if available.
+
+   :param to_put_path: local file or folder to copy
+   :param destination: copy destination of the form ``<container>/...``
+   :param fs: filesystem
+   :param quiet: disable logging of adlfs output
+   :param clobber: force overwriting of existing files (only works when azcopy is used)
+   :param azcopy_path: path to azcopy executable
+
+
+.. py:function:: read_patio_resource_results(datestr)
+
+   Reads patio resource results from Azure.
+
+   Reads patio resource results from Azure and returns the extracted data as a
+   dictionary (named list). The method handles the specific format of patio resource
+   files and manages file system interactions as well as cache mechanisms.
+
+   :param datestr: Date string that identifies the model run.
+
+
+.. py:function:: read_cloud_file(filename)
+
+   Read parquet, csv, or DataZip files from Azure.
+
+   The method handles the specific format of patio resource
+   files and manages file system interactions as well as cache mechanisms.
+
+   :param filename: the full path to the file including container and file extension.
+
+   .. rubric:: Examples
+
+   >>> from etoolbox.utils.cloud import read_cloud_file
+
+   >>> df = read_cloud_file("patio-data/20241031/utility_ids.parquet")
+   >>> df.head()  # doctest: +NORMALIZE_WHITESPACE
+      utility_id_ferc1  ...  public_private_unmapped
+   0               1.0  ...                 unmapped
+   1             342.0  ...                   public
+   2             294.0  ...                   public
+   3             394.0  ...                   public
+   4             349.0  ...                   public
+   <BLANKLINE>
+   [5 rows x 37 columns]
+
+
+.. py:function:: write_cloud_file(data, filename)
+
+   Writes economic results for patio data to a specified filename in Azure storage.
+
+   :param data: DataFrame, or str or bytes representing
+   :param filename: Target filename for storing the results, it must include the
+                    container, full path, and appropriate file extension, i.e., parquet for
+                    a DataFrame; csv json yaml yml toml or txt for str/bytes.
+
+
