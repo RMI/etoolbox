@@ -167,7 +167,7 @@ PUDL_TABLE_MAP = {
     "denorm_generation_fuel_combined_yearly_eia923": "out_eia923__yearly_generation_fuel_combined",
     "denorm_generation_monthly_eia923": "out_eia923__monthly_generation",
     "denorm_generation_yearly_eia923": "out_eia923__yearly_generation",
-    "denorm_generators_eia": "_out_eia__yearly_generators",
+    "denorm_generators_eia": "out_eia__yearly_generators",
     "denorm_ownership_eia860": "out_eia860__yearly_ownership",
     "denorm_plants_eia": "out_eia__yearly_plants",
     "denorm_plants_utilities_eia": "_out_eia__plants_utilities",
