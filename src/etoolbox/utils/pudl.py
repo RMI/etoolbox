@@ -322,7 +322,7 @@ def generator_ownership(
         else year
     )
     return (
-        pl_scan_pudl("_out_eia__yearly_generators", release=release)
+        pl_scan_pudl("out_eia__yearly_generators", release=release)
         .filter(
             (pl.col("data_maturity") == "final")
             & (pl.col("report_date").dt.year() == year)
