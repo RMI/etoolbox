@@ -633,11 +633,11 @@ class DataZip(ZipFile):
         ),
         "plSeries": partial(
             _decode_cache_helper,
-            func=lambda self, obj: pl.read_parquet(
-                BytesIO(self.read(obj["__loc__"])), use_pyarrow=True
-            )
-            .to_series()
-            .alias(obj["col_name"]),
+            func=lambda self, obj: (
+                pl.read_parquet(BytesIO(self.read(obj["__loc__"])), use_pyarrow=True)
+                .to_series()
+                .alias(obj["col_name"])
+            ),
         ),
         "pgoFigure": lambda self, obj: pickle.load(  # noqa: S301
             BytesIO(self.read(obj["__loc__"]))
